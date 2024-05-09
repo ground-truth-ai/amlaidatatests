@@ -1,0 +1,474 @@
+
+version: 2
+
+sources:
+#  - name: my_bq_input_dataset
+  - name: input_dataset
+    description: Test dataset
+    tables:
+      - name: party_{{ var("suffix") }}
+        description: Party Table
+        tests:
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns:
+                - party_id 
+                - validity_start_time
+          - excessive_validity_start_time_changes:
+              PKs: party_id
+              threshold: 500
+              config:
+                severity: warn
+              tags:
+                - excessive_validity_start_time_changes
+          - excessive_validity_start_time_changes:
+              PKs: party_id
+              threshold: 1000
+              config:
+                severity: error
+              tags:
+                - excessive_validity_start_time_changes
+        columns:
+          - name: party_id
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - not_null
+            - dbt_utils.not_empty_string:
+                trim_whitespace: true
+          - name: validity_start_time
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: timestamp
+                tags:
+                  - "column_type"
+            - not_null
+          - name: source_system
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"              
+          - name: birth_date
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: date
+                tags:
+                  - "column_type"
+          - name: establishment_date
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: date
+                tags:
+                  - "column_type"
+          - name: occupation
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+          - name: gender
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+          - name: nationalities
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: struct
+                tags:
+                  - "column_type"
+          - name: (nationalities).region_code
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - not_null
+          - name: residencies
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: struct
+                tags:
+                  - "column_type"
+            - not_null
+          - name: (residencies).region_code
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+          - name: exit_date
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: date
+                tags:
+                  - "column_type"
+          - name: join_date
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: date
+                tags:
+                  - "column_type"
+          - name: assets_value_range
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: struct
+                tags:
+                  - "column_type"
+          - name: (assets_value_range).start_amount
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: struct
+                tags:
+                  - "column_type"
+          - name: ((assets_value_range).start_amount).currency_code
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - not_null
+          - name: ((assets_value_range).start_amount).units
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: int64
+                tags:
+                  - "column_type"
+            - not_null
+          - name: ((assets_value_range).start_amount).nanos
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: int64
+                tags:
+                  - "column_type"
+            - not_null
+          - name: (assets_value_range).end_amount
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: struct
+                tags:
+                  - "column_type"
+          - name: ((assets_value_range).end_amount).currency_code
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - not_null
+          - name: ((assets_value_range).end_amount).units
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: int64
+                tags:
+                  - "column_type"
+            - not_null
+          - name: ((assets_value_range).end_amount).nanos
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: int64
+                tags:
+                  - "column_type"
+            - not_null
+          - name: type
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - accepted_values:
+                values: ['COMPANY', 'CONSUMER']
+            - not_null
+            - dbt_utils.not_empty_string:
+                trim_whitespace: true
+          - name: is_entity_deleted
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: bool
+                tags:
+                  - "column_type"
+          - name: civil_status_code
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - accepted_values:
+                values: ['SINGLE', 'LEGALLY_DIVORCED', 'DIVORCED', 'WIDOW', 'STABLE_UNION', 'SEPARATED', 'UNKNOWN']
+          - name: education_level_code
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - accepted_values:
+                values: ['LESS_THAN_PRIMARY_EDUCATION', 'PRIMARY_EDUCATION', 'LOWER_SECONDARY_EDUCATION', 'UPPER_SECONDARY_EDUCATION', 'POST_SECONDARY_NON_TERTIARY_EDUCATION', 'SHORT_CYCLE_TERTIARY_EDUCATION', 'BACHELORS_OR_EQUIVALENT', 'MASTERS_OR_EQUIVALENT', 'DOCTORAL_OR_EQUIVALENT', 'NOT_ELSEWHERE_CLASSIFIED', 'UNKNOWN']
+
+
+      - name: account_party_link_{{ var("suffix") }}
+        description: Account Party Link Table
+        tests:
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns:
+                - account_id  
+                - party_id 
+                - validity_start_time
+          - excessive_validity_start_time_changes:
+              PKs: party_id, account_id
+              threshold: 500
+              config:
+                severity: warn
+              tags:
+                - excessive_validity_start_time_changes  
+          - excessive_validity_start_time_changes:
+              PKs: party_id, account_id
+              threshold: 1000
+              config:
+                severity: error
+              tags:
+                - excessive_validity_start_time_changes
+      
+        columns:
+          - name: account_id
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - not_null
+            - dbt_utils.not_empty_string:
+                trim_whitespace: true
+          - name: party_id
+            tests:
+              - dbt_expectations.expect_column_values_to_be_of_type:
+                  column_type: string
+                  tags:
+                  - "column_type"
+              - relationships:
+                  to: ref("party")
+                  field: party_id
+              - not_null
+              - dbt_utils.not_empty_string:
+                  trim_whitespace: true
+          - name: validity_start_time
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: timestamp
+                tags:
+                  - "column_type"
+            - not_null
+          - name: source_system
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+          - name: is_entity_deleted
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: bool
+                tags:
+                  - "column_type"
+          - name: role
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - accepted_values:
+                values: ['PRIMARY_HOLDER', 'SECONDARY_HOLDER', 'SUPPLEMENTARY_HOLDER']
+
+      - name: transaction_{{ var("suffix") }}
+        description: Transaction Table
+        tests:
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns:
+                - transaction_id
+                - validity_start_time 
+          - excessive_validity_start_time_changes:
+              PKs: transaction_id
+              threshold: 500
+              config:
+                severity: warn
+              tags:
+                - excessive_validity_start_time_changes
+          - excessive_validity_start_time_changes:
+              PKs: transaction_id
+              threshold: 1000
+              config:
+                severity: error
+              tags:
+                - excessive_validity_start_time_changes
+        columns:
+          - name: transaction_id
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - not_null
+            - dbt_utils.not_empty_string:
+                trim_whitespace: true
+          - name: validity_start_time
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: timestamp
+                tags:
+                  - "column_type"
+            - not_null
+          - name: source_system
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+          - name: account_id
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - relationships:
+                to: ref("account_party_link")
+                field: account_id
+            - not_null
+            - dbt_utils.not_empty_string:
+                trim_whitespace: true
+          - name: counterparty_account
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: struct
+                tags:
+                  - "column_type"
+          - name: (counterparty_account).account_id
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+          - name: type
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - not_null
+            - dbt_utils.not_empty_string:
+                trim_whitespace: true
+            - accepted_values:
+                values: ['WIRE', 'CASH', 'CHECK', 'CARD', 'OTHER']
+          - name: direction
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - accepted_values:
+                values: ['DEBIT', 'CREDIT']
+            - not_null
+            - dbt_utils.not_empty_string:
+                trim_whitespace: true
+          - name: book_time
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - is_even:
+                tags:
+                  - "even"
+          - name: normalized_booked_amount
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: struct
+                tags:
+                  - "column_type"
+          - name: (normalized_booked_amount).currency_code
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+          - name: (normalized_booked_amount).units
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: int64
+                tags:
+                  - "column_type"
+            - not_null
+          - name: (normalized_booked_amount).nanos
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: int64
+                tags:
+                  - "column_type"
+            - not_null
+          - name: is_entity_deleted
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: bool
+                tags:
+                  - "column_type"
+            - not_null
+
+
+      - name: risk_case_event_{{ var("suffix") }}
+        description: Risk Case Event Table
+        columns:
+          - name: risk_case_event_id
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - unique 
+            - not_null
+            - dbt_utils.not_empty_string:
+                trim_whitespace: true
+          - name: event_time
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: timestamp
+                tags:
+                  - "column_type"
+            - not_null
+          - name: type
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - accepted_values:
+                values: ['AML_SUSPICIOUS_ACTIVITY_START', 'AML_SUSPICIOUS_ACTIVITY_END','AML_PROCESS_START','AML_PROCESS_END','AML_ALERT_GOOGLE','AML_ALERT_LEGACY','AML_ALERT_ADHOC','AML_ALERT_EXPLORATORY','AML_SAR','AML_EXTERNAL','AML_EXIT']
+            - not_null
+            - dbt_utils.not_empty_string:
+                trim_whitespace: true
+          - name: party_id
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - not_null
+            - dbt_utils.not_empty_string:
+                trim_whitespace: true
+            - relationships:
+                to: ref("party")
+                field: party_id
+          - name: risk_case_id
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - not_null
+            - dbt_utils.not_empty_string:
+                trim_whitespace: true
+          - name: is_entity_deleted
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: bool
+                tags:
+                  - "column_type"
