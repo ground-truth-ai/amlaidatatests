@@ -17,8 +17,7 @@ validation_errors as (
         1
 
     from validation
-    -- if this is true, then even_field is actually odd!
-    where validity_start_time_changes > {{ threshold }}
+        where validity_start_time_changes > {{ threshold }}
 
 )
 

@@ -56,24 +56,40 @@ sources:
                 column_type: date
                 tags:
                   - "column_type"
+            - conditional_null:
+                expression: type='COMPANY'
+                tags:
+                  - "conditional_null"
           - name: establishment_date
             tests:
             - dbt_expectations.expect_column_values_to_be_of_type:
                 column_type: date
                 tags:
                   - "column_type"
+            - conditional_null:
+                expression: type='COMSUMER'
+                tags:
+                  - "conditional_null"
           - name: occupation
             tests:
             - dbt_expectations.expect_column_values_to_be_of_type:
                 column_type: string
                 tags:
                   - "column_type"
+            - conditional_null:
+                expression: type='COMPANY'
+                tags:
+                  - "conditional_null"
           - name: gender
             tests:
             - dbt_expectations.expect_column_values_to_be_of_type:
                 column_type: string
                 tags:
                   - "column_type"
+            - conditional_null:
+                expression: type='COMPANY'
+                tags:
+                  - "conditional_null"
           - name: nationalities
             tests:
             - dbt_expectations.expect_column_values_to_be_of_type:
@@ -86,6 +102,10 @@ sources:
                 column_type: string
                 tags:
                   - "column_type"
+            - valid_code:
+                code_model: country_codes
+                tags:
+                  - "country_codes"
             - not_null
           - name: residencies
             tests:
@@ -100,6 +120,10 @@ sources:
                 column_type: string
                 tags:
                   - "column_type"
+            - valid_code:
+                code_model: country_codes
+                tags:
+                  - "country_codes"
           - name: exit_date
             tests:
             - dbt_expectations.expect_column_values_to_be_of_type:
@@ -131,12 +155,23 @@ sources:
                 tags:
                   - "column_type"
             - not_null
+            - valid_code:
+                code_model: currency_codes
+                tags:
+                  - "currency_codes"
+            - single_value:
+                tags:
+                  - "single_value"
           - name: ((assets_value_range).start_amount).units
             tests:
             - dbt_expectations.expect_column_values_to_be_of_type:
                 column_type: int64
                 tags:
                   - "column_type"
+            - dbt_utils.accepted_range:
+                  min_value: 0
+                  tags:
+                    - "accepted_range"
             - not_null
           - name: ((assets_value_range).start_amount).nanos
             tests:
@@ -145,6 +180,11 @@ sources:
                 tags:
                   - "column_type"
             - not_null
+            - dbt_utils.accepted_range:
+                  min_value: 0
+                  max_value: 999999999
+                  tags:
+                    - "accepted_range"
           - name: (assets_value_range).end_amount
             tests:
             - dbt_expectations.expect_column_values_to_be_of_type:
@@ -158,6 +198,13 @@ sources:
                 tags:
                   - "column_type"
             - not_null
+            - valid_code:
+                code_model: currency_codes
+                tags:
+                  - "currency_codes"
+            - single_value:
+                tags:
+                  - "single_value"
           - name: ((assets_value_range).end_amount).units
             tests:
             - dbt_expectations.expect_column_values_to_be_of_type:
@@ -165,6 +212,10 @@ sources:
                 tags:
                   - "column_type"
             - not_null
+            - dbt_utils.accepted_range:
+                  min_value: 0
+                  tags:
+                    - "accepted_range"
           - name: ((assets_value_range).end_amount).nanos
             tests:
             - dbt_expectations.expect_column_values_to_be_of_type:
@@ -172,6 +223,11 @@ sources:
                 tags:
                   - "column_type"
             - not_null
+            - dbt_utils.accepted_range:
+                  min_value: 0
+                  max_value: 999999999
+                  tags:
+                    - "accepted_range"
           - name: type
             tests:
             - dbt_expectations.expect_column_values_to_be_of_type:
@@ -391,6 +447,13 @@ sources:
                 column_type: string
                 tags:
                   - "column_type"
+            - valid_code:
+                code_model: currency_codes
+                tags:
+                  - "currency_codes"
+            - single_value:
+                tags:
+                  - "single_value"
           - name: (normalized_booked_amount).units
             tests:
             - dbt_expectations.expect_column_values_to_be_of_type:
@@ -398,6 +461,10 @@ sources:
                 tags:
                   - "column_type"
             - not_null
+            - dbt_utils.accepted_range:
+                  min_value: 0
+                  tags:
+                    - "accepted_range"
           - name: (normalized_booked_amount).nanos
             tests:
             - dbt_expectations.expect_column_values_to_be_of_type:
@@ -405,6 +472,11 @@ sources:
                 tags:
                   - "column_type"
             - not_null
+            - dbt_utils.accepted_range:
+                  min_value: 0
+                  max_value: 999999999
+                  tags:
+                    - "accepted_range"
           - name: is_entity_deleted
             tests:
             - dbt_expectations.expect_column_values_to_be_of_type:
@@ -412,8 +484,6 @@ sources:
                 tags:
                   - "column_type"
             - not_null
-
-
       - name: risk_case_event_{{ var("suffix") }}
         description: Risk Case Event Table
         columns:
@@ -472,3 +542,63 @@ sources:
                 column_type: bool
                 tags:
                   - "column_type"
+
+      - name: party_supplementary_data_{{ var("suffix") }}
+        description: Party Supplementary Data Table
+        tests:
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns:
+                - party_supplementary_data_id
+                - party_id
+                - validity_start_time 
+        columns:
+          - name: party_supplementary_data_id
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - unique 
+            - not_null
+            - dbt_utils.not_empty_string:
+                trim_whitespace: true
+          - name: validity_start_time
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: timestamp
+                tags:
+                  - "column_type"
+            - not_null
+          - name: is_entity_deleted
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: bool
+                tags:
+                  - "column_type"
+            - not_null
+          - name: source_system
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+          - name: party_id
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - not_null
+          - name: supplementary_data_payload
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: struct
+                tags:
+                  - "column_type"
+          - name: supplementary_data_payload.value
+            tests:
+            - dbt_expectations.expect_column_values_to_be_of_type:
+                column_type: string
+                tags:
+                  - "column_type"
+            - not_null
