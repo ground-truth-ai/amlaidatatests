@@ -1,7 +1,7 @@
 import os
 from amlaidatatests.connection import connection
 from amlaidatatests.io import load_directory
-from amlaidatatests.schema.v1.common import entity_fields, non_nullable_fields
+from amlaidatatests.schema.v1.common import entity_columns, non_nullable_fields
 import pytest
 from amlaidatatests.schema.v1 import party_schema
 
@@ -25,6 +25,7 @@ def create_empty_tables():
 
 
 if __name__ == "__main__":
-    #load_directory("/home/matt/amlsynth/out/20240605_161330_0_0_post24_g2e0001d_d20240605")
     create_empty_tables()
-    retcode = pytest.main(args=[f'{dir_path}/tests/test_party_table.py'])
+    load_directory()
+    #create_empty_tables()
+    #retcode = pytest.main(args=[f'{dir_path}/tests/test_party_table.py'])

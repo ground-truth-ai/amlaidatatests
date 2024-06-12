@@ -5,6 +5,15 @@ class FailTest(Exception):
     pass
 
 class AbstractBaseTest(ABC):
+    pass
 
-    def test(table: Table) -> None:
+
+class AbstractColumnTest(AbstractBaseTest):
+
+    def test(self, *, table: Table, column: str) -> None:
+        ...
+
+class AbstractTableTest(AbstractBaseTest):
+
+    def test(self, *, table: Table) -> None:
         ...

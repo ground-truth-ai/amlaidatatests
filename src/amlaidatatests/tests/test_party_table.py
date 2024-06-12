@@ -2,101 +2,57 @@
 
 from typing import Callable, Tuple
 from amlaidatatests.io import get_valid_region_codes
-from amlaidatatests.schema.v1.common import entity_fields, get_entity_tests, non_nullable_fields
+from amlaidatatests.io import get_table
+from amlaidatatests.schema.v1.common import EntityTest, entity_columns, get_entity_mutation_tests, get_entity_tests, non_nullable_fields
 from amlaidatatests.schema.v1 import party_schema
 from amlaidatatests.tests.fixtures import common_tests
-import ibis
 import pytest
-from ..connection import connection
-
-
 
 SUFFIX = "1234"
+SCHEMA = party_schema
 
 variables = {
     "suffix": SUFFIX
 }
 
-
-def get_table(t: str) -> ibis.Table:
-    table = connection.table(t)
-    return table
-
-
-# class Validator(object):
-    
-#     def __init__(self, config: dict, tables_available: dict[str, str]):
-#         """_summary_
-
-#         Args:
-#             config (dict): _description_
-#             tables_available (dict[str, str]): _description_
-#         """
-#         self.config = config
-#         self.tables_available = tables_available
-
-#     def validate_available_tables(self):
-#         for t in config["tables"]:
-#             try:
-#                 self.tables_available.get(t["name"])
-#             except:
-#                 pass
-
-#     def validate(self):
-#         pass
-
-# class TestSampleWithScenarios:
-#     scenarios = [scenario1, scenario2]
-
-#     def test_demo1(self, attribute) -> None:
-#         assert isinstance(attribute, str)
-
-#     def test_demo2(self, attribute) -> None:
-#         assert isinstance(attribute, str)
-
 table = get_table("party_1234")
 
-def pytest_generate_tests(metafunc):
-    # called once per each test function
-    # funcarglist = metafunc.cls.params[metafunc.function.__name__]
-    # argnames = sorted(funcarglist[0])
-    # metafunc.parametrize(
-    #     # argnames, [[funcargs[name] for name in argnames] for funcargs in funcarglist]
-    # )
-    if "test_schema_entities" in metafunc.fixturenames:
-        fields = entity_fields(party_schema)
-        tests: list[Tuple[str, Callable]] = []
-        test_ids: list[str] = []
+def test_unique_combination_of_columns():
+    test = common_tests.TestUniqueCombinationOfColumns(unique_combination_of_columns=["party_id", "validity_start_time"])
+    test.test(table=table)
 
-        for column_name, entity_name in fields.items():
-            entity_tests_objs = get_entity_tests(entity_name)
-            tests += [(f"{column_name}.{t.test_field}", t.test) for t in entity_tests_objs]
-            test_ids += [f"({entity_name})-{column_name}-{t.test_name}" for t in entity_tests_objs]
+@pytest.mark.parametrize("test", get_entity_mutation_tests(primary_keys=["party_id"]))
+def test_entity_mutation_tests(test: EntityTest):
+    f = test.test.test
+    f(table=table)
 
-        metafunc.parametrize(["column", "test"], tests, ids=test_ids)
-
-def test_entities_in_schema(test_schema_entities, column, test):
-    test(column=column, table=table)
-
-def test_unique_combination_of_columns(unique_combination_of_columns):
-    unique_combination_of_columns(table=table, unique_combination_of_columns=["party_id", "validity_start_time"])
+@pytest.mark.parametrize("column", entity_columns(schema=SCHEMA, entity_types=["CurrencyValue"]))
+@pytest.mark.parametrize("test", get_entity_tests(entity_name="CurrencyValue"))
+def test_currency_value_entity(column, test: EntityTest):
+    # Todo: tidy this up a bit
+    f = test.test.test
+    subfield = f"{column}.{test.test_field}"
+    f(column=subfield, table=table)
 
 # For each column in the schema, check all columns are all present
-@pytest.mark.parametrize("column", party_schema.fields.keys())
-def test_column_presence(column: str, test_column_presence):
-    test_column_presence(schema_column=column, table=table)
+@pytest.mark.parametrize("column", SCHEMA.fields.keys())
+def test_column_presence(column: str):
+    test = common_tests.TestColumnPresence()
+    test.test(table=table, column=column)
 
 # For each column in the schema, check all columns are the correct type
-@pytest.mark.parametrize("column", party_schema.fields.keys())
-def test_column_type(column, test_column_type):
-    test_column_type(schema_name=column, schema_data_type=party_schema[column], table=table)
+@pytest.mark.parametrize("column", SCHEMA.fields.keys())
+def test_column_type(column):
+    test = common_tests.TestColumnType(SCHEMA)
+    test.test(column=column, table=table)
 
 # Validate all fields marked in the schema as being non-nullable are non-nullable. This is in addition
 # to the schema level tests, since it's not possible to enforce an embedded struct is non-nullable.
 
-@pytest.mark.parametrize("path", non_nullable_fields(party_schema))
-def test_non_nullable_fields(path, test_non_nullable_fields):
-    test_non_nullable_fields(path=path, table=table)
+@pytest.mark.parametrize("column", non_nullable_fields(SCHEMA))
+def test_non_nullable_fields(column):
+    test = common_tests.TestFieldNeverNull()
+    test.test(column=column, table=table)
 
 @pytest.mark.parametrize("column,values", [
     ("type", ["COMPANY", "CONSUMER"]),
@@ -105,8 +61,9 @@ def test_non_nullable_fields(path, test_non_nullable_fields):
     ("nationalities.region_code", get_valid_region_codes()),
     ("residencies.region_code", get_valid_region_codes())
 ])
-def test_column_values(column, values, test_column_values):
-    common_tests.test_column_values(table=table, column=column, values=values)
+def test_column_values(column, values):
+    test = common_tests.TestColumnValues(values=values)
+    test.test(column=column, table=table)
 
 @pytest.mark.parametrize("column,expression", [
     ("birth_date", table.type == "COMPANY"),
@@ -115,8 +72,8 @@ def test_column_values(column, values, test_column_values):
     ("occupation", table.type == "CONSUMER"),
 ])
 def test_null_if(column, expression):
-    test = common_tests.test_null_if()
-    test(table=table, expression=expression, column=column)
+    test = common_tests.TestNullIf(expression)
+    test.test(table=table, column=column)
 
 if __name__ == "__main__":
     retcode = pytest.main()

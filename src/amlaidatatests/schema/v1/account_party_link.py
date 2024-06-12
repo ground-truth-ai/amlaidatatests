@@ -1,5 +1,8 @@
 from ibis import schema
+import ibis
 from ibis.expr.datatypes.core import DataType
+from ibis.expr.datatypes import String, Int32, Timestamp, Boolean, Date, Struct, Array
+
 
 #            account_id              VARCHAR(255),
 #            party_id                VARCHAR(255),
@@ -15,3 +18,15 @@ ACCOUNT_PARTY_LINK = schema([("account_id", "string"),
                      ("role", "string"),
                      ("source_system", "string")
                      ])
+
+account_party_link_schema = ibis.Schema(
+    {
+        "account_id": String(nullable=False),
+        "party_id": String(nullable=False),
+        "validity_start_time": Timestamp(nullable=False),
+        "is_entity_deleted": Boolean(nullable=True),
+        "role": String(nullable=True),
+        "source_system": String(nullable=True),
+        "type": String(nullable=False)
+    }
+)

@@ -31,10 +31,10 @@ party_schema = ibis.Schema(
         "occupation": String(nullable=True),
         "gender": String(nullable=True),
         "nationalities": Array(
-            nullable=True, value_type=Struct(fields={"region_code": String()})
+            nullable=True, value_type=Struct(fields={"region_code": String(nullable=False)})
         ),
         "residencies": Array(
-            nullable=True, value_type=Struct(fields={"region_code": String()})
+            nullable=True, value_type=Struct(fields={"region_code": String(nullable=False)})
         ),
         "exit_date": Date(nullable=True),
         "join_date": Date(nullable=True),

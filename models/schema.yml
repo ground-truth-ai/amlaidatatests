@@ -3,37 +3,11 @@ version: 2
 
 tables:
   - name: party
-    tests:
-      - excessive_validity_start_time_changes:
-          PKs: party_id
-          threshold: 500
-          config:
-            severity: warn
-          tags:
-            - excessive_validity_start_time_changes
-      - excessive_validity_start_time_changes:
-          PKs: party_id
-          threshold: 1000
-          config:
-            severity: error
-          tags:
-            - excessive_validity_start_time_changes
     columns:
       - name: party_id
         tests:
         - dbt_utils.not_empty_string:
             trim_whitespace: true
-      - name: (nationalities).region_code
-        tests:
-        - dbt_expectations.expect_column_values_to_be_of_type:
-            column_type: string
-            tags:
-              - "column_type"
-        - valid_code:
-            code_model: country_codes
-            tags:
-              - "country_codes"
-        - not_null
       - name: residencies
         tests:
         - not_null ??
@@ -51,23 +25,6 @@ tables:
         - single_value:
             tags:
               - "single_value"
-      - name: ((assets_value_range).start_amount).units
-        tests:
-        - dbt_expectations.expect_column_values_to_be_of_type:
-            column_type: int64
-            tags:
-              - "column_type"
-        - dbt_utils.accepted_range:
-              min_value: 0
-              tags:
-                - "accepted_range"
-      - name: ((assets_value_range).start_amount).nanos
-        tests:
-        - dbt_utils.accepted_range:
-              min_value: 0
-              max_value: 999999999
-              tags:
-                - "accepted_range"
       - name: ((assets_value_range).end_amount).currency_code
         tests:
         - dbt_expectations.expect_column_values_to_be_of_type:
