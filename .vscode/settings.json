@@ -1,0 +1,15 @@
+{
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./src/amlaidatatests/",
+        "-p",
+        "*_test.py"
+    ],
+    "python.testing.pytestArgs": [
+        "./src/amlaidatatests/",
+        "./tests/"
+    ],
+}
