@@ -1,0 +1,77 @@
+-e git+https://github.com/ground-truth-ai/amlaidatatests.git@3ce417b7438bfe095cb9f3c8e5baad228154bc8a#egg=amlaidatatests
+-e git+https://github.com/ground-truth-ai/amlaidatatests.git@3ce417b7438bfe095cb9f3c8e5baad228154bc8a#egg=amlsynth
+antlr4-python3-runtime==4.9.3
+appdirs @ file:///home/conda/feedstock_root/build_artifacts/appdirs_1603108395799/work
+atpublic @ file:///home/conda/feedstock_root/build_artifacts/atpublic_1641909357516/work
+bidict @ file:///home/conda/feedstock_root/build_artifacts/bidict_1708298236075/work
+Brotli @ file:///home/conda/feedstock_root/build_artifacts/brotli-split_1695989787169/work
+cachetools==5.3.3
+certifi @ file:///home/conda/feedstock_root/build_artifacts/certifi_1707022139797/work/certifi
+charset-normalizer @ file:///home/conda/feedstock_root/build_artifacts/charset-normalizer_1698833585322/work
+coverage==7.5.3
+dacite==1.8.1
+db-dtypes==1.2.0
+duckdb @ file:///home/conda/feedstock_root/build_artifacts/python-duckdb-split_1716489283545/work/tools/pythonpkg
+filelock @ file:///home/conda/feedstock_root/build_artifacts/filelock_1714422806336/work
+fsspec @ file:///home/conda/feedstock_root/build_artifacts/fsspec_1707102468451/work
+google-api-core==2.19.0
+google-auth==2.30.0
+google-auth-oauthlib==1.2.0
+google-cloud-bigquery==3.24.0
+google-cloud-bigquery-storage==2.25.0
+google-cloud-core==2.4.1
+google-crc32c==1.5.0
+google-resumable-media==2.7.1
+googleapis-common-protos==1.63.1
+graphviz @ file:///home/conda/feedstock_root/build_artifacts/python-graphviz_1711016462626/work
+grpcio==1.64.1
+grpcio-status==1.62.2
+humanize @ file:///home/conda/feedstock_root/build_artifacts/humanize_1700607927158/work
+ibis-framework @ file:///home/conda/feedstock_root/build_artifacts/ibis-framework-ext_1715619568018/work
+idna @ file:///home/conda/feedstock_root/build_artifacts/idna_1713279365350/work
+importlib_metadata @ file:///home/conda/feedstock_root/build_artifacts/importlib-metadata_1710971335535/work
+importlib_resources @ file:///home/conda/feedstock_root/build_artifacts/importlib_resources_1711040877059/work
+iniconfig==2.0.0
+Jinja2 @ file:///home/conda/feedstock_root/build_artifacts/jinja2_1715127149914/work
+joblib @ file:///home/conda/feedstock_root/build_artifacts/joblib_1714665484399/work
+markdown-it-py @ file:///home/conda/feedstock_root/build_artifacts/markdown-it-py_1686175045316/work
+MarkupSafe @ file:///home/conda/feedstock_root/build_artifacts/markupsafe_1706899920239/work
+mdurl @ file:///home/conda/feedstock_root/build_artifacts/mdurl_1704317613764/work
+multipledispatch==0.6.0
+numpy @ file:///home/conda/feedstock_root/build_artifacts/numpy_1707225359967/work/dist/numpy-1.26.4-cp312-cp312-linux_x86_64.whl#sha256=031b7d6b2e5e604d9e21fc21be713ebf28ce133ec872dce6de006742d5e49bab
+oauthlib==3.2.2
+omegaconf==2.3.0
+packaging==24.0
+pandas @ file:///home/conda/feedstock_root/build_artifacts/pandas_1715897630316/work
+parsy @ file:///home/conda/feedstock_root/build_artifacts/parsy_1677097220753/work
+pins @ file:///home/conda/feedstock_root/build_artifacts/pins_1715736000621/work
+pluggy==1.5.0
+proto-plus==1.23.0
+protobuf==4.25.3
+pyarrow==16.1.0
+pyarrow-hotfix @ file:///home/conda/feedstock_root/build_artifacts/pyarrow-hotfix_1700596371886/work
+pyasn1==0.6.0
+pyasn1_modules==0.4.0
+pydata-google-auth==1.8.2
+Pygments @ file:///home/conda/feedstock_root/build_artifacts/pygments_1714846767233/work
+PySocks @ file:///home/conda/feedstock_root/build_artifacts/pysocks_1661604839144/work
+pytest==8.2.2
+pytest-cov==5.0.0
+python-dateutil @ file:///home/conda/feedstock_root/build_artifacts/python-dateutil_1709299778482/work
+pytz @ file:///home/conda/feedstock_root/build_artifacts/pytz_1706886791323/work
+PyYAML @ file:///home/conda/feedstock_root/build_artifacts/pyyaml_1695373450623/work
+regex @ file:///home/conda/feedstock_root/build_artifacts/regex_1715828414513/work
+requests @ file:///home/conda/feedstock_root/build_artifacts/requests_1717057054362/work
+requests-oauthlib==2.0.0
+rich @ file:///home/conda/feedstock_root/build_artifacts/rich-split_1709150387247/work/dist
+rsa==4.9
+setuptools==70.0.0
+six @ file:///home/conda/feedstock_root/build_artifacts/six_1620240208055/work
+sqlglot @ file:///home/conda/feedstock_root/build_artifacts/sqlglot_1714501989735/work
+toolz @ file:///home/conda/feedstock_root/build_artifacts/toolz_1706112571092/work
+typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/typing_extensions_1717287769032/work
+tzdata @ file:///home/conda/feedstock_root/build_artifacts/python-tzdata_1707747584337/work
+urllib3 @ file:///home/conda/feedstock_root/build_artifacts/urllib3_1708239446578/work
+wheel==0.43.0
+xxhash @ file:///home/conda/feedstock_root/build_artifacts/python-xxhash_1696486305723/work
+zipp @ file:///home/conda/feedstock_root/build_artifacts/zipp_1695255097490/work
