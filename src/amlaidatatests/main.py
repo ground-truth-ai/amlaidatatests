@@ -26,4 +26,4 @@ def create_empty_tables():
 
 if __name__ == "__main__":
     # load_from_bigquery_to_copy()
-    retcode = pytest.main(args=[f'{dir_path}/tests/test_party_table.py'])
+    retcode = pytest.main(args=[f'{dir_path}/tests/test_party_table.py', "--html=report.html", "--self-contained-html"])

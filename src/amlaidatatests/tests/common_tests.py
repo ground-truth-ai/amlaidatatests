@@ -3,7 +3,7 @@
 from typing import Any, List, Optional, cast
 from amlaidatatests import connection
 from amlaidatatests.tests.base import AbstractColumnTest, AbstractTableTest, FailTest, resolve_field, resolve_field_to_level
-from ibis import Table
+from ibis import BaseBackend, Table
 from ibis.expr.datatypes import Struct, Array, Timestamp, DataType
 from ibis import Expr, Schema, _
 import warnings
@@ -12,31 +12,31 @@ from ibis.common.exceptions import IbisTypeError
     
 class TestUniqueCombinationOfColumns(AbstractTableTest):
 
-    def __init__(self, *, schema: Schema, unique_combination_of_columns: List[str]) -> None:
-        super().__init__(schema)
+    def __init__(self, *, table: Table, unique_combination_of_columns: List[str]) -> None:
+        super().__init__(table)
         self.unique_combination_of_columns = unique_combination_of_columns
 
-    def test(self, *, table: Table) -> None:
-        n_pairs = table[self.unique_combination_of_columns].nunique().execute()
-        n_total = table.count().execute()
+    def test(self, *, connection: BaseBackend) -> None:
+        n_pairs = connection.execute(self.table[self.unique_combination_of_columns].nunique())
+        n_total = connection.execute(self.table.count())
         if n_pairs != n_total:
             raise FailTest(f"Found {n_total - n_pairs} duplicate values")
 
 class TestCountValidityStartTimeChanges(AbstractTableTest):
 
-    def __init__(self, *, schema: Schema, primary_keys: List[str], warn=500, error=1000) -> None:
-        super().__init__(schema)
+    def __init__(self, *, table: Table, primary_keys: List[str], warn=500, error=1000) -> None:
+        super().__init__(table=table)
         self.warn  = warn
         self.error = error
         self.primary_keys = primary_keys
         if warn > error:
             raise Exception("")
 
-    def test(self, *, table: Table) -> None:
-        counted = table.group_by(self.primary_keys).agg(count_per_pk=table.count())
+    def test(self, *, connection: BaseBackend) -> None:
+        counted = self.table.group_by(self.primary_keys).agg(count_per_pk=self.table.count())
         warn_number = counted.count(_.count_per_pk > self.warn)
         error_number = counted.count(_.count_per_pk > self.error)
-        result = table.select(warn_number=warn_number, error_number=error_number).execute()
+        result = connection.execute(self.table.select(warn_number=warn_number, error_number=error_number))
         if len(result.index) == 0:
             raise Exception("No rows in table")
         
@@ -45,23 +45,23 @@ class TestCountValidityStartTimeChanges(AbstractTableTest):
             
         
         if result["error_number"][0] > 0:
-            raise Exception(f"{no_errors} entities found with more than {self.error} validation changes in table {table}")
+            raise Exception(f"{no_errors} entities found with more than {self.error} validation changes in table {self.table}")
         if result["warn_number"][0] > 0:
-            warnings.warn(f"{no_warnings} entities found with more than {self.warn} validation changes in table {table}")
+            warnings.warn(f"{no_warnings} entities found with more than {self.warn} validation changes in table {self.table}")
         
 
 
 class TestColumnPresence(AbstractColumnTest):
 
-    def test(self, *, column: str, table: Table):
+    def test(self, *, connection: BaseBackend):
         try:
-            table.schema()[column]
-        except KeyError as e:
-            raise FailTest(f"Missing Required Column: {column}") from e
+            self.get_bound_table(connection)[self.column]
+        except IbisTypeError as e:
+            raise FailTest(f"Missing Required Column: {self.column}") from e
 
 class TestColumnType(AbstractColumnTest):
     
-    def test(self, *, column: str, table: Table):
+    def test(self, *, connection: BaseBackend):
         """_summary_
 
         Args:
@@ -71,8 +71,9 @@ class TestColumnType(AbstractColumnTest):
         Raises:
             FailTest: _description_
         """
-        actual_type = table.schema()[column]
-        schema_data_type = self.schema[column]
+        actual_table = self.get_bound_table(connection)
+        actual_type = actual_table.schema()[self.column]
+        schema_data_type = self.table.schema()[self.column]
 
         self._compare(actual_type, schema_data_type)
 
@@ -80,7 +81,7 @@ class TestColumnType(AbstractColumnTest):
             friendly_schema_type = f"nullable {schema_data_type}" if schema_data_type.nullable else f"not-nullable {schema_data_type}"
             friendly_actual_type = f"nullable {actual_type}" if actual_type.nullable else f"not-nullable {actual_type}"
 
-            raise FailTest(f"Expected column {column} to be {friendly_schema_type}, found {friendly_actual_type}")
+            raise FailTest(f"Expected column {self.column} to be {friendly_schema_type}, found {friendly_actual_type}")
     
     def _compare(self, a: Struct, b: Struct):
         pass
@@ -119,11 +120,11 @@ class TestColumnType(AbstractColumnTest):
 
 class TestColumnValues(AbstractColumnTest):
 
-    def __init__(self, *, values: List[Any], schema: Schema) -> None:
-        super().__init__(schema)
+    def __init__(self, *, values: List[Any], table: Table, column: str, validate: bool = True) -> None:
+        super().__init__(table=table, column=column, validate=validate)
         self.values = values
     
-    def test(self, *, table: Table, column: str):
+    def test(self, *, connection: BaseBackend):
         """_summary_
 
         Args:
@@ -133,13 +134,13 @@ class TestColumnValues(AbstractColumnTest):
         Raises:
             FailTest: _description_
         """
-        table, field = resolve_field(table, column)
+        table, field = resolve_field(self.table, self.column)
         
-        assert table.filter(field.notin(self.values)).count().execute() == 0
+        assert connection.execute(table.filter(field.notin(self.values)).count()) == 0
 
 class TestFieldNeverNull(AbstractColumnTest):
 
-    def test(self, *, table: Table, column: str):
+    def test(self, *, connection: BaseBackend):
         """_summary_
 
         Args:
@@ -149,7 +150,7 @@ class TestFieldNeverNull(AbstractColumnTest):
         Raises:
             FailTest: _description_
         """
-        table, field = resolve_field(table, column)
+        table, field = resolve_field(self.table, self.column)
 
         predicates = [field.isnull()]
         
@@ -157,37 +158,38 @@ class TestFieldNeverNull(AbstractColumnTest):
         # the parent
         # as well - it doesn't make any sense to check the parent if the child
         # is also null
-        if column.count(".") >= 1:
-            _, parent_field = resolve_field_to_level(table, column, -1)
+        if self.column.count(".") >= 1:
+            _, parent_field = resolve_field_to_level(self.table, self.column, -1)
             # We want to check if the field is null but its parent isn't
             predicates += [parent_field.notnull()]
         
-        assert table.filter(predicates).count().execute() == 0
+        assert connection.execute(table.filter(predicates).count()) == 0
         
 class TestNullIf(AbstractColumnTest):
 
-    def __init__(self, *, schema: Schema, expression: Expr) -> None:
-        super().__init__(schema)
+    def __init__(self, *, table: Table, column: str, expression: Expr) -> None:
+        super().__init__(table, column)
         self.expression = expression
 
-    def test(self, *, table: Table, column: str):
-        assert table.filter(self.expression).count(table[column].notnull()).execute() == 0
+    def test(self, *, connection: BaseBackend):
+        assert connection.execute(self.table.filter(self.expression).count(self.table[self.column].notnull())) == 0
 
 
 class TestAcceptedRange(AbstractColumnTest):
 
-    def __init__(self, *, schema: Schema, min: Optional[int] = None, max: Optional[int] = None) -> None:
-        super().__init__(schema)
+    def __init__(self, *, table: Table, column: str, min: Optional[int] = None, max: Optional[int] = None,
+                 validate: bool = True) -> None:
+        super().__init__(table, column=column, validate=validate)
         self.min = min
         self.max = max
 
 
-    def test(self, *, table: Table, column: str):
-        table, field = resolve_field(table, column)
+    def test(self, *, connection: BaseBackend):
+        table, field = resolve_field(self.table, self.column)
 
         min_pred = [field < self.min] if min is not None else []
         max_pred = [field > self.max] if max is not None else []
 
         predicates = [*min_pred, *max_pred]
 
-        assert table.filter(predicates).count().execute() == 0
+        assert connection.execute(table.filter(predicates).count()) == 0

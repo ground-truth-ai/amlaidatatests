@@ -1,33 +1,28 @@
-import pathlib
-from .connection import connection
+from .connection import bigquery_connection_factory, connection_factory
 import pandas as pd
-import ibis
 from ibis import literal
-import google.auth
 import importlib.resources
 
 tables = ["party", "account_party_link", "risk_case_event", "transaction"]
 
-credentials, project_id = google.auth.default()
+def get_table_name(name: str):
+    SUFFIX = "1234"
+    return f"{name}_{SUFFIX}"
 
-SUFFIX = "1234"
 
-bigquery_connection = ibis.bigquery.connect(
-    project_id="gtai-amlai-sandbox",
-    dataset_id="my_bq_input_dataset",
-    credentials=credentials
-)
 
 def load_from_bigquery_to_empty_table():
     for t in tables:
-        table_name = f"{t}_{SUFFIX}"
+        table_name = get_table_name(t)
+        bigquery_connection = bigquery_connection_factory()
         t_bq = bigquery_connection.table(t)
         
         print("Loading into", table_name)
         
         # t = connection.table(f"{t}_{SUFFIX}")
+        connection = connection_factory()
         temp_table = connection.create_table(f"{t}_temp", obj=t_bq.to_pandas(), temp=True)
-        target_table = connection.table(f"{t}_{SUFFIX}")
+        target_table = connection.table(get_table_name(t))
 
         target_schema = target_table.schema()
         temp_schema = temp_table.schema()
@@ -42,18 +37,20 @@ def load_from_bigquery_to_empty_table():
 
         all_temp_table_2 = all_temp_table.select(**{n: getattr(all_temp_table, n) for n in target_schema.keys()})
 
-        connection.insert(f"{t}_{SUFFIX}", obj=all_temp_table_2, overwrite=True)
+        connection.insert(get_table_name(t), obj=all_temp_table_2, overwrite=True)
         #connection.create_table(name=f"{t}_{SUFFIX}", obj=table_out, overwrite=True, schema=party_schema)
 
 def load_from_bigquery_to_copy():
     for t in tables:
-        table_name = f"{t}_{SUFFIX}"
+        connection = connection_factory()
+        table_name = get_table_name(t)
+        bigquery_connection = bigquery_connection_factory()
         t_bq = bigquery_connection.table(t)
         
         print("Loading into", table_name)
         
         # t = connection.table(f"{t}_{SUFFIX}")
-        temp_table = connection.create_table(f"{t}_{SUFFIX}", obj=t_bq.to_pandas(), overwrite=True)
+        temp_table = connection.create_table(get_table_name(t), obj=t_bq.to_pandas(), overwrite=True)
 
 
 def get_valid_region_codes():

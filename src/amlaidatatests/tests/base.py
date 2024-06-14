@@ -1,7 +1,9 @@
 from abc import ABC
+from typing import Optional
 from ibis import Table, Schema
 from ibis import Expr, Schema, _
 from ibis.common.exceptions import IbisTypeError
+from ibis import BaseBackend
 import pytest
 
 class FailTest(Exception):
@@ -10,8 +12,10 @@ class FailTest(Exception):
 def resolve_field(table: Table, column: str) -> Expr:
     # Given a path x.y.z, resolve the field object
     # on the table
+    splits = column.split(".")
+    table = table.select(splits[0])
     field = table
-    for i, p in enumerate(column.split(".")):
+    for i, p in enumerate(splits):
         # The first field is a table. If the table
         # has a field called table, this loo
         if i > 0 and field.type().is_array():
@@ -33,36 +37,52 @@ class AbstractBaseTest(ABC):
 
 class AbstractTableTest(AbstractBaseTest):
 
-    def __init__(self, schema: Schema) -> None:
-        self.schema = schema
+    def __init__(self, table: Table) -> None:
+        self.table = table
         super().__init__()
 
 
-    def test(self, *, table: Table) -> None:
+    def test(self, *, connection: BaseBackend) -> None:
         ...
 
-    def __call__(self, table: Table):
-        self.test(table=table)
+    def __call__(self, connection: BaseBackend):
+        self.test(connection=connection)
 
 class AbstractColumnTest(AbstractBaseTest):
 
-    def __init__(self, schema: Schema) -> None:
-        self.schema = schema
+
+    def __init__(self, table: Table, column: str, validate: bool = True) -> None:
+        self.table = table
+        self.column = column
+        # Ensure the column is specified on the unbound table
+        # provided
+        if validate:
+            resolve_field(table, column)
         super().__init__()
 
-    def test(self, *, table: Table, column: str) -> None:
+    def test(self, *, connection: BaseBackend) -> None:
         ...
 
-    def __call__(self, table: Table, column: str):
+    def get_bound_table(self, connection: BaseBackend):
+        return connection.table(self.table.get_name())
+
+    def __call__(self, connection: BaseBackend, prefix: Optional[str] = None):
         # It's fine for the top level column to be missing if it's 
         # an optional field. If it is, we can skip the whole test
+        __prefix_revert = None
+        if prefix:
+            __prefix_revert = self.column
+            self.column = f"{prefix}.{self.column}"
         try:
-            f = resolve_field_to_level(table=table, column=column, level=1)
+            f = resolve_field_to_level(table=self.get_bound_table(connection), column=self.column, level=1)
         except IbisTypeError:
-            parent_column = column.split(".")[0]
-            if self.schema[parent_column].nullable:
-                pytest.skip(f"Skipping running test on non-existent (but not required) column {column}")
+            parent_column = self.column.split(".")[0]
+            if self.table.schema()[parent_column].nullable:
+                pytest.skip(f"Skipping running test on non-existent (but not required) column {self.column}")
             # Deliberately do not error - the test should continue and will most likely fail
             pass
         # if self.schema
-        self.test(table=table, column=column)
+        self.test(connection=connection)
+        if __prefix_revert:
+            # Deliberately bypass the validating setter
+            self.column = __prefix_revert
