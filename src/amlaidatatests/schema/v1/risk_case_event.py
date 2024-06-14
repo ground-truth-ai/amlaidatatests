@@ -1,4 +1,5 @@
 from ibis import schema
+from ibis.expr.datatypes import String, Int32, Timestamp, Boolean, Date, Struct, Array
 
 #         """risk_case_event_id        VARCHAR(255),
 #         event_time              Int,
@@ -6,8 +7,8 @@ from ibis import schema
 #         party_id                VARCHAR(255),
 #         risk_case_id            VARCHAR(255)
 
-RISK_CASE_EVENT = schema([("risk_case_event_id", "string"),
-                     ("event_time", "timestamp"),
-                     ("type", "string"),
-                     ("party_id", "string"),
-                     ("risk_case_id", "string")])
+risk_case_event_schema = schema({"risk_case_event_id": String(nullable=False),
+                                       "event_time": Timestamp(nullable=False),
+                                       "type": String(nullable=False),
+                                       "party_id": String(nullable=False),
+                                       "risk_case_id": String(nullable=False)})

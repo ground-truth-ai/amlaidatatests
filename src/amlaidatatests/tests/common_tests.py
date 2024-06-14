@@ -1,32 +1,19 @@
 
 
-from typing import List, Optional
-from amlaidatatests.tests.base import AbstractBaseTest, AbstractColumnTest, AbstractTableTest, FailTest
+from typing import Any, List, Optional, cast
+from amlaidatatests import connection
+from amlaidatatests.tests.base import AbstractColumnTest, AbstractTableTest, FailTest, resolve_field, resolve_field_to_level
 from ibis import Table
-from ibis.expr.datatypes import DataType, Struct, Array
-import pytest
+from ibis.expr.datatypes import Struct, Array, Timestamp, DataType
 from ibis import Expr, Schema, _
-from ...connection import connection
 import warnings
+from ibis.common.exceptions import IbisTypeError
 
-
-def resolve_field(table: Table, column: str) -> Expr:
-    # Given a path x.y.z, resolve the field object
-    # on the table
-    field = table
-    for i, p in enumerate(column.split(".")):
-        # The first field is a table. If the table
-        # has a field called table, this loo
-        if i > 0 and field.type().is_array():
-            field = field.map(lambda f: getattr(f, p))
-        else:
-            field = getattr(field, p)
-    return field
-
+    
 class TestUniqueCombinationOfColumns(AbstractTableTest):
 
-    def __init__(self, *, unique_combination_of_columns: List[str]) -> None:
-        super().__init__()
+    def __init__(self, *, schema: Schema, unique_combination_of_columns: List[str]) -> None:
+        super().__init__(schema)
         self.unique_combination_of_columns = unique_combination_of_columns
 
     def test(self, *, table: Table) -> None:
@@ -37,8 +24,8 @@ class TestUniqueCombinationOfColumns(AbstractTableTest):
 
 class TestCountValidityStartTimeChanges(AbstractTableTest):
 
-    def __init__(self, *, primary_keys: List[str], warn=500, error=1000) -> None:
-        super().__init__()
+    def __init__(self, *, schema: Schema, primary_keys: List[str], warn=500, error=1000) -> None:
+        super().__init__(schema)
         self.warn  = warn
         self.error = error
         self.primary_keys = primary_keys
@@ -67,13 +54,12 @@ class TestCountValidityStartTimeChanges(AbstractTableTest):
 class TestColumnPresence(AbstractColumnTest):
 
     def test(self, *, column: str, table: Table):
-        table.schema()[column]
+        try:
+            table.schema()[column]
+        except KeyError as e:
+            raise FailTest(f"Missing Required Column: {column}") from e
 
 class TestColumnType(AbstractColumnTest):
-
-    def __init__(self, schema: Schema) -> None:
-        super().__init__()
-        self.schema = schema
     
     def test(self, *, column: str, table: Table):
         """_summary_
@@ -88,33 +74,53 @@ class TestColumnType(AbstractColumnTest):
         actual_type = table.schema()[column]
         schema_data_type = self.schema[column]
 
+        self._compare(actual_type, schema_data_type)
+
         if self._strip_type_for_comparison(actual_type) != self._strip_type_for_comparison(schema_data_type):
             friendly_schema_type = f"nullable {schema_data_type}" if schema_data_type.nullable else f"not-nullable {schema_data_type}"
             friendly_actual_type = f"nullable {actual_type}" if actual_type.nullable else f"not-nullable {actual_type}"
 
             raise FailTest(f"Expected column {column} to be {friendly_schema_type}, found {friendly_actual_type}")
     
-    def _strip_type_for_comparison(self, a: Struct, level = 0) -> Struct:
+    def _compare(self, a: Struct, b: Struct):
+        pass
+        
+
+    def _strip_type_for_comparison(self, a: DataType, level = 0) -> Struct:
+        """ Recursively strip nulls for type comparison """
         level = level + 1
+        # We can't check lower level nullable columns because
+        # it's not possible to specify columns
         nullable = a.nullable if level == 1 else True
         dct = {}
         if a.is_struct():
+            a = cast(Struct, a)
             for n, dtype in a.items():
                 dct[n] = self._strip_type_for_comparison(dtype, level)
+            # Now normalize the keys so the order is consistent for comparison
+            dct = dict(sorted(dct.items()))
             return Struct(nullable=nullable, fields=dct)
         if a.is_array():
             value = self._strip_type_for_comparison(a.value_type, level)
             return Array(nullable=nullable, value_type=value)
         if a.is_timestamp():
+            a = cast(Timestamp, a)
+            # In bigquery, the timestamp datatype is always in UTC
+            # so this shouldn't happen, but it could happen in another
+            # database
+            if a.timezone and a.timezone != 'UTC':
+                warnings.warn(f"""Timezone of column {a.name} is not UTC. This
+                              could cause problems with bigquery, since the timezone
+                              is always UTC""")
             # Scale varies by database
-            return a.copy(nullable=nullable, scale=None)
+            return a.copy(nullable=nullable, scale=None, timezone=None)
         return a.copy(nullable=nullable)
         
 
 class TestColumnValues(AbstractColumnTest):
 
-    def __init__(self, values: List[any]) -> None:
-        super().__init__()
+    def __init__(self, *, values: List[Any], schema: Schema) -> None:
+        super().__init__(schema)
         self.values = values
     
     def test(self, *, table: Table, column: str):
@@ -127,7 +133,7 @@ class TestColumnValues(AbstractColumnTest):
         Raises:
             FailTest: _description_
         """
-        field = resolve_field(table, column)
+        table, field = resolve_field(table, column)
         
         assert table.filter(field.notin(self.values)).count().execute() == 0
 
@@ -143,51 +149,41 @@ class TestFieldNeverNull(AbstractColumnTest):
         Raises:
             FailTest: _description_
         """
-        field = resolve_field(table, column)
+        table, field = resolve_field(table, column)
+
+        predicates = [field.isnull()]
         
-        field = table
-        for p in column.split("."):
-            field = getattr(field, p)
-        assert table.filter(field.isnull()).count().execute() == 0
+        # If subfields exist (struct or array), we need to compare the nullness of 
+        # the parent
+        # as well - it doesn't make any sense to check the parent if the child
+        # is also null
+        if column.count(".") >= 1:
+            _, parent_field = resolve_field_to_level(table, column, -1)
+            # We want to check if the field is null but its parent isn't
+            predicates += [parent_field.notnull()]
+        
+        assert table.filter(predicates).count().execute() == 0
         
 class TestNullIf(AbstractColumnTest):
 
-    def __init__(self, expression: Expr) -> None:
-        super().__init__()
+    def __init__(self, *, schema: Schema, expression: Expr) -> None:
+        super().__init__(schema)
         self.expression = expression
 
     def test(self, *, table: Table, column: str):
-        assert table.filter(self.expression).count().execute() == 0
-
-
-@pytest.fixture
-def test_schema_entities():
-    
-    def _test_schema_entities(*, table: Table, column: str, entity: Struct):
-        """_summary_
-
-        Args:
-            table (Table): _description_
-            schema (Schema): _description_
-
-        Raises:
-            FailTest: _description_
-        """
-        assert table.filter(expression).count().execute() == 0
-
-    return _test_schema_entities
+        assert table.filter(self.expression).count(table[column].notnull()).execute() == 0
 
 
 class TestAcceptedRange(AbstractColumnTest):
 
-    def __init__(self, min: Optional[int] = None, max: Optional[int] = None) -> None:
-        super().__init__()
+    def __init__(self, *, schema: Schema, min: Optional[int] = None, max: Optional[int] = None) -> None:
+        super().__init__(schema)
         self.min = min
         self.max = max
 
 
     def test(self, *, table: Table, column: str):
-        field = resolve_field(table, column)
+        table, field = resolve_field(table, column)
 
         min_pred = [field < self.min] if min is not None else []
         max_pred = [field > self.max] if max is not None else []
@@ -195,30 +191,3 @@ class TestAcceptedRange(AbstractColumnTest):
         predicates = [*min_pred, *max_pred]
 
         assert table.filter(predicates).count().execute() == 0
-
-
-#     return _test_column_types
-# @pytest.fixture
-# def test_column_types():
-#     test_issues = []
-#     def _test_column_types(*, table: Table, schema: Schema):
-#         """_summary_
-
-#         Args:
-#             table (Table): _description_
-#             schema (Schema): _description_
-
-#         Raises:
-#             FailTest: _description_
-#         """
-#         for field_name, field_type in table.schema().items():
-#             try:
-#                 validation_field = schema[field_name]
-#                 assert field_type == validation_field
-#             except AssertionError:
-#                 test_issues.append(f"Column {field_name} is the wrong type. Was {field_type}, expected {validation_field}")
-
-#         if len(test_issues) > 0:
-#             raise FailTest("\n".join(test_issues))
-
-#     return _test_column_types

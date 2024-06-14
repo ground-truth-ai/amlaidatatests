@@ -8,7 +8,7 @@
         "type":"debugpy",
         "request":"launch",
         "module":"amlaidatatests.main",
-        "env": {"PYTEST_ADDOPTS": "--no-cov"}
+        // "env": {"PYTEST_ADDOPTS": "--no-cov"}
     },
         {
             "name": "Python: Debug Tests",
@@ -17,8 +17,8 @@
             "program": "${file}",
             "purpose": ["debug-test"],
             "console": "integratedTerminal",
-            "justMyCode": false,
-            "env": {"PYTEST_ADDOPTS": "--no-cov"}
+            "justMyCode": true,
+            // "env": {"PYTEST_ADDOPTS": "--no-cov"}
           }          
     ]
 }

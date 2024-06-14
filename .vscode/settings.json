@@ -9,7 +9,7 @@
         "*_test.py"
     ],
     "python.testing.pytestArgs": [
-        "./src/amlaidatatests/",
+        "./src/amlaidatatests/tests",
         "./tests/"
     ],
 }

@@ -1,6 +1,6 @@
 import os
 from amlaidatatests.connection import connection
-from amlaidatatests.io import load_directory
+from amlaidatatests.io import load_from_bigquery_to_copy
 from amlaidatatests.schema.v1.common import entity_columns, non_nullable_fields
 import pytest
 from amlaidatatests.schema.v1 import party_schema
@@ -25,7 +25,5 @@ def create_empty_tables():
 
 
 if __name__ == "__main__":
-    create_empty_tables()
-    load_directory()
-    #create_empty_tables()
-    #retcode = pytest.main(args=[f'{dir_path}/tests/test_party_table.py'])
+    # load_from_bigquery_to_copy()
+    retcode = pytest.main(args=[f'{dir_path}/tests/test_party_table.py'])

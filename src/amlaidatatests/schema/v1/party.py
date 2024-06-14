@@ -23,26 +23,25 @@ party_schema = ibis.Schema(
     {
         "party_id": String(nullable=False),
         "validity_start_time": Timestamp(nullable=False),
-        "is_entity_deleted": Boolean(nullable=True),
-        "source_system": String(nullable=True),
+        "is_entity_deleted": Boolean(),
+        "source_system": String(),
         "type": String(nullable=False),
-        "birth_date": Date(nullable=True),
-        "establishment_date": Date(nullable=True),
-        "occupation": String(nullable=True),
-        "gender": String(nullable=True),
+        "birth_date": Date(),
+        "establishment_date": Date(),
+        "occupation": String(),
+        "gender": String(),
         "nationalities": Array(
-            nullable=True, value_type=Struct(fields={"region_code": String(nullable=False)})
+            value_type=Struct(fields={"region_code": String(nullable=False)})
         ),
         "residencies": Array(
-            nullable=True, value_type=Struct(fields={"region_code": String(nullable=False)})
+            value_type=Struct(fields={"region_code": String(nullable=False)})
         ),
-        "exit_date": Date(nullable=True),
-        "join_date": Date(nullable=True),
+        "exit_date": Date(),
+        "join_date": Date(),
         "assets_value_range": Struct(
-            nullable=True,
             fields={"start_amount": CurrencyValue(), "end_amount": CurrencyValue()},
         ),
-        "civil_status_code": String(nullable=True),
-        "education_level_code": String(nullable=True),
+        "civil_status_code": String(),
+        "education_level_code": String(),
     }
 )

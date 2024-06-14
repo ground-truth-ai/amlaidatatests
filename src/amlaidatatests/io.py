@@ -6,7 +6,7 @@ from ibis import literal
 import google.auth
 import importlib.resources
 
-tables = ["party"]#, "account_party_link", "risk_case_event"]#, "transaction"]
+tables = ["party", "account_party_link", "risk_case_event", "transaction"]
 
 credentials, project_id = google.auth.default()
 
@@ -18,7 +18,7 @@ bigquery_connection = ibis.bigquery.connect(
     credentials=credentials
 )
 
-def load_directory():
+def load_from_bigquery_to_empty_table():
     for t in tables:
         table_name = f"{t}_{SUFFIX}"
         t_bq = bigquery_connection.table(t)
@@ -45,17 +45,23 @@ def load_directory():
         connection.insert(f"{t}_{SUFFIX}", obj=all_temp_table_2, overwrite=True)
         #connection.create_table(name=f"{t}_{SUFFIX}", obj=table_out, overwrite=True, schema=party_schema)
 
+def load_from_bigquery_to_copy():
+    for t in tables:
+        table_name = f"{t}_{SUFFIX}"
+        t_bq = bigquery_connection.table(t)
+        
+        print("Loading into", table_name)
+        
+        # t = connection.table(f"{t}_{SUFFIX}")
+        temp_table = connection.create_table(f"{t}_{SUFFIX}", obj=t_bq.to_pandas(), overwrite=True)
+
+
 def get_valid_region_codes():
     template_res = importlib.resources.files("amlaidatatests.seeds").joinpath("country_codes.csv")
     with importlib.resources.as_file(template_res) as template_file:
-        return pd.read_csv(template_file, na_values=[])["code"].to_list()
+        return pd.read_csv(template_file, na_values=[], keep_default_na=False)["code"].to_list()
 
 def get_valid_currency_codes():
     template_res = importlib.resources.files("amlaidatatests.seeds").joinpath("currency_codes.csv")
     with importlib.resources.as_file(template_res) as template_file:
-        return pd.read_csv(template_file, na_values=[])["code"].to_list()
-
-
-def get_table(t: str) -> ibis.Table:
-    table = connection.table(t)
-    return table
+        return pd.read_csv(template_file, na_values=[], keep_default_na=False)["code"].to_list()

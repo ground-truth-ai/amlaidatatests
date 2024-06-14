@@ -2,26 +2,26 @@ from typing import Callable, Union
 from amlaidatatests.io import get_valid_currency_codes
 from ibis.expr.datatypes import Int64, String, Struct, DataType, Array
 from ibis import Schema
-from amlaidatatests.tests.fixtures.common_tests import TestAcceptedRange, TestColumnValues, TestCountValidityStartTimeChanges
+from amlaidatatests.tests.common_tests import TestAcceptedRange, TestColumnValues, TestCountValidityStartTimeChanges
 from dataclasses import dataclass
 
 
-def CurrencyValue():
+def CurrencyValue(nullable=True):
     return Struct(
-            nullable=False,
-            fields={
-                'units': Int64(nullable=False),
-                'nanos': Int64(nullable=False)
-            }
-        )
-
-def ValueEntity():
-    return Struct(
-            nullable=False,
+            nullable=nullable,
             fields={
                 'units': Int64(nullable=False),
                 'nanos': Int64(nullable=False),
-                'currency_code': String()
+                'currency_code': String(nullable=False)
+            }
+        )
+
+def ValueEntity(nullable=True):
+    return Struct(
+            nullable=nullable,
+            fields={
+                'units': Int64(nullable=False),
+                'nanos': Int64(nullable=False),
             }
         )
 
@@ -31,27 +31,31 @@ class EntityTest():
     test_field: str
     test: Callable
 
+    def __name__(self):
+        return f"{self.test_name}_{self.test_field}_{self.test}"
+
+
 ENTITIES = {'CurrencyValue': CurrencyValue(),
             'ValueEntity': ValueEntity()}
 
-def get_entity_tests(entity_name: str) -> list[EntityTest]:
+def get_entity_tests(schema: Schema, entity_name: str) -> list[EntityTest]:
     if entity_name == "CurrencyValue":
         return [EntityTest(test_name="nanos_range", 
                            test_field="nanos",
-                           test=TestAcceptedRange(min=0, max=1e9)),
+                           test=TestAcceptedRange(schema=schema, min=0, max=1e9)),
                 EntityTest(test_name="units_range", 
                            test_field="units",
-                           test=TestAcceptedRange(min=0, max=None)),
+                           test=TestAcceptedRange(schema=schema, min=0, max=None)),
                 EntityTest(test_name="currency_code", 
                            test_field="currency_code",
-                           test=TestColumnValues(values=get_valid_currency_codes()))
+                           test=TestColumnValues(schema=schema, values=get_valid_currency_codes()))
                 ]
     raise Exception(f"Unknown Entity {entity_name}")
 
-def get_entity_mutation_tests(primary_keys: list[str]) -> list[EntityTest]:
+def get_entity_mutation_tests(schema: Schema, primary_keys: list[str]) -> list[EntityTest]:
     return [EntityTest(test_name="validity_start_time_changes",
                        test_field="validity_start_time",
-                       test=TestCountValidityStartTimeChanges(warn=500, error=1000, primary_keys=primary_keys))
+                       test=TestCountValidityStartTimeChanges(schema=schema, warn=500, error=1000, primary_keys=primary_keys))
             ]
 
 
