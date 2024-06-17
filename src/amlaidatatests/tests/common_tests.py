@@ -9,6 +9,7 @@ from ibis import Expr, Schema, _
 import warnings
 from ibis.common.exceptions import IbisTypeError
 from ibis import literal
+from ibis.expr.operations.arrays import Array as NewArray
 
     
 class TestUniqueCombinationOfColumns(AbstractTableTest):
@@ -217,11 +218,9 @@ class TestReferentialIntegrity(AbstractTableTest):
         else:
             raise Exception("Expecting a dictionary of string table ids to keys in those tables")
 
-    def test(self, *, connection: BaseBackend):
-        predicates = literal(False)
-        for k in self.keys:
-            _, field_from_table = resolve_field(table=self.table, column=k)
-            _, field_to_table = resolve_field(table=self.to_table, column=k)
-            predicates |= (field_from_table.notin(field_to_table))
-
-        assert connection.execute(self.table.select(*[self.keys]).count(predicates)) == 0
+    def test(self, *, connection: BaseBackend):        
+        result = connection.execute(self.table.select(*[self.keys]).anti_join(self.to_table, self.keys).count())
+        if result > 0:
+            raise FailTest(f"""{result} keys found in table {self.table.get_name()} which were not in {self.to_table.get_name()}. 
+                           Key column(s) was {" ".join(self.keys)}""")
+        return True
