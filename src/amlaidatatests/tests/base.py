@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Optional
+from typing import List, Optional
 from ibis import Table, Schema
 from ibis import Expr, Schema, _
 from ibis.common.exceptions import IbisTypeError
@@ -47,6 +47,20 @@ class AbstractTableTest(AbstractBaseTest):
 
     def __call__(self, connection: BaseBackend):
         self.test(connection=connection)
+
+class AbstractMultiTableTest(AbstractBaseTest):
+
+    def __init__(self, tables: List[Table]) -> None:
+        self.tables = tables
+        super().__init__()
+
+
+    def test(self, *, connection: BaseBackend) -> None:
+        ...
+
+    def __call__(self, connection: BaseBackend):
+        self.test(connection=connection)
+
 
 class AbstractColumnTest(AbstractBaseTest):
 

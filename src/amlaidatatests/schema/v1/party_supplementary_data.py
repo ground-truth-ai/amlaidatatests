@@ -1,6 +1,6 @@
 from amlaidatatests.schema.v1.common import CurrencyValue
 import ibis
-from ibis.expr.datatypes import String, Timestamp, Boolean, Date, Struct, Array
+from ibis.expr.datatypes import String, Timestamp, Boolean, Date, Struct, Array, Float64
 
 #            party_id                  VARCHAR(255),
 #            validity_start_time     Int,
@@ -19,29 +19,13 @@ from ibis.expr.datatypes import String, Timestamp, Boolean, Date, Struct, Array
 #    civil_status_code       VARCHAR(255),
 #    education_level_code    VARCHAR(255)
 
-party_schema = ibis.Schema(
+party_supplementary_data_schema = ibis.Schema(
     {
-        "party_id": String(nullable=False),
+        "party_supplementary_data_id": String(nullable=False),
         "validity_start_time": Timestamp(nullable=False),
         "is_entity_deleted": Boolean(),
         "source_system": String(),
-        "type": String(nullable=False),
-        "birth_date": Date(),
-        "establishment_date": Date(),
-        "occupation": String(),
-        "gender": String(),
-        "nationalities": Array(
-            value_type=Struct(fields={"region_code": String(nullable=False)})
-        ),
-        "residencies": Array(
-            value_type=Struct(fields={"region_code": String(nullable=False)})
-        ),
-        "exit_date": Date(),
-        "join_date": Date(),
-        "assets_value_range": Struct(
-            fields={"start_amount": CurrencyValue(), "end_amount": CurrencyValue()},
-        ),
-        "civil_status_code": String(),
-        "education_level_code": String(),
+        "party_id": String(nullable=False),
+        "supplementary_data_payload": Struct(fields={"value": Float64(nullable=False)}),
     }
 )

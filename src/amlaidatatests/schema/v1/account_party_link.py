@@ -24,9 +24,8 @@ account_party_link_schema = ibis.Schema(
         "account_id": String(nullable=False),
         "party_id": String(nullable=False),
         "validity_start_time": Timestamp(nullable=False),
-        "is_entity_deleted": Boolean(nullable=True),
-        "role": String(nullable=True),
-        "source_system": String(nullable=True),
-        "type": String(nullable=False)
+        "is_entity_deleted": Boolean(),
+        "role": String(),
+        "source_system": String()
     }
 )

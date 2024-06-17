@@ -1,15 +1,10 @@
+from amlaidatatests.schema.utils import get_table_name
 from .connection import bigquery_connection_factory, connection_factory
 import pandas as pd
 from ibis import literal
 import importlib.resources
 
-tables = ["party", "account_party_link", "risk_case_event", "transaction"]
-
-def get_table_name(name: str):
-    SUFFIX = "1234"
-    return f"{name}_{SUFFIX}"
-
-
+tables = ["party_supplementary_data"]#["party", "account_party_link", "risk_case_event", "transaction"]
 
 def load_from_bigquery_to_empty_table():
     for t in tables:

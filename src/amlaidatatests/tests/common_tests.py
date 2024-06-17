@@ -1,13 +1,14 @@
 
 
-from typing import Any, List, Optional, cast
+from typing import Any, List, Optional, Union, cast
 from amlaidatatests import connection
-from amlaidatatests.tests.base import AbstractColumnTest, AbstractTableTest, FailTest, resolve_field, resolve_field_to_level
+from amlaidatatests.tests.base import AbstractColumnTest, AbstractMultiTableTest, AbstractTableTest, FailTest, resolve_field, resolve_field_to_level
 from ibis import BaseBackend, Table
 from ibis.expr.datatypes import Struct, Array, Timestamp, DataType
 from ibis import Expr, Schema, _
 import warnings
 from ibis.common.exceptions import IbisTypeError
+from ibis import literal
 
     
 class TestUniqueCombinationOfColumns(AbstractTableTest):
@@ -193,3 +194,34 @@ class TestAcceptedRange(AbstractColumnTest):
         predicates = [*min_pred, *max_pred]
 
         assert connection.execute(table.filter(predicates).count()) == 0
+
+class TestReferentialIntegrity(AbstractTableTest):
+
+    def __init__(self, *, table: Table, to_table: Table, keys: list[str]) -> None:
+        super().__init__(table=table)
+        self.to_table = to_table
+        if isinstance(keys, list):
+            self.keys = keys
+        # elif isinstance(keys, dict):
+        #     # Validate the length of keys are always the same
+        #     self.keys = keys
+        #     length = None
+        #     for k, v in self.keys.items():
+        #         if not isinstance(v, list) or not isinstance(k, str):
+        #             raise Exception("Expecting a dictionary of string table ids to keys in those tables")
+        #         if length is None:
+        #             length = len(v)
+        #             continue
+        #         if length != len(v):
+        #             raise Exception("Mismatched key lengths in key dictionary passed")
+        else:
+            raise Exception("Expecting a dictionary of string table ids to keys in those tables")
+
+    def test(self, *, connection: BaseBackend):
+        predicates = literal(False)
+        for k in self.keys:
+            _, field_from_table = resolve_field(table=self.table, column=k)
+            _, field_to_table = resolve_field(table=self.to_table, column=k)
+            predicates |= (field_from_table.notin(field_to_table))
+
+        assert connection.execute(self.table.select(*[self.keys]).count(predicates)) == 0

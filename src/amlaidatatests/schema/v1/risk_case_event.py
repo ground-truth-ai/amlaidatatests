@@ -1,5 +1,5 @@
 from ibis import schema
-from ibis.expr.datatypes import String, Int32, Timestamp, Boolean, Date, Struct, Array
+from ibis.expr.datatypes import String, Timestamp
 
 #         """risk_case_event_id        VARCHAR(255),
 #         event_time              Int,

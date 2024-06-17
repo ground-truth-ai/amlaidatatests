@@ -1,4 +1,4 @@
-from amlaidatatests.io import get_table_name
+from amlaidatatests.schema.utils import get_table_name
 import pytest
 from amlaidatatests.connection import connection_factory
 

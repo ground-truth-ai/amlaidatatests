@@ -1,7 +1,8 @@
 import os
-from amlaidatatests.connection import connection
+from amlaidatatests.connection import connection_factory
 from amlaidatatests.io import load_from_bigquery_to_copy
-from amlaidatatests.schema.v1.common import entity_columns, non_nullable_fields
+from amlaidatatests.test_generators import non_nullable_fields
+from amlaidatatests.test_generators import entity_columns
 import pytest
 from amlaidatatests.schema.v1 import party_schema
 
@@ -12,6 +13,7 @@ tables = ["party", "account_party_link", "risk_case_event", "transaction"]
 SUFFIX = "1234"
 
 def create_empty_tables():
+    connection = connection_factory()
     connection.create_table(name=f"party_{SUFFIX}", overwrite=True, schema=party_schema)
 
     # for t in tables:
@@ -25,5 +27,5 @@ def create_empty_tables():
 
 
 if __name__ == "__main__":
-    # load_from_bigquery_to_copy()
-    retcode = pytest.main(args=[f'{dir_path}/tests/test_party_table.py', "--html=report.html", "--self-contained-html"])
+    load_from_bigquery_to_copy()
+    # retcode = pytest.main(args=[f'{dir_path}/tests/test_party_table.py'])

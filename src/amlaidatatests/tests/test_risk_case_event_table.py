@@ -10,10 +10,10 @@ from amlaidatatests.tests.base import AbstractColumnTest
 import pytest
 import ibis
 
-TABLE = get_table("party")
+TABLE = get_table("risk_case_event")
 
 def test_unique_combination_of_columns(connection):
-    test = common_tests.TestUniqueCombinationOfColumns(table=TABLE, unique_combination_of_columns=["party_id", "validity_start_time"])
+    test = common_tests.TestUniqueCombinationOfColumns(table=TABLE, unique_combination_of_columns=["risk_case_event_id"])
     test(connection)
 
 @pytest.mark.parametrize("test", get_entity_mutation_tests(table=TABLE, primary_keys=["party_id"]))
@@ -46,25 +46,18 @@ def test_non_nullable_fields(connection, column):
     test(connection)
 
 @pytest.mark.parametrize("column,values", [
-    ("type", ["COMPANY", "CONSUMER"]),
-    ("civil_status_code", ['SINGLE', 'LEGALLY_DIVORCED', 'DIVORCED', 'WIDOW', 'STABLE_UNION', 'SEPARATED', 'UNKNOWN']),
-    ("education_level_code", ['LESS_THAN_PRIMARY_EDUCATION', 'PRIMARY_EDUCATION', 'LOWER_SECONDARY_EDUCATION', 'UPPER_SECONDARY_EDUCATION', 'POST_SECONDARY_NON_TERTIARY_EDUCATION', 'SHORT_CYCLE_TERTIARY_EDUCATION', 'BACHELORS_OR_EQUIVALENT', 'MASTERS_OR_EQUIVALENT', 'DOCTORAL_OR_EQUIVALENT', 'NOT_ELSEWHERE_CLASSIFIED', 'UNKNOWN']),
-    ("nationalities.region_code", get_valid_region_codes()),
-    ("residencies.region_code", get_valid_region_codes())
+    ("type", ['AML_SUSPICIOUS_ACTIVITY_START', 'AML_SUSPICIOUS_ACTIVITY_END','AML_PROCESS_START','AML_PROCESS_END','AML_ALERT_GOOGLE','AML_ALERT_LEGACY','AML_ALERT_ADHOC','AML_ALERT_EXPLORATORY','AML_SAR','AML_EXTERNAL','AML_EXIT'])
 ])
 def test_column_values(connection, column, values):
     test = common_tests.TestColumnValues(values=values, table=TABLE, column=column)
     test(connection)
 
-@pytest.mark.parametrize("column,expression", [
-    ("birth_date", TABLE.type == "COMPANY"),
-    ("gender", TABLE.type == "COMPANY"),
-    ("establishment_date", TABLE.type == "CONSUMER"),
-    ("occupation", TABLE.type == "CONSUMER"),
-])
-def test_null_if(connection, column, expression):
-    test = common_tests.TestNullIf(expression=expression, table=TABLE, column=column)
+@pytest.mark.parametrize("to_table,keys", [["party", (["party_id"])]] )
+def test_referential_integrity(connection, to_table: str, keys: list[str]):
+    to_table_obj = get_table(to_table)
+    test = common_tests.TestReferentialIntegrity(table=TABLE, to_table=to_table_obj, keys=keys)
     test(connection)
+
 
 if __name__ == "__main__":
     retcode = pytest.main()
