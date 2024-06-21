@@ -1,5 +1,5 @@
 from amlaidatatests.schema.utils import get_table_name
-from .connection import bigquery_connection_factory, connection_factory
+from .connection import connection_factory
 import pandas as pd
 from ibis import literal
 import importlib.resources
@@ -57,3 +57,5 @@ def get_valid_currency_codes():
     template_res = importlib.resources.files("amlaidatatests.seeds").joinpath("currency_codes.csv")
     with importlib.resources.as_file(template_res) as template_file:
         return pd.read_csv(template_file, na_values=[], keep_default_na=False)["code"].to_list()
+    
+# def copy_prefix() -> 

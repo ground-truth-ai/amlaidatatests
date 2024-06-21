@@ -5,7 +5,7 @@ from amlaidatatests.schema.utils import get_table, get_table_name
 from amlaidatatests.test_generators import non_nullable_fields
 from amlaidatatests.schema.v1 import party_schema
 from amlaidatatests.test_generators import entity_columns, get_entity_mutation_tests, get_entity_tests
-from amlaidatatests.tests import common_tests
+from amlaidatatests.tests import common
 from amlaidatatests.tests.base import AbstractColumnTest
 import pytest
 import ibis
@@ -13,7 +13,7 @@ import ibis
 TABLE = get_table("party")
 
 def test_unique_combination_of_columns(connection):
-    test = common_tests.TestUniqueCombinationOfColumns(table=TABLE, unique_combination_of_columns=["party_id", "validity_start_time"])
+    test = common.TestUniqueCombinationOfColumns(table=TABLE, unique_combination_of_columns=["party_id", "validity_start_time"])
     test(connection)
 
 @pytest.mark.parametrize("test", get_entity_mutation_tests(table=TABLE, primary_keys=["party_id"]))
@@ -28,13 +28,13 @@ def test_currency_value_entity(connection, column, test: AbstractColumnTest):
 # For each column in the schema, check all columns are all present
 @pytest.mark.parametrize("column", TABLE.schema().fields.keys())
 def test_column_presence(connection, column: str):
-    test = common_tests.TestColumnPresence(table=TABLE, column=column)
+    test = common.TestColumnPresence(table=TABLE, column=column)
     test(connection)
 
 # For each column in the schema, check all columns are the correct type
 @pytest.mark.parametrize("column", TABLE.schema().fields.keys())
 def test_column_type(connection, column):
-    test = common_tests.TestColumnType(table=TABLE, column=column)
+    test = common.TestColumnType(table=TABLE, column=column)
     test(connection)
 
 # Validate all fields marked in the schema as being non-nullable are non-nullable. This is in addition
@@ -42,7 +42,7 @@ def test_column_type(connection, column):
 
 @pytest.mark.parametrize("column", non_nullable_fields(TABLE.schema()))
 def test_non_nullable_fields(connection, column):
-    test = common_tests.TestFieldNeverNull(table=TABLE, column=column)
+    test = common.TestFieldNeverNull(table=TABLE, column=column)
     test(connection)
 
 @pytest.mark.parametrize("column,values", [
@@ -53,7 +53,7 @@ def test_non_nullable_fields(connection, column):
     ("residencies.region_code", get_valid_region_codes())
 ])
 def test_column_values(connection, column, values):
-    test = common_tests.TestColumnValues(values=values, table=TABLE, column=column)
+    test = common.TestColumnValues(values=values, table=TABLE, column=column)
     test(connection)
 
 @pytest.mark.parametrize("column,expression", [
@@ -63,7 +63,7 @@ def test_column_values(connection, column, values):
     ("occupation", TABLE.type == "CONSUMER"),
 ])
 def test_null_if(connection, column, expression):
-    test = common_tests.TestNullIf(expression=expression, table=TABLE, column=column)
+    test = common.TestNullIf(expression=expression, table=TABLE, column=column)
     test(connection)
 
 if __name__ == "__main__":

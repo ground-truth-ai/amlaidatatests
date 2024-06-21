@@ -8,6 +8,8 @@
         "type":"debugpy",
         "request":"launch",
         "module":"amlaidatatests.main",
+        "args": ["--connection_string=duckdb://duckdb.ddb", "--id=1234"],
+        "justMyCode": false
         // "env": {"PYTEST_ADDOPTS": "--no-cov"}
     },
         {

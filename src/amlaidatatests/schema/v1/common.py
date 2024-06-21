@@ -1,6 +1,7 @@
 from ibis.expr.datatypes import Int64, String, Struct
 
 
+
 def CurrencyValue(nullable=True):
     return Struct(
             nullable=nullable,

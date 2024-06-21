@@ -2,7 +2,7 @@ from typing import Union
 from amlaidatatests.io import get_valid_currency_codes
 from amlaidatatests.schema.v1.common import CurrencyValue, ValueEntity
 from amlaidatatests.tests.base import AbstractColumnTest
-from amlaidatatests.tests.common_tests import TestAcceptedRange, TestColumnValues, TestCountValidityStartTimeChanges
+from amlaidatatests.tests.common import TestAcceptedRange, TestColumnValues, TestCountValidityStartTimeChanges
 from ibis import Schema, Table
 from ibis.expr.datatypes import Array, DataType, Struct
 

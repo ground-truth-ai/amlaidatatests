@@ -1,17 +1,14 @@
 
 
-from typing import Any, List, Optional, Union, cast
-from amlaidatatests import connection
-from amlaidatatests.tests.base import AbstractColumnTest, AbstractMultiTableTest, AbstractTableTest, FailTest, resolve_field, resolve_field_to_level
+from typing import Any, List, Optional, cast
+from amlaidatatests.tests.base import AbstractColumnTest, AbstractTableTest, FailTest, resolve_field, resolve_field_to_level
 from ibis import BaseBackend, Table
 from ibis.expr.datatypes import Struct, Array, Timestamp, DataType
-from ibis import Expr, Schema, _
+from ibis import Expr, _
 import warnings
 from ibis.common.exceptions import IbisTypeError
-from ibis import literal
-from ibis.expr.operations.arrays import Array as NewArray
 
-    
+
 class TestUniqueCombinationOfColumns(AbstractTableTest):
 
     def __init__(self, *, table: Table, unique_combination_of_columns: List[str]) -> None:
@@ -164,13 +161,17 @@ class TestFieldNeverNull(AbstractColumnTest):
             _, parent_field = resolve_field_to_level(self.table, self.column, -1)
             # We want to check if the field is null but its parent isn't
             predicates += [parent_field.notnull()]
-        
-        assert connection.execute(table.filter(predicates).count()) == 0
+
+        count_null = connection.execute(table.filter(predicates).count())
+
+        if count_null == 0:
+            return
+        raise FailTest(f"{count_null} rows found with null values of {self.column} in table {self.table.get_name()}")
         
 class TestNullIf(AbstractColumnTest):
 
     def __init__(self, *, table: Table, column: str, expression: Expr) -> None:
-        super().__init__(table, column)
+        super().__init__(table=table, column=column)
         self.expression = expression
 
     def test(self, *, connection: BaseBackend):
@@ -181,7 +182,7 @@ class TestAcceptedRange(AbstractColumnTest):
 
     def __init__(self, *, table: Table, column: str, min: Optional[int] = None, max: Optional[int] = None,
                  validate: bool = True) -> None:
-        super().__init__(table, column=column, validate=validate)
+        super().__init__(table=table, column=column, validate=validate)
         self.min = min
         self.max = max
 

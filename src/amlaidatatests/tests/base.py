@@ -3,11 +3,14 @@ from typing import List, Optional
 from ibis import Table, Schema
 from ibis import Expr, Schema, _
 from ibis.common.exceptions import IbisTypeError
+from ibis import literal
 from ibis import BaseBackend
 import pytest
 
 class FailTest(Exception):
     pass
+
+OPTIONAL_TABLES = ["party_supplementary_table"]
 
 def resolve_field(table: Table, column: str) -> Expr:
     # Given a path x.y.z, resolve the field object
@@ -45,34 +48,32 @@ class AbstractTableTest(AbstractBaseTest):
     def test(self, *, connection: BaseBackend) -> None:
         ...
 
-    def __call__(self, connection: BaseBackend):
-        self.test(connection=connection)
-
-class AbstractMultiTableTest(AbstractBaseTest):
-
-    def __init__(self, tables: List[Table]) -> None:
-        self.tables = tables
-        super().__init__()
-
-
-    def test(self, *, connection: BaseBackend) -> None:
-        ...
+    def check_table_exists(self, connection: BaseBackend):
+        try:
+            connection.execute(self.table.select(literal(1)).limit(0))
+            return
+        except:
+            if self.table.get_name(): # is optional
+                pytest.skip(f"Skipping test: optional table {self.table.get_name()} does not exist")
+            else:
+                raise FailTest(f"Required table {self.table.get_name()} does not exist")
 
     def __call__(self, connection: BaseBackend):
+        # Check if table exists
+        self.check_table_exists(connection)
         self.test(connection=connection)
 
 
-class AbstractColumnTest(AbstractBaseTest):
-
+class AbstractColumnTest(AbstractTableTest):
 
     def __init__(self, table: Table, column: str, validate: bool = True) -> None:
-        self.table = table
+        """ """
         self.column = column
         # Ensure the column is specified on the unbound table
         # provided
         if validate:
             resolve_field(table, column)
-        super().__init__()
+        super().__init__(table=table)
 
     def test(self, *, connection: BaseBackend) -> None:
         ...
@@ -83,6 +84,7 @@ class AbstractColumnTest(AbstractBaseTest):
     def __call__(self, connection: BaseBackend, prefix: Optional[str] = None):
         # It's fine for the top level column to be missing if it's 
         # an optional field. If it is, we can skip the whole test
+        self.check_table_exists(connection)
         __prefix_revert = None
         if prefix:
             __prefix_revert = self.column

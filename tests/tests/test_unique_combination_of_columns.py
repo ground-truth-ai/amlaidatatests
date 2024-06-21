@@ -1,7 +1,7 @@
 from amlaidatatests.tests.base import FailTest
 import ibis
 import pytest
-from amlaidatatests.tests.common_tests import TestUniqueCombinationOfColumns
+from amlaidatatests.tests.common import TestUniqueCombinationOfColumns
 from ibis.expr.datatypes import String
 
 table = ibis.table(name="test_table", schema={"alpha": String(nullable=False),

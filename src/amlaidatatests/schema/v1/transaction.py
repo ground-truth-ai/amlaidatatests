@@ -1,6 +1,6 @@
-from amlaidatatests.schema.v1.common import CurrencyValue, ValueEntity
+from amlaidatatests.schema.v1.common import CurrencyValue
 import ibis
-from ibis.expr.datatypes import String, Timestamp, Boolean, Date, Struct
+from ibis.expr.datatypes import String, Timestamp, Boolean, Struct
 
 
 transaction_schema = ibis.Schema(

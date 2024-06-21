@@ -1,8 +1,8 @@
 from amlaidatatests.tests.base import FailTest
 import ibis
 import pytest
-from ibis.expr.datatypes import String, Struct
-from amlaidatatests.tests import common_tests
+from ibis.expr.datatypes import String
+from amlaidatatests.tests import common
 
 @pytest.fixture()
 def in_memory_connection():
@@ -17,7 +17,7 @@ def test_missing_key_local_table(in_memory_connection):
     other_table = ibis.table(name="other_table", schema={"id": String(nullable=False)})
     in_memory_connection.create_table("local_table", ibis.memtable(data=[{'id': "1"}], schema={"a": str}))
     in_memory_connection.create_table("other_table", ibis.memtable(data=[{'id': "1"}, {'id': "2"}], schema={"a": str}))
-    t = common_tests.TestReferentialIntegrity(table=local_table, to_table=other_table, keys=["id"])
+    t = common.TestReferentialIntegrity(table=local_table, to_table=other_table, keys=["id"])
     # Should pass - RI works one way only
     t(in_memory_connection)
 
@@ -28,8 +28,25 @@ def test_missing_key_other_table(in_memory_connection):
     in_memory_connection.create_table("local_table", ibis.memtable(data=[{'id': "1"}, {'id': "2"}], schema={"a": str}))
     # Should fail - key doesn't exist
     with pytest.raises(FailTest, match=r'1 keys found in table'):
-        t = common_tests.TestReferentialIntegrity(table=local_table, to_table=other_table, keys=["id"])
+        t = common.TestReferentialIntegrity(table=local_table, to_table=other_table, keys=["id"])
         t(in_memory_connection)
+
+def test_passes_multiple_keys(in_memory_connection):
+    local_table = ibis.table(name="local_table", schema={"id1": String(nullable=False), "id2": String(nullable=False)})
+    other_table = ibis.table(name="other_table", schema={"id1": String(nullable=False), "id2": String(nullable=False)})
+    in_memory_connection.create_table("other_table", ibis.memtable(data=[{'id1': "1", 'id2': "2"}, {'id1': "2", 'id2': "3"}], schema={"a": str}))
+    in_memory_connection.create_table("local_table", ibis.memtable(data=[{'id1': "1", 'id2': "2"}, {'id1': "2", 'id2': "3"}], schema={"a": str}))
+    t = common.TestReferentialIntegrity(table=local_table, to_table=other_table, keys=["id1", 'id2'])
+    t(in_memory_connection)
+
+
+def test_passes_duplicated_keys(in_memory_connection):
+    local_table = ibis.table(name="local_table", schema={"id1": String(nullable=False), "id2": String(nullable=False)})
+    other_table = ibis.table(name="other_table", schema={"id1": String(nullable=False), "id2": String(nullable=False)})
+    in_memory_connection.create_table("other_table", ibis.memtable(data=[{'id1': "1", 'id2': "2"}, {'id1': "1", 'id2': "2"}], schema={"a": str}))
+    in_memory_connection.create_table("local_table", ibis.memtable(data=[{'id1': "1", 'id2': "2"}, {'id1': "1", 'id2': "2"}], schema={"a": str}))
+    t = common.TestReferentialIntegrity(table=local_table, to_table=other_table, keys=["id1", 'id2'])
+    t(in_memory_connection)
 
 def test_missing_multiple_keys_other_table(in_memory_connection):
     local_table = ibis.table(name="local_table", schema={"id1": String(nullable=False), "id2": String(nullable=False)})
@@ -38,5 +55,5 @@ def test_missing_multiple_keys_other_table(in_memory_connection):
     in_memory_connection.create_table("local_table", ibis.memtable(data=[{'id1': "2", 'id2': "3"}], schema={"a": str}))
     # Should fail - key doesn't exist
     with pytest.raises(FailTest, match=r'1 keys found in table'):
-        t = common_tests.TestReferentialIntegrity(table=local_table, to_table=other_table, keys=["id1", 'id2'])
+        t = common.TestReferentialIntegrity(table=local_table, to_table=other_table, keys=["id1", 'id2'])
         t(in_memory_connection)
