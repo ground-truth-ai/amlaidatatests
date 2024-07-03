@@ -1,16 +1,14 @@
 #!/usr/bin/env python
 
 from amlaidatatests.io import get_valid_region_codes
-from amlaidatatests.schema.utils import get_table, get_table_name
-from amlaidatatests.test_generators import non_nullable_fields
-from amlaidatatests.schema.v1 import party_schema
+from amlaidatatests.schema.utils import get_unbound_table
+from amlaidatatests.test_generators import non_nullable_field_tests
 from amlaidatatests.test_generators import entity_columns, get_entity_mutation_tests, get_entity_tests
 from amlaidatatests.tests import common
 from amlaidatatests.tests.base import AbstractColumnTest
 import pytest
-import ibis
 
-TABLE = get_table("party")
+TABLE = get_unbound_table("party")
 
 def test_unique_combination_of_columns(connection):
     test = common.TestUniqueCombinationOfColumns(table=TABLE, unique_combination_of_columns=["party_id", "validity_start_time"])
@@ -40,30 +38,27 @@ def test_column_type(connection, column):
 # Validate all fields marked in the schema as being non-nullable are non-nullable. This is in addition
 # to the schema level tests, since it's not possible to enforce an embedded struct is non-nullable.
 
-@pytest.mark.parametrize("column", non_nullable_fields(TABLE.schema()))
-def test_non_nullable_fields(connection, column):
-    test = common.TestFieldNeverNull(table=TABLE, column=column)
+@pytest.mark.parametrize("test", non_nullable_field_tests(TABLE))
+def test_non_nullable_fields(connection, test: AbstractColumnTest):
     test(connection)
 
-@pytest.mark.parametrize("column,values", [
-    ("type", ["COMPANY", "CONSUMER"]),
-    ("civil_status_code", ['SINGLE', 'LEGALLY_DIVORCED', 'DIVORCED', 'WIDOW', 'STABLE_UNION', 'SEPARATED', 'UNKNOWN']),
-    ("education_level_code", ['LESS_THAN_PRIMARY_EDUCATION', 'PRIMARY_EDUCATION', 'LOWER_SECONDARY_EDUCATION', 'UPPER_SECONDARY_EDUCATION', 'POST_SECONDARY_NON_TERTIARY_EDUCATION', 'SHORT_CYCLE_TERTIARY_EDUCATION', 'BACHELORS_OR_EQUIVALENT', 'MASTERS_OR_EQUIVALENT', 'DOCTORAL_OR_EQUIVALENT', 'NOT_ELSEWHERE_CLASSIFIED', 'UNKNOWN']),
-    ("nationalities.region_code", get_valid_region_codes()),
-    ("residencies.region_code", get_valid_region_codes())
+@pytest.mark.parametrize("test", [
+    common.TestColumnValues(column="type", values=["COMPANY", "CONSUMER"], table=TABLE),
+    common.TestColumnValues(column="civil_status_code", values=['SINGLE', 'LEGALLY_DIVORCED', 'DIVORCED', 'WIDOW', 'STABLE_UNION', 'SEPARATED', 'UNKNOWN'], table=TABLE),
+    common.TestColumnValues(column="education_level_code", values=['LESS_THAN_PRIMARY_EDUCATION', 'PRIMARY_EDUCATION', 'LOWER_SECONDARY_EDUCATION', 'UPPER_SECONDARY_EDUCATION', 'POST_SECONDARY_NON_TERTIARY_EDUCATION', 'SHORT_CYCLE_TERTIARY_EDUCATION', 'BACHELORS_OR_EQUIVALENT', 'MASTERS_OR_EQUIVALENT', 'DOCTORAL_OR_EQUIVALENT', 'NOT_ELSEWHERE_CLASSIFIED', 'UNKNOWN'], table=TABLE),
+    common.TestColumnValues(column="nationalities.region_code", values=get_valid_region_codes(), table=TABLE),
+    common.TestColumnValues(column="residencies.region_code", values=get_valid_region_codes(), table=TABLE)
 ])
-def test_column_values(connection, column, values):
-    test = common.TestColumnValues(values=values, table=TABLE, column=column)
+def test_column_values(connection, test):
     test(connection)
 
-@pytest.mark.parametrize("column,expression", [
-    ("birth_date", TABLE.type == "COMPANY"),
-    ("gender", TABLE.type == "COMPANY"),
-    ("establishment_date", TABLE.type == "CONSUMER"),
-    ("occupation", TABLE.type == "CONSUMER"),
+@pytest.mark.parametrize("test", [
+    common.TestNullIf(column="birth_date", table=TABLE, expression=TABLE.type == "COMPANY"),
+    common.TestNullIf(column="gender", table=TABLE, expression=TABLE.type == "COMPANY"),
+    common.TestNullIf(column="establishment_date", table=TABLE, expression=TABLE.type == "CONSUMER"),
+    common.TestNullIf(column="occupation", table=TABLE, expression=TABLE.type == "CONSUMER"),
 ])
-def test_null_if(connection, column, expression):
-    test = common.TestNullIf(expression=expression, table=TABLE, column=column)
+def test_null_if(connection, test):
     test(connection)
 
 if __name__ == "__main__":

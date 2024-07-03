@@ -2,7 +2,8 @@ import importlib
 from amlaidatatests.config import ConfigSingleton
 from amlaidatatests.schema.base import BaseSchemaConfiguration
 import ibis
-from string import Template 
+from string import Template
+
 
 def get_schema_version_config() -> BaseSchemaConfiguration:
     # Interpolate the version config here
@@ -18,7 +19,9 @@ def get_schema_version_config() -> BaseSchemaConfiguration:
 
 def get_table_name(name: str):
     config_singleton = ConfigSingleton.get()
-    name_template = Template(config_singleton.table_template)
+    name_template = Template(config_singleton.table_name_template)
+    if config_singleton.dataset:
+        name = f"${config_singleton.dataset}.{name}"
     if config_singleton.id is None:
         return name
     else:
@@ -30,9 +33,13 @@ def get_table_name(name: str):
 def get_table_schema(name: str) -> ibis.Schema:
     return get_schema_version_config().get_table_schema(name).schema
 
-def get_table(name: str) -> ibis.Table:
+def get_unbound_table(name: str) -> ibis.Table:
+    """ Get the unbound ibis table reference for the unqualified table name specified """
     s = get_table_schema(name)
-    return ibis.table(schema=s, name=get_table_name(name))
+    cfg = ConfigSingleton.get()
+    return ibis.table(schema=s, name=name, database=cfg.database)
+
+
 
 
 if __name__ == "__main__":

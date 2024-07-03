@@ -3,21 +3,61 @@
 from typing import Any, List, Optional, cast
 from amlaidatatests.tests.base import AbstractColumnTest, AbstractTableTest, FailTest, resolve_field, resolve_field_to_level
 from ibis import BaseBackend, Table
+import ibis
 from ibis.expr.datatypes import Struct, Array, Timestamp, DataType
 from ibis import Expr, _
 import warnings
 from ibis.common.exceptions import IbisTypeError
+import warnings
+from sqlglot import exp, parse_one
 
+
+class WarnTest(Warning):
+    pass
+
+
+class TestTableSchema(AbstractTableTest):
+
+    def __init__(self, table: Table) -> None:
+        super().__init__(table)
+
+    def test(self, *, connection: BaseBackend):
+        actual_columns = set(connection.table(name=self.table.get_name()).columns)
+        schema_columns = set(self.table.columns)
+        excess_columns = actual_columns.difference(schema_columns)
+        if len(excess_columns) > 0:
+            warnings.warn(WarnTest(f"{len(excess_columns)} unexpected columns found in table {self.table.get_name()}"))
+        # Schema table
+
+
+class TestTableEmpty(AbstractTableTest):
+
+    def __init__(self, table: Table) -> None:
+        super().__init__(table)
+
+    def test(self, *, connection: BaseBackend):
+        count = connection.table(name=self.table.count())
+        
+        if count == 0:
+            warnings.warn(WarnTest(f""))
+        # Schema table
 
 class TestUniqueCombinationOfColumns(AbstractTableTest):
 
     def __init__(self, *, table: Table, unique_combination_of_columns: List[str]) -> None:
         super().__init__(table)
+        # Check columns provided are in table
+        for col in unique_combination_of_columns:
+            resolve_field(table, col)
         self.unique_combination_of_columns = unique_combination_of_columns
 
     def test(self, *, connection: BaseBackend) -> None:
-        n_pairs = connection.execute(self.table[self.unique_combination_of_columns].nunique())
-        n_total = connection.execute(self.table.count())
+        # TODO: Make into a single call rather than two
+        expr = self.table[self.unique_combination_of_columns].agg(unique_rows=_.nunique(),
+                                                                              count=_.count())
+        result = connection.execute(expr).loc[0]
+        n_pairs = result["unique_rows"]
+        n_total = result["count"]
         if n_pairs != n_total:
             raise FailTest(f"Found {n_total - n_pairs} duplicate values")
 
@@ -74,17 +114,12 @@ class TestColumnType(AbstractColumnTest):
         actual_type = actual_table.schema()[self.column]
         schema_data_type = self.table.schema()[self.column]
 
-        self._compare(actual_type, schema_data_type)
-
         if self._strip_type_for_comparison(actual_type) != self._strip_type_for_comparison(schema_data_type):
-            friendly_schema_type = f"nullable {schema_data_type}" if schema_data_type.nullable else f"not-nullable {schema_data_type}"
-            friendly_actual_type = f"nullable {actual_type}" if actual_type.nullable else f"not-nullable {actual_type}"
-
-            raise FailTest(f"Expected column {self.column} to be {friendly_schema_type}, found {friendly_actual_type}")
-    
-    def _compare(self, a: Struct, b: Struct):
-        pass
-        
+            if schema_data_type.nullable and not actual_type.nullable:
+                warnings.warn(WarnTest(f"Schema is stricter than required: expected column {self.column} to be {schema_data_type}, found {actual_type}"))
+                return
+            raise FailTest(f"Expected column {self.column} to be {schema_data_type}, found {actual_type}")
+            
 
     def _strip_type_for_comparison(self, a: DataType, level = 0) -> Struct:
         """ Recursively strip nulls for type comparison """
@@ -135,9 +170,35 @@ class TestColumnValues(AbstractColumnTest):
         """
         table, field = resolve_field(self.table, self.column)
         
-        assert connection.execute(table.filter(field.notin(self.values)).count()) == 0
+        tbl = table.filter(field.notin(self.values)).select(field=field)
 
-class TestFieldNeverNull(AbstractColumnTest):
+        result = connection.execute(ibis.join(
+            # Limit the number of valid values collected to 100
+            left=tbl.limit(100).agg(invalid_fields=_.field.collect()),
+            right=tbl.agg(count=_.count()))
+        )
+
+        cnt = result["count"].loc[0]
+                                    
+        if cnt > 0:
+            row = result.iloc[0]
+            valid_values_message = f"Value(s) found were {result["invalid_fields"].loc[0]}"
+            raise FailTest(f"{row["count"]} rows found with invalid values. Valid values are: {' '.join(self.values)}.")
+
+class TestFieldNeverWhitespaceOnly(AbstractColumnTest):
+
+    def filter_null_parent_fields(self):
+        # If subfields exist (struct or array), we need to compare the nullness of 
+        # the parent
+        # as well - it doesn't make any sense to check the parent if the child
+        # is also null
+        predicates = []
+        if self.column.count(".") >= 1:
+            _, parent_field = resolve_field_to_level(self.table, self.column, -1)
+            # We want to check for cases only where field is null but its parent isn't
+            predicates += [parent_field.notnull()]
+        return predicates
+
 
     def test(self, *, connection: BaseBackend):
         """_summary_
@@ -151,31 +212,76 @@ class TestFieldNeverNull(AbstractColumnTest):
         """
         table, field = resolve_field(self.table, self.column)
 
-        predicates = [field.isnull()]
+        predicates = [field.strip() == '', *self.filter_null_parent_fields()]
         
-        # If subfields exist (struct or array), we need to compare the nullness of 
-        # the parent
-        # as well - it doesn't make any sense to check the parent if the child
-        # is also null
-        if self.column.count(".") >= 1:
-            _, parent_field = resolve_field_to_level(self.table, self.column, -1)
-            # We want to check if the field is null but its parent isn't
-            predicates += [parent_field.notnull()]
+        count_blank = connection.execute(table.filter(predicates).count())
 
+        if count_blank == 0:
+            return
+        raise FailTest(f"{count_blank} rows found with whitespace-only values of {self.column} in table {self.table.get_name()}")
+    
+
+class TestFieldNeverNull(TestFieldNeverWhitespaceOnly):
+
+    def test(self, *, connection: BaseBackend):
+        """_summary_
+
+        Args:
+            table (Table): _description_
+            schema (Schema): _description_
+
+        Raises:
+            FailTest: _description_
+        """
+        table, field = resolve_field(self.table, self.column)
+
+        predicates = [field.isnull(), *self.filter_null_parent_fields()]
+        
         count_null = connection.execute(table.filter(predicates).count())
 
         if count_null == 0:
             return
         raise FailTest(f"{count_null} rows found with null values of {self.column} in table {self.table.get_name()}")
+
+class TestDatetimeFieldNeverJan1970(TestFieldNeverWhitespaceOnly):
+
+    def test(self, *, connection: BaseBackend):
+        """_summary_
+
+        Args:
+            table (Table): _description_
+            schema (Schema): _description_
+
+        Raises:
+            FailTest: _description_
+        """
+        table, field = resolve_field(self.table, self.column)
+
+        predicates = [field.epoch_seconds() == 0, *self.filter_null_parent_fields()]
         
+        count_null = connection.execute(table.filter(predicates).count())
+
+        if count_null == 0:
+            return
+        raise FailTest(f"{count_null} rows found with date on 1970-01-01 {self.column} in table {self.table.get_name()}. This value is often nullable")
+
+
+
 class TestNullIf(AbstractColumnTest):
 
     def __init__(self, *, table: Table, column: str, expression: Expr) -> None:
         super().__init__(table=table, column=column)
         self.expression = expression
 
+    @property
+    def id(self):
+        return self.expression.get_name()
+
     def test(self, *, connection: BaseBackend):
-        assert connection.execute(self.table.filter(self.expression).count(self.table[self.column].notnull())) == 0
+        result = connection.execute(self.table.filter(self.expression).count(self.table[self.column].notnull()))
+        if result > 0:
+            raise FailTest(f"{result} rows not fulfilling criteria {ibis.to_sql(self.expression)}")
+
 
 
 class TestAcceptedRange(AbstractColumnTest):
@@ -190,12 +296,14 @@ class TestAcceptedRange(AbstractColumnTest):
     def test(self, *, connection: BaseBackend):
         table, field = resolve_field(self.table, self.column)
 
-        min_pred = [field < self.min] if min is not None else []
-        max_pred = [field > self.max] if max is not None else []
+        min_pred = field < self.min if self.min is not None else False
+        max_pred = field > self.max if self.max is not None else False
 
-        predicates = [*min_pred, *max_pred]
+        predicates = [min_pred | max_pred]
 
-        assert connection.execute(table.filter(predicates).count()) == 0
+        result = connection.execute(table.filter(predicates).count())
+        if result > 0:
+            raise FailTest(f"{result} rows in column {self.column} in table {self.table} were outside of inclusive range {self.min} - {self.max}")
 
 class TestReferentialIntegrity(AbstractTableTest):
 
@@ -204,20 +312,9 @@ class TestReferentialIntegrity(AbstractTableTest):
         self.to_table = to_table
         if isinstance(keys, list):
             self.keys = keys
-        # elif isinstance(keys, dict):
-        #     # Validate the length of keys are always the same
-        #     self.keys = keys
-        #     length = None
-        #     for k, v in self.keys.items():
-        #         if not isinstance(v, list) or not isinstance(k, str):
-        #             raise Exception("Expecting a dictionary of string table ids to keys in those tables")
-        #         if length is None:
-        #             length = len(v)
-        #             continue
-        #         if length != len(v):
-        #             raise Exception("Mismatched key lengths in key dictionary passed")
         else:
-            raise Exception("Expecting a dictionary of string table ids to keys in those tables")
+            # TODO: Validate provided keys
+            raise Exception("Expecting a list of keys present in both tables")
 
     def test(self, *, connection: BaseBackend):        
         result = connection.execute(self.table.select(*[self.keys]).anti_join(self.to_table, self.keys).count())

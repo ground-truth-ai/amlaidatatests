@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-from amlaidatatests.schema.utils import get_table
+from amlaidatatests.schema.utils import get_unbound_table
 from amlaidatatests.test_generators import non_nullable_fields
 from amlaidatatests.test_generators import entity_columns, get_entity_mutation_tests, get_entity_tests
 from amlaidatatests.tests import common
 from amlaidatatests.tests.base import AbstractColumnTest
 import pytest
 
-TABLE = get_table("risk_case_event")
+TABLE = get_unbound_table("risk_case_event")
 
 def test_unique_combination_of_columns(connection):
     test = common.TestUniqueCombinationOfColumns(table=TABLE, unique_combination_of_columns=["risk_case_event_id"])
@@ -51,7 +51,7 @@ def test_column_values(connection, column, values):
 
 @pytest.mark.parametrize("to_table,keys", [["party", (["party_id"])]] )
 def test_referential_integrity(connection, to_table: str, keys: list[str]):
-    to_table_obj = get_table(to_table)
+    to_table_obj = get_unbound_table(to_table)
     test = common.TestReferentialIntegrity(table=TABLE, to_table=to_table_obj, keys=keys)
     test(connection)
 

@@ -1,10 +1,10 @@
 from amlaidatatests.test_generators import entity_columns, get_entity_mutation_tests, get_entity_tests, non_nullable_fields
 from amlaidatatests.tests import common
-from amlaidatatests.schema.utils import get_table
+from amlaidatatests.schema.utils import get_unbound_table
 from amlaidatatests.tests.base import AbstractColumnTest
 import pytest
 
-TABLE = get_table("transaction")
+TABLE = get_unbound_table("transaction")
 
 def test_unique_combination_of_columns(connection):
     test = common.TestUniqueCombinationOfColumns(table=TABLE, unique_combination_of_columns=["transaction_id", "validity_start_time"])
@@ -29,7 +29,7 @@ def test_non_nullable_fields(connection, column):
 
 @pytest.mark.parametrize("to_table,keys", [["account_party_link", (["account_id"])]] )
 def test_referential_integrity(connection, to_table: str, keys: list[str]):
-    to_table_obj = get_table(to_table)
+    to_table_obj = get_unbound_table(to_table)
     test = common.TestReferentialIntegrity(table=TABLE, to_table=to_table_obj, keys=keys)
     test(connection)
 
@@ -37,13 +37,11 @@ def test_referential_integrity(connection, to_table: str, keys: list[str]):
 def test_entity_mutation_tests(connection, test: AbstractColumnTest):
     test(connection=connection)
 
-@pytest.mark.parametrize("column,values", [
-    ("type", ['WIRE', 'CASH', 'CHECK', 'CARD', 'OTHER']),
-    ("direction", ['DEBIT', 'CREDIT']),
-    
+@pytest.mark.parametrize("test", [
+    common.TestColumnValues(column="type", values=['WIRE', 'CASH', 'CHECK', 'CARD', 'OTHER'], table=TABLE),
+    common.TestColumnValues(column="direction", values=['DEBIT', 'CREDIT'], table=TABLE)
 ])
-def test_column_values(connection, column, values):
-    test = common.TestColumnValues(values=values, table=TABLE, column=column)
+def test_column_values(connection, test):
     test(connection)
 
 @pytest.mark.parametrize("column", entity_columns(schema=TABLE.schema(), entity_types=["CurrencyValue"]))

@@ -1,1 +1,1 @@
-connection_string: bigquery://
+connection_string: duckdb://duckdb.ddb

@@ -11,6 +11,8 @@
     "python.testing.pytestArgs": [
         "./src/amlaidatatests/tests",
         "./tests/",
-        // "--conf=./examples/duckdb.yaml"
+        // "--connection_string=bigquery://gtai-amlai-sandbox-uat/my_bq_input_dataset?location=us-central1",
+        "--connection_string=duckdb://"
+        // "--id=1234"
     ],
 }

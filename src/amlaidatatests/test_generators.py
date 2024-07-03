@@ -1,8 +1,8 @@
 from typing import Union
 from amlaidatatests.io import get_valid_currency_codes
 from amlaidatatests.schema.v1.common import CurrencyValue, ValueEntity
-from amlaidatatests.tests.base import AbstractColumnTest
-from amlaidatatests.tests.common import TestAcceptedRange, TestColumnValues, TestCountValidityStartTimeChanges
+from amlaidatatests.tests.base import AbstractColumnTest, resolve_field
+from amlaidatatests.tests.common import TestAcceptedRange, TestColumnValues, TestCountValidityStartTimeChanges, TestFieldNeverWhitespaceOnly, TestFieldNeverNull, TestTableSchema
 from ibis import Schema, Table
 from ibis.expr.datatypes import Array, DataType, Struct
 
@@ -12,6 +12,18 @@ ENTITIES = {'CurrencyValue': CurrencyValue(),
 
 
 def get_entity_tests(table: Table, entity_name: str) -> list[AbstractColumnTest]:
+    """_summary_
+
+    Args:
+        table (Table): _description_
+        entity_name (str): _description_
+
+    Raises:
+        Exception: _description_
+
+    Returns:
+        list[AbstractColumnTest]: _description_
+    """
     if entity_name == "CurrencyValue":
         return [TestAcceptedRange(table=table, column="nanos" , min=0, max=1e9, validate=False),
                 TestAcceptedRange(table=table, column="units", min=0, max=None, validate=False),
@@ -20,12 +32,31 @@ def get_entity_tests(table: Table, entity_name: str) -> list[AbstractColumnTest]
 
 
 def get_entity_mutation_tests(table: Table, primary_keys: list[str]) -> list[AbstractColumnTest]:
+    """_summary_
+
+    Args:
+        table (Table): _description_
+        primary_keys (list[str]): _description_
+
+    Returns:
+        list[AbstractColumnTest]: _description_
+    """
     return [TestCountValidityStartTimeChanges(table=table, warn=500, error=1000, primary_keys=primary_keys)]
 
 
 def entity_columns(schema: Union[Schema, Array, Struct, DataType],
                   entity_types = ENTITIES.keys(),
                   path: list[str] = []):
+    """_summary_
+
+    Args:
+        schema (Union[Schema, Array, Struct, DataType]): _description_
+        entity_types (_type_, optional): _description_. Defaults to ENTITIES.keys().
+        path (list[str], optional): _description_. Defaults to [].
+
+    Returns:
+        _type_: _description_
+    """
     fields = {}
     for n, dtype in schema.items():
 
@@ -51,7 +82,17 @@ def entity_columns(schema: Union[Schema, Array, Struct, DataType],
     return fields
 
 
+
 def non_nullable_fields(schema: Union[Schema, Array, Struct, DataType], path: list[str] = []):# -> list | dict:
+    """_summary_
+
+    Args:
+        schema (Union[Schema, Array, Struct, DataType]): _description_
+        path (list[str], optional): _description_. Defaults to [].
+
+    Returns:
+        _type_: _description_
+    """
     if not isinstance(schema, (Schema, Array, Struct)):
         return True
 
@@ -70,3 +111,23 @@ def non_nullable_fields(schema: Union[Schema, Array, Struct, DataType], path: li
             fields += [".".join(path + [n])]
 
     return fields
+
+def non_nullable_field_tests(table: Table):
+    """ Depending on field type, generate a list of tests 
+    which depend on """
+    fields = non_nullable_fields(schema=table.schema())
+    print(fields)
+    tests = []
+    for f in fields:
+        _, _field = resolve_field(table=table, column=f)
+        field_type = _field.type()
+        if field_type.is_string():
+            tests.append(TestFieldNeverWhitespaceOnly(table=table, column=f))
+
+        tests.append(TestFieldNeverNull(table=table, column=f))
+    return tests
+
+def get_generic_table_tests(table: Table):
+    """ Depending on field type, generate a list of tests 
+    which depend on """
+    return [TestTableSchema(table)]

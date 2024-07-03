@@ -1,10 +1,5 @@
 import os
-from amlaidatatests.config import ConfigSingleton, DatatestConfig
-from omegaconf import OmegaConf
 import pytest
-import argparse
-from omegacli import parse_config
-import json
 import sys
 
 dir_path = os.path.dirname(os.path.realpath(__file__))

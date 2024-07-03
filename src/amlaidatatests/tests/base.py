@@ -1,18 +1,18 @@
 from abc import ABC
-from typing import List, Optional
-from ibis import Table, Schema
-from ibis import Expr, Schema, _
+from typing import Optional
+from ibis import Table
+from ibis import Expr, _
 from ibis.common.exceptions import IbisTypeError
-from ibis import literal
 from ibis import BaseBackend
 import pytest
+from google.api_core.exceptions import NotFound as GoogleTableNotFound
 
 class FailTest(Exception):
     pass
 
 OPTIONAL_TABLES = ["party_supplementary_table"]
 
-def resolve_field(table: Table, column: str) -> Expr:
+def resolve_field(table: Table, column: str) -> tuple[Table, Expr]:
     # Given a path x.y.z, resolve the field object
     # on the table
     splits = column.split(".")
@@ -35,7 +35,12 @@ def resolve_field_to_level(table: Table, column: str, level: int):
     return resolve_field(table, parent_column)
 
 class AbstractBaseTest(ABC):
-    pass
+    @property
+    def id(self) -> Optional[str]:
+        """ Override to provide additional information about the 
+        test to pytest"""
+        return None
+
 
 
 class AbstractTableTest(AbstractBaseTest):
@@ -44,19 +49,27 @@ class AbstractTableTest(AbstractBaseTest):
         self.table = table
         super().__init__()
 
+    @property
+    def id(self) -> Optional[str]:
+        """ Override to provide additional information about the 
+        test to pytest to identify the test"""
+        return f"{self.__class__.__name__}"
 
     def test(self, *, connection: BaseBackend) -> None:
         ...
 
     def check_table_exists(self, connection: BaseBackend):
         try:
-            connection.execute(self.table.select(literal(1)).limit(0))
+            connection.table(self.table.get_name())
             return
-        except:
+        except GoogleTableNotFound:
             if self.table.get_name(): # is optional
                 pytest.skip(f"Skipping test: optional table {self.table.get_name()} does not exist")
             else:
                 raise FailTest(f"Required table {self.table.get_name()} does not exist")
+
+    def optional_table(self):
+        pass
 
     def __call__(self, connection: BaseBackend):
         # Check if table exists
@@ -74,6 +87,13 @@ class AbstractColumnTest(AbstractTableTest):
         if validate:
             resolve_field(table, column)
         super().__init__(table=table)
+
+    @property
+    def id(self) -> Optional[str]:
+        """ Override to provide additional information about the 
+        test to pytest to identify the test"""
+        return f"{self.__class__.__name__}-{self.column}"
+
 
     def test(self, *, connection: BaseBackend) -> None:
         ...

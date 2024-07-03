@@ -1,12 +1,16 @@
 
 
-from amlaidatatests.schema.utils import get_table
-from amlaidatatests.test_generators import get_entity_mutation_tests
+from amlaidatatests.schema.utils import get_unbound_table
+from amlaidatatests.test_generators import get_entity_mutation_tests, get_generic_table_tests
 from amlaidatatests.tests import common
-from amlaidatatests.tests.base import AbstractColumnTest
+from amlaidatatests.tests.base import AbstractColumnTest, AbstractTableTest
 import pytest
 
-TABLE = get_table("account_party_link")
+TABLE = get_unbound_table("account_party_link")
+
+@pytest.mark.parametrize("test", get_generic_table_tests(table=TABLE))
+def test_table(connection, test: AbstractTableTest):
+    test(connection=connection)
 
 def test_unique_combination_of_columns(connection):
     test = common.TestUniqueCombinationOfColumns(table=TABLE, unique_combination_of_columns=["party_id", 
@@ -15,7 +19,7 @@ def test_unique_combination_of_columns(connection):
 
 # For each column in the schema, check all columns are all present
 @pytest.mark.parametrize("column", TABLE.schema().fields.keys())
-def test_column_presence(connection, column: str):
+def test_column_presence(connection: common.BaseBackend, column: str):
     test = common.TestColumnPresence(table=TABLE, column=column)
     test(connection)
 
@@ -27,7 +31,7 @@ def test_column_type(connection, column):
 
 @pytest.mark.parametrize("to_table,keys", [["party", (["party_id"])]] )
 def test_referential_integrity(connection, to_table: str, keys: list[str]):
-    to_table_obj = get_table(to_table)
+    to_table_obj = get_unbound_table(to_table)
     test = common.TestReferentialIntegrity(table=TABLE, to_table=to_table_obj, keys=keys)
     test(connection)
 
