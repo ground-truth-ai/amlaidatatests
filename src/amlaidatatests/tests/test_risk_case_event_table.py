@@ -1,21 +1,21 @@
 #!/usr/bin/env python
 
 from amlaidatatests.schema.utils import get_unbound_table
-from amlaidatatests.test_generators import non_nullable_fields
+from amlaidatatests.test_generators import get_generic_table_tests, non_nullable_fields
 from amlaidatatests.test_generators import entity_columns, get_entity_mutation_tests, get_entity_tests
 from amlaidatatests.tests import common
-from amlaidatatests.tests.base import AbstractColumnTest
+from amlaidatatests.tests.base import AbstractColumnTest, AbstractTableTest, TestSeverity
 import pytest
 
 TABLE = get_unbound_table("risk_case_event")
 
+@pytest.mark.parametrize("test", get_generic_table_tests(table=TABLE, max_rows_factor=10e6, severity=TestSeverity.INFO))
+def test_table(connection, test: AbstractTableTest):
+    test(connection=connection)
+
 def test_unique_combination_of_columns(connection):
     test = common.TestUniqueCombinationOfColumns(table=TABLE, unique_combination_of_columns=["risk_case_event_id"])
     test(connection)
-
-@pytest.mark.parametrize("test", get_entity_mutation_tests(table=TABLE, primary_keys=["party_id"]))
-def test_entity_mutation_tests(connection, test: AbstractColumnTest):
-    test(connection=connection)
 
 @pytest.mark.parametrize("column", entity_columns(schema=TABLE.schema(), entity_types=["CurrencyValue"]))
 @pytest.mark.parametrize("test", get_entity_tests(table=TABLE, entity_name="CurrencyValue"))

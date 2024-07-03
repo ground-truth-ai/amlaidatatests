@@ -1,14 +1,40 @@
 from abc import ABC
+from enum import Enum, auto
+import enum
 from typing import Optional
+import warnings
 from ibis import Table
 from ibis import Expr, _
+import ibis
 from ibis.common.exceptions import IbisTypeError
 from ibis import BaseBackend
+from ibis import Expr
 import pytest
 from google.api_core.exceptions import NotFound as GoogleTableNotFound
 
+class TestSeverity(enum.Enum):
+    ERROR = auto()
+    WARN = auto()
+    INFO = auto()
+
 class FailTest(Exception):
+    def __init__(self, message: str, expr: Optional[Expr] = None) -> None:
+        self.message = message
+        self.sql = str(ibis.to_sql(expr, ibis.get_backend(expr).dialect)) if expr else None
+
+    def friendly_message(self):
+        msg = self.message
+        if self.sql:
+            msg += "\nTo reproduce this result, run:\n"
+            msg += self.sql
+        return msg
+
+    def __str__(self):
+        return self.friendly_message()
+
+class WarnTest(Warning):
     pass
+
 
 OPTIONAL_TABLES = ["party_supplementary_table"]
 
@@ -34,20 +60,43 @@ def resolve_field_to_level(table: Table, column: str, level: int):
     parent_column = ".".join(parent_column_split[:level])
     return resolve_field(table, parent_column)
 
+
+
+
 class AbstractBaseTest(ABC):
+
+    def __init__(self, table: Table, severity: TestSeverity = TestSeverity.ERROR) -> None:
+        self.table = table
+        self.severity = severity
+
     @property
     def id(self) -> Optional[str]:
         """ Override to provide additional information about the 
         test to pytest"""
         return None
 
+    def _test(self, *, connection: BaseBackend) -> None:
+        ...
+
+    def _run_test_with_severity(self, connection: BaseBackend):
+        try:
+            self._test(connection=connection)
+        except FailTest as e:
+            if self.severity == TestSeverity.ERROR:
+                raise e
+            if self.severity == TestSeverity.WARN:
+                warnings.warn(e.message)
+            if self.severity == TestSeverity.INFO:
+                pytest.skip(e.message)
+        except WarnTest as e:
+            warnings.warn(e)
 
 
 class AbstractTableTest(AbstractBaseTest):
 
-    def __init__(self, table: Table) -> None:
+    def __init__(self, table: Table, severity: TestSeverity = TestSeverity.ERROR) -> None:
         self.table = table
-        super().__init__()
+        super().__init__(table=table, severity=severity)
 
     @property
     def id(self) -> Optional[str]:
@@ -55,7 +104,7 @@ class AbstractTableTest(AbstractBaseTest):
         test to pytest to identify the test"""
         return f"{self.__class__.__name__}"
 
-    def test(self, *, connection: BaseBackend) -> None:
+    def _test(self, *, connection: BaseBackend) -> None:
         ...
 
     def check_table_exists(self, connection: BaseBackend):
@@ -74,19 +123,23 @@ class AbstractTableTest(AbstractBaseTest):
     def __call__(self, connection: BaseBackend):
         # Check if table exists
         self.check_table_exists(connection)
-        self.test(connection=connection)
+        self._run_test_with_severity(connection=connection)
 
 
 class AbstractColumnTest(AbstractTableTest):
 
-    def __init__(self, table: Table, column: str, validate: bool = True) -> None:
+    def __init__(self, 
+                 table: Table, 
+                 column: str, 
+                 validate: bool = True, 
+                 severity: TestSeverity = TestSeverity.ERROR) -> None:
         """ """
         self.column = column
         # Ensure the column is specified on the unbound table
         # provided
         if validate:
             resolve_field(table, column)
-        super().__init__(table=table)
+        super().__init__(table=table, severity=severity)
 
     @property
     def id(self) -> Optional[str]:
@@ -95,8 +148,6 @@ class AbstractColumnTest(AbstractTableTest):
         return f"{self.__class__.__name__}-{self.column}"
 
 
-    def test(self, *, connection: BaseBackend) -> None:
-        ...
 
     def get_bound_table(self, connection: BaseBackend):
         return connection.table(self.table.get_name())
@@ -117,8 +168,6 @@ class AbstractColumnTest(AbstractTableTest):
                 pytest.skip(f"Skipping running test on non-existent (but not required) column {self.column}")
             # Deliberately do not error - the test should continue and will most likely fail
             pass
-        # if self.schema
-        self.test(connection=connection)
+        self._run_test_with_severity(connection=connection)
         if __prefix_revert:
-            # Deliberately bypass the validating setter
             self.column = __prefix_revert

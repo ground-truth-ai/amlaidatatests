@@ -9,7 +9,7 @@
         "request":"launch",
         "module":"amlaidatatests.main",
         "args": ["--connection_string=duckdb://duckdb.ddb", "--id=1234"],
-        "justMyCode": false,
+        "justMyCode": true,
         "env": {"PYTEST_ADDOPTS": "--no-cov"}
     },
         {
@@ -19,7 +19,7 @@
             "program": "${file}",
             "purpose": ["debug-test"],
             "console": "integratedTerminal",
-            "justMyCode": false,
+            "justMyCode": true,
             "env": {"PYTEST_ADDOPTS": "--no-cov"}
           }          
     ]

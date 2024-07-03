@@ -8,7 +8,7 @@ import pytest
 
 TABLE = get_unbound_table("account_party_link")
 
-@pytest.mark.parametrize("test", get_generic_table_tests(table=TABLE))
+@pytest.mark.parametrize("test", get_generic_table_tests(table=TABLE, max_rows_factor=500e6))
 def test_table(connection, test: AbstractTableTest):
     test(connection=connection)
 
@@ -29,10 +29,9 @@ def test_column_type(connection, column):
     test = common.TestColumnType(table=TABLE, column=column)
     test(connection)
 
-@pytest.mark.parametrize("to_table,keys", [["party", (["party_id"])]] )
-def test_referential_integrity(connection, to_table: str, keys: list[str]):
-    to_table_obj = get_unbound_table(to_table)
-    test = common.TestReferentialIntegrity(table=TABLE, to_table=to_table_obj, keys=keys)
+def test_referential_integrity(connection):
+    to_table_obj = get_unbound_table("party")
+    test = common.TestReferentialIntegrity(table=TABLE, to_table=to_table_obj, keys=["party_id"])
     test(connection)
 
 @pytest.mark.parametrize("column,values", [

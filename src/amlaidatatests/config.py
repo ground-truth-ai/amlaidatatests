@@ -30,6 +30,8 @@ class DatatestConfig:
     database: Optional[str] = "${infer_database:${connection_string}}"
     """ For bigquery, the dataset being used """
 
+    scale: float = 1.0
+
 
 
 

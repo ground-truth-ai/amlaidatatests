@@ -1,7 +1,8 @@
 
 
 from typing import Any, List, Optional, cast
-from amlaidatatests.tests.base import AbstractColumnTest, AbstractTableTest, FailTest, resolve_field, resolve_field_to_level
+from amlaidatatests.config import ConfigSingleton
+from amlaidatatests.tests.base import AbstractColumnTest, AbstractTableTest, FailTest, TestSeverity, WarnTest, resolve_field, resolve_field_to_level
 from ibis import BaseBackend, Table
 import ibis
 from ibis.expr.datatypes import Struct, Array, Timestamp, DataType
@@ -9,11 +10,6 @@ from ibis import Expr, _
 import warnings
 from ibis.common.exceptions import IbisTypeError
 import warnings
-from sqlglot import exp, parse_one
-
-
-class WarnTest(Warning):
-    pass
 
 
 class TestTableSchema(AbstractTableTest):
@@ -21,26 +17,35 @@ class TestTableSchema(AbstractTableTest):
     def __init__(self, table: Table) -> None:
         super().__init__(table)
 
-    def test(self, *, connection: BaseBackend):
+    def _test(self, *, connection: BaseBackend):
         actual_columns = set(connection.table(name=self.table.get_name()).columns)
         schema_columns = set(self.table.columns)
         excess_columns = actual_columns.difference(schema_columns)
         if len(excess_columns) > 0:
-            warnings.warn(WarnTest(f"{len(excess_columns)} unexpected columns found in table {self.table.get_name()}"))
+            raise WarnTest(f"{len(excess_columns)} unexpected columns found in table {self.table.get_name()}")
         # Schema table
 
 
-class TestTableEmpty(AbstractTableTest):
+class TestTableCount(AbstractTableTest):
 
-    def __init__(self, table: Table) -> None:
-        super().__init__(table)
+    def __init__(self, table: Table, max_rows_factor: int, severity: TestSeverity = TestSeverity.ERROR) -> None:
+        self.max_rows_factor = max_rows_factor
+        self.scale = ConfigSingleton.get().scale
+        super().__init__(table, severity)
 
-    def test(self, *, connection: BaseBackend):
-        count = connection.table(name=self.table.count())
+    def _test(self, *, connection: BaseBackend):
+        count = connection.execute(self.table.count())
         
+        max_rows = self.max_rows_factor * self.scale
+
         if count == 0:
-            warnings.warn(WarnTest(f""))
-        # Schema table
+            raise FailTest(f"Table {self.table.get_name()} is empty")
+        if count > max_rows:
+            raise FailTest(f"Table {self.table.get_name()} has more rows than seems feasible: {count} vs maximum {max_rows}. "
+                           "To stop this error triggering, review the data provided or increase the scale setting")
+        if count > (max_rows) * 0.9:
+            raise WarnTest(f"Table {self.table.get_name()} is close to the feasibility ceiling: {count} vs maximum {max_rows}. "
+                           "To stop this error triggering, review the data provided or increase the scale setting")
 
 class TestUniqueCombinationOfColumns(AbstractTableTest):
 
@@ -51,7 +56,7 @@ class TestUniqueCombinationOfColumns(AbstractTableTest):
             resolve_field(table, col)
         self.unique_combination_of_columns = unique_combination_of_columns
 
-    def test(self, *, connection: BaseBackend) -> None:
+    def _test(self, *, connection: BaseBackend) -> None:
         # TODO: Make into a single call rather than two
         expr = self.table[self.unique_combination_of_columns].agg(unique_rows=_.nunique(),
                                                                               count=_.count())
@@ -71,36 +76,55 @@ class TestCountValidityStartTimeChanges(AbstractTableTest):
         if warn > error:
             raise Exception("")
 
-    def test(self, *, connection: BaseBackend) -> None:
-        counted = self.table.group_by(self.primary_keys).agg(count_per_pk=self.table.count())
+    def _test(self, *, connection: BaseBackend) -> None:
+        # References to validity_start_time are unnecessary, but they do ensure that the column is present on the table
+        counted = self.table.group_by(self.primary_keys).agg(count_per_pk=self.table.count(), 
+                                                             min_validity_start_time=_.validity_start_time.min(),
+                                                             max_validity_start_time=_.validity_start_time.max())
         warn_number = counted.count(_.count_per_pk > self.warn)
         error_number = counted.count(_.count_per_pk > self.error)
+
         result = connection.execute(self.table.select(warn_number=warn_number, error_number=error_number))
         if len(result.index) == 0:
             raise Exception("No rows in table")
         
         no_errors = result["error_number"][0]
         no_warnings = result["warn_number"][0]
-            
         
         if result["error_number"][0] > 0:
-            raise Exception(f"{no_errors} entities found with more than {self.error} validation changes in table {self.table}")
+            raise FailTest(f"{no_errors} entities found with more than {self.error} validity_start_time changes in table {self.table}")
         if result["warn_number"][0] > 0:
-            warnings.warn(f"{no_warnings} entities found with more than {self.warn} validation changes in table {self.table}")
+            raise WarnTest(f"{no_warnings} entities found with more than {self.warn} validity_start_time changes in table {self.table}")
         
+class TestConsecutiveEntityDeletions(AbstractTableTest):
+
+    def __init__(self, *, table: Table, primary_keys: List[str]) -> None:
+        super().__init__(table=table, severity=TestSeverity.WARN)
+        self.primary_keys = primary_keys
+
+    def _test(self, *, connection: BaseBackend) -> None:
+        counted = self.table.filter(_.is_entity_deleted).group_by(self.primary_keys).agg(count_per_pk=_.count())
+        expr = counted.count(_.count_per_pk > 0)
+        results = connection.execute(expr)
+        if results > 0:
+            raise FailTest(f"{results} rows found with consecutive entity deletions. Entities should generally only be deleted once.",
+                           expr=expr)
 
 
 class TestColumnPresence(AbstractColumnTest):
 
-    def test(self, *, connection: BaseBackend):
+    def _test(self, *, connection: BaseBackend):
         try:
             self.get_bound_table(connection)[self.column]
         except IbisTypeError as e:
             raise FailTest(f"Missing Required Column: {self.column}") from e
 
+class FieldComparisonInterrupt(Exception):
+    pass
+
 class TestColumnType(AbstractColumnTest):
     
-    def test(self, *, connection: BaseBackend):
+    def _test(self, *, connection: BaseBackend):
         """_summary_
 
         Args:
@@ -114,29 +138,74 @@ class TestColumnType(AbstractColumnTest):
         actual_type = actual_table.schema()[self.column]
         schema_data_type = self.table.schema()[self.column]
 
+        # Check the child types
         if self._strip_type_for_comparison(actual_type) != self._strip_type_for_comparison(schema_data_type):
+            # First, check if the difference might just be due to excess fields in structs
+            try:
+                extra_fields = self._find_extra_struct_fields(schema_data_type, actual_type, self.column)
+                # If no expcetion
+                warnings.warn(message=WarnTest(f"Additional fields found in structs in {self.column}. Full path to the extra fields were: {extra_fields}"))
+                return
+            except FieldComparisonInterrupt as e:
+                pass
             if schema_data_type.nullable and not actual_type.nullable:
-                warnings.warn(WarnTest(f"Schema is stricter than required: expected column {self.column} to be {schema_data_type}, found {actual_type}"))
+                warnings.warn(message=WarnTest(f"Schema is stricter than required: expected column {self.column} to be {schema_data_type}, found {actual_type}"))
                 return
             raise FailTest(f"Expected column {self.column} to be {schema_data_type}, found {actual_type}")
-            
+    
+    @classmethod
+    def _find_extra_struct_fields(cls, expected_type: DataType, actual_type: DataType, path = '', level = 0):
+        """ Attempt to determine if the schema mismatch is because of an extra field in a struct, including embedded structs 
+        and arrays. If the fields are too dissimilar, raises FieldComparisonInterrupt(). """
+        level += 1
+        if level == 1 and (expected_type.nullable != actual_type.nullable):
+            # Don't get in the way of nullability checks for the top level fields
+            # so assume not nullable
+            raise FieldComparisonInterrupt()
+        if expected_type.name != actual_type.name:
+            raise FieldComparisonInterrupt()
+        extra_fields = []
+        if expected_type.is_struct():
+            expected_type = cast(Struct, expected_type)
+            for name, actual_dtype in actual_type.items():
+                expected_dtype = expected_type.get(name)
+                if expected_dtype is None: # actual struct field does not exist on the expected field
+                    extra_fields.append(f'{path}.{name}')
+                else:
+                    fields = cls._find_extra_struct_fields(expected_type=expected_dtype, actual_type=actual_dtype, path=f'{path}.{name}', level=level)
+                    extra_fields += fields
+            # Also need to check all the fields in the expected type are present,
+            # and the type
+            for name, expected_dtype in expected_type.items():
+                actual_dtype = actual_type.get(name)
+                if actual_dtype is None: # actual struct field does not exist on the expected field
+                    raise FieldComparisonInterrupt()
+                if expected_dtype.name != actual_dtype.name:
+                    raise FieldComparisonInterrupt()
 
-    def _strip_type_for_comparison(self, a: DataType, level = 0) -> Struct:
+        if expected_type.is_array():
+            expected_type = cast(Array, expected_type)
+            extra_fields.append(cls._find_extra_struct_fields(expected_type=expected_type.value_type, actual_type=actual_type.value_type, path=f'{path}.', level=level))
+        # Otherwise, not a container so we don't need to check recursively
+        return extra_fields
+
+    @classmethod
+    def _strip_type_for_comparison(cls, a: DataType, level = 0) -> Struct:
         """ Recursively strip nulls for type comparison """
         level = level + 1
         # We can't check lower level nullable columns because
-        # it's not possible to specify columns
+        # it's not possible to specify these fields as non-nullable
         nullable = a.nullable if level == 1 else True
         dct = {}
         if a.is_struct():
             a = cast(Struct, a)
             for n, dtype in a.items():
-                dct[n] = self._strip_type_for_comparison(dtype, level)
+                dct[n] = cls._strip_type_for_comparison(dtype, level)
             # Now normalize the keys so the order is consistent for comparison
             dct = dict(sorted(dct.items()))
             return Struct(nullable=nullable, fields=dct)
         if a.is_array():
-            value = self._strip_type_for_comparison(a.value_type, level)
+            value = cls._strip_type_for_comparison(a.value_type, level)
             return Array(nullable=nullable, value_type=value)
         if a.is_timestamp():
             a = cast(Timestamp, a)
@@ -158,7 +227,7 @@ class TestColumnValues(AbstractColumnTest):
         super().__init__(table=table, column=column, validate=validate)
         self.values = values
     
-    def test(self, *, connection: BaseBackend):
+    def _test(self, *, connection: BaseBackend):
         """_summary_
 
         Args:
@@ -200,7 +269,7 @@ class TestFieldNeverWhitespaceOnly(AbstractColumnTest):
         return predicates
 
 
-    def test(self, *, connection: BaseBackend):
+    def _test(self, *, connection: BaseBackend):
         """_summary_
 
         Args:
@@ -223,7 +292,7 @@ class TestFieldNeverWhitespaceOnly(AbstractColumnTest):
 
 class TestFieldNeverNull(TestFieldNeverWhitespaceOnly):
 
-    def test(self, *, connection: BaseBackend):
+    def _test(self, *, connection: BaseBackend):
         """_summary_
 
         Args:
@@ -245,7 +314,7 @@ class TestFieldNeverNull(TestFieldNeverWhitespaceOnly):
 
 class TestDatetimeFieldNeverJan1970(TestFieldNeverWhitespaceOnly):
 
-    def test(self, *, connection: BaseBackend):
+    def _test(self, *, connection: BaseBackend):
         """_summary_
 
         Args:
@@ -277,7 +346,7 @@ class TestNullIf(AbstractColumnTest):
     def id(self):
         return self.expression.get_name()
 
-    def test(self, *, connection: BaseBackend):
+    def _test(self, *, connection: BaseBackend):
         result = connection.execute(self.table.filter(self.expression).count(self.table[self.column].notnull()))
         if result > 0:
             raise FailTest(f"{result} rows not fulfilling criteria {ibis.to_sql(self.expression)}")
@@ -293,7 +362,7 @@ class TestAcceptedRange(AbstractColumnTest):
         self.max = max
 
 
-    def test(self, *, connection: BaseBackend):
+    def _test(self, *, connection: BaseBackend):
         table, field = resolve_field(self.table, self.column)
 
         min_pred = field < self.min if self.min is not None else False
@@ -307,8 +376,8 @@ class TestAcceptedRange(AbstractColumnTest):
 
 class TestReferentialIntegrity(AbstractTableTest):
 
-    def __init__(self, *, table: Table, to_table: Table, keys: list[str]) -> None:
-        super().__init__(table=table)
+    def __init__(self, *, table: Table, to_table: Table, keys: list[str], severity = TestSeverity.ERROR) -> None:
+        super().__init__(table=table, severity=severity)
         self.to_table = to_table
         if isinstance(keys, list):
             self.keys = keys
@@ -316,9 +385,10 @@ class TestReferentialIntegrity(AbstractTableTest):
             # TODO: Validate provided keys
             raise Exception("Expecting a list of keys present in both tables")
 
-    def test(self, *, connection: BaseBackend):        
+    def _test(self, *, connection: BaseBackend):        
         result = connection.execute(self.table.select(*[self.keys]).anti_join(self.to_table, self.keys).count())
         if result > 0:
-            raise FailTest(f"""{result} keys found in table {self.table.get_name()} which were not in {self.to_table.get_name()}. 
-                           Key column(s) was {" ".join(self.keys)}""")
-        return True
+            msg = f"""{result} keys found in table {self.table.get_name()} which were not in {self.to_table.get_name()}. 
+                           Key column(s) were {" ".join(self.keys)}"""
+            raise FailTest(msg)
+        return

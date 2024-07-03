@@ -4,6 +4,8 @@ from omegaconf import OmegaConf
 import argparse
 from dataclasses import fields
 
+import pytest
+
 pytest_plugins = [
    "amlaidatatests.tests.fixtures.fixtures",
 ]
@@ -72,6 +74,13 @@ def pytest_configure(config):
     _cfg = ConfigSingleton().get()
     for field in fields(DatatestConfig):
         getattr(_cfg, field.name)
+
+def pytest_make_parametrize_id(config, val, argname):
+    if isinstance(val, AbstractTableTest):
+        return val.id
+    # return None to let pytest handle the formatting
+    return None
+
 
 def pytest_make_parametrize_id(config, val, argname):
     if isinstance(val, AbstractTableTest):

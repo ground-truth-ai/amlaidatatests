@@ -20,8 +20,6 @@ def get_schema_version_config() -> BaseSchemaConfiguration:
 def get_table_name(name: str):
     config_singleton = ConfigSingleton.get()
     name_template = Template(config_singleton.table_name_template)
-    if config_singleton.dataset:
-        name = f"${config_singleton.dataset}.{name}"
     if config_singleton.id is None:
         return name
     else:
@@ -37,6 +35,7 @@ def get_unbound_table(name: str) -> ibis.Table:
     """ Get the unbound ibis table reference for the unqualified table name specified """
     s = get_table_schema(name)
     cfg = ConfigSingleton.get()
+    name = get_table_name(name)
     return ibis.table(schema=s, name=name, database=cfg.database)
 
 

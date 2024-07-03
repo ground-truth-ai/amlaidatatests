@@ -2,13 +2,17 @@
 
 from amlaidatatests.io import get_valid_region_codes
 from amlaidatatests.schema.utils import get_unbound_table
-from amlaidatatests.test_generators import non_nullable_field_tests
+from amlaidatatests.test_generators import get_generic_table_tests, non_nullable_field_tests
 from amlaidatatests.test_generators import entity_columns, get_entity_mutation_tests, get_entity_tests
 from amlaidatatests.tests import common
-from amlaidatatests.tests.base import AbstractColumnTest
+from amlaidatatests.tests.base import AbstractColumnTest, AbstractTableTest, TestSeverity
 import pytest
 
 TABLE = get_unbound_table("party")
+
+@pytest.mark.parametrize("test", get_generic_table_tests(table=TABLE, max_rows_factor=50e9, severity=TestSeverity.INFO))
+def test_table(connection, test: AbstractTableTest):
+    test(connection=connection)
 
 def test_unique_combination_of_columns(connection):
     test = common.TestUniqueCombinationOfColumns(table=TABLE, unique_combination_of_columns=["party_id", "validity_start_time"])
@@ -59,6 +63,11 @@ def test_column_values(connection, test):
     common.TestNullIf(column="occupation", table=TABLE, expression=TABLE.type == "CONSUMER"),
 ])
 def test_null_if(connection, test):
+    test(connection)
+
+def test_referential_integrity(connection):
+    to_table_obj = get_unbound_table("account_party_link")
+    test = common.TestReferentialIntegrity(table=TABLE, to_table=to_table_obj, keys=["party_id"], severity=TestSeverity.WARN)
     test(connection)
 
 if __name__ == "__main__":

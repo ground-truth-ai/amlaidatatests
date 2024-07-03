@@ -1,8 +1,8 @@
 from typing import Union
 from amlaidatatests.io import get_valid_currency_codes
 from amlaidatatests.schema.v1.common import CurrencyValue, ValueEntity
-from amlaidatatests.tests.base import AbstractColumnTest, resolve_field
-from amlaidatatests.tests.common import TestAcceptedRange, TestColumnValues, TestCountValidityStartTimeChanges, TestFieldNeverWhitespaceOnly, TestFieldNeverNull, TestTableSchema
+from amlaidatatests.tests.base import AbstractColumnTest, TestSeverity, resolve_field
+from amlaidatatests.tests.common import TestAcceptedRange, TestColumnValues, TestConsecutiveEntityDeletions, TestCountValidityStartTimeChanges, TestFieldNeverWhitespaceOnly, TestFieldNeverNull, TestTableCount, TestTableSchema
 from ibis import Schema, Table
 from ibis.expr.datatypes import Array, DataType, Struct
 
@@ -41,7 +41,8 @@ def get_entity_mutation_tests(table: Table, primary_keys: list[str]) -> list[Abs
     Returns:
         list[AbstractColumnTest]: _description_
     """
-    return [TestCountValidityStartTimeChanges(table=table, warn=500, error=1000, primary_keys=primary_keys)]
+    return [TestCountValidityStartTimeChanges(table=table, warn=500, error=1000, primary_keys=primary_keys),
+            TestConsecutiveEntityDeletions(table=table, primary_keys=primary_keys)]
 
 
 def entity_columns(schema: Union[Schema, Array, Struct, DataType],
@@ -127,7 +128,7 @@ def non_nullable_field_tests(table: Table):
         tests.append(TestFieldNeverNull(table=table, column=f))
     return tests
 
-def get_generic_table_tests(table: Table):
+def get_generic_table_tests(table: Table,  max_rows_factor: int, severity: TestSeverity = TestSeverity.WARN):
     """ Depending on field type, generate a list of tests 
     which depend on """
-    return [TestTableSchema(table)]
+    return [TestTableSchema(table), TestTableCount(table, severity=severity, max_rows_factor=max_rows_factor)]
