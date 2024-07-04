@@ -5,17 +5,17 @@ from amlaidatatests.schema.utils import get_unbound_table
 from amlaidatatests.test_generators import get_generic_table_tests, non_nullable_field_tests
 from amlaidatatests.test_generators import entity_columns, get_entity_mutation_tests, get_entity_tests
 from amlaidatatests.tests import common
-from amlaidatatests.tests.base import AbstractColumnTest, AbstractTableTest, TestSeverity
+from amlaidatatests.base import AbstractColumnTest, AbstractTableTest, AMLAITestSeverity
 import pytest
 
 TABLE = get_unbound_table("party")
 
-@pytest.mark.parametrize("test", get_generic_table_tests(table=TABLE, max_rows_factor=50e9, severity=TestSeverity.INFO))
+@pytest.mark.parametrize("test", get_generic_table_tests(table=TABLE, max_rows_factor=50e9))
 def test_table(connection, test: AbstractTableTest):
     test(connection=connection)
 
-def test_unique_combination_of_columns(connection):
-    test = common.TestUniqueCombinationOfColumns(table=TABLE, unique_combination_of_columns=["party_id", "validity_start_time"])
+def test_primary_keys(connection):
+    test = common.TestPrimaryKeyColumns(table=TABLE, unique_combination_of_columns=["party_id", "validity_start_time"])
     test(connection)
 
 @pytest.mark.parametrize("test", get_entity_mutation_tests(table=TABLE, primary_keys=["party_id"]))
@@ -66,8 +66,9 @@ def test_null_if(connection, test):
     test(connection)
 
 def test_referential_integrity(connection):
+    # A warning here means that there are parties without linked accounts
     to_table_obj = get_unbound_table("account_party_link")
-    test = common.TestReferentialIntegrity(table=TABLE, to_table=to_table_obj, keys=["party_id"], severity=TestSeverity.WARN)
+    test = common.TestReferentialIntegrity(table=TABLE, to_table=to_table_obj, keys=["party_id"], severity=AMLAITestSeverity.WARN)
     test(connection)
 
 if __name__ == "__main__":

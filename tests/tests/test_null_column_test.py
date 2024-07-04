@@ -1,6 +1,6 @@
 
 
-from amlaidatatests.tests.base import FailTest
+from amlaidatatests.base import FailTest
 import ibis
 import pytest
 from ibis.expr.datatypes import String, Timestamp, Array, Struct

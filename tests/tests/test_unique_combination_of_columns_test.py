@@ -1,18 +1,18 @@
 import datetime
-from amlaidatatests.tests.base import FailTest
+from amlaidatatests.base import FailTest
 import ibis
 import pytest
-from amlaidatatests.tests.common import TestUniqueCombinationOfColumns
+from amlaidatatests.tests.common import TestPrimaryKeyColumns
 from ibis.expr.datatypes import String, Timestamp
 
 
 
 @pytest.fixture
-def test_base_table() -> TestUniqueCombinationOfColumns:
+def test_base_table() -> TestPrimaryKeyColumns:
     def _test_base_table(table: str):
         table = ibis.table(name=table, schema={"alpha": String(nullable=False),
                             "beta": String(nullable=False)})
-        return TestUniqueCombinationOfColumns(unique_combination_of_columns=["alpha", "beta"], table=table)
+        return TestPrimaryKeyColumns(unique_combination_of_columns=["alpha", "beta"], table=table)
     return _test_base_table
 
 def test_no_duplicate_rows(test_connection, test_base_table, create_test_table):
@@ -45,6 +45,6 @@ def test_mixed_types(test_connection, create_test_table):
                                     schema=schema))
     tbl = ibis.table(name=data, 
                        schema=schema)
-    t = TestUniqueCombinationOfColumns(unique_combination_of_columns=["id", "id2"], table=tbl)
+    t = TestPrimaryKeyColumns(unique_combination_of_columns=["id", "id2"], table=tbl)
         
     t(test_connection)

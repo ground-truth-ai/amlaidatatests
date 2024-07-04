@@ -2,7 +2,7 @@
 
 from typing import Any, List, Optional, cast
 from amlaidatatests.config import ConfigSingleton
-from amlaidatatests.tests.base import AbstractColumnTest, AbstractTableTest, FailTest, TestSeverity, WarnTest, resolve_field, resolve_field_to_level
+from amlaidatatests.base import AbstractColumnTest, AbstractTableTest, FailTest, AMLAITestSeverity, WarnTest, resolve_field, resolve_field_to_level
 from ibis import BaseBackend, Table
 import ibis
 from ibis.expr.datatypes import Struct, Array, Timestamp, DataType
@@ -28,7 +28,7 @@ class TestTableSchema(AbstractTableTest):
 
 class TestTableCount(AbstractTableTest):
 
-    def __init__(self, table: Table, max_rows_factor: int, severity: TestSeverity = TestSeverity.ERROR) -> None:
+    def __init__(self, table: Table, max_rows_factor: int, severity: AMLAITestSeverity = AMLAITestSeverity.ERROR) -> None:
         self.max_rows_factor = max_rows_factor
         self.scale = ConfigSingleton.get().scale
         super().__init__(table, severity)
@@ -47,7 +47,7 @@ class TestTableCount(AbstractTableTest):
             raise WarnTest(f"Table {self.table.get_name()} is close to the feasibility ceiling: {count} vs maximum {max_rows}. "
                            "To stop this error triggering, review the data provided or increase the scale setting")
 
-class TestUniqueCombinationOfColumns(AbstractTableTest):
+class TestPrimaryKeyColumns(AbstractTableTest):
 
     def __init__(self, *, table: Table, unique_combination_of_columns: List[str]) -> None:
         super().__init__(table)
@@ -99,7 +99,7 @@ class TestCountValidityStartTimeChanges(AbstractTableTest):
 class TestConsecutiveEntityDeletions(AbstractTableTest):
 
     def __init__(self, *, table: Table, primary_keys: List[str]) -> None:
-        super().__init__(table=table, severity=TestSeverity.WARN)
+        super().__init__(table=table, severity=AMLAITestSeverity.WARN)
         self.primary_keys = primary_keys
 
     def _test(self, *, connection: BaseBackend) -> None:
@@ -376,7 +376,7 @@ class TestAcceptedRange(AbstractColumnTest):
 
 class TestReferentialIntegrity(AbstractTableTest):
 
-    def __init__(self, *, table: Table, to_table: Table, keys: list[str], severity = TestSeverity.ERROR) -> None:
+    def __init__(self, *, table: Table, to_table: Table, keys: list[str], severity = AMLAITestSeverity.ERROR) -> None:
         super().__init__(table=table, severity=severity)
         self.to_table = to_table
         if isinstance(keys, list):

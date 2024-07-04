@@ -1,22 +1,42 @@
 import os
-import pytest
 import sys
+from amlaidatatests.config import ConfigSingleton, init_config
+from amlaidatatests.connection import connection_factory
+from amlaidatatests.schema.utils import get_schema_version_config, get_table_name
+import argparse
+
+import pytest
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-tables = ["party", "account_party_link", "risk_case_event", "transaction"]
+def create_skeleton(args):
+    cfg = ConfigSingleton.get()
+    version = cfg.schema_version
+    schema = get_schema_version_config(version)
+    connection = connection_factory()
+    for table in schema.TABLES:
+        connection.create_table(name=get_table_name(table.name),
+                                schema=table.schema)
 
-    # for t in tables:
-    #     tbl_path = p.joinpath(f"{t}.parquet")
-    #     table_name = f"{t}_{SUFFIX}"
-    #     print("Loading from ", tbl_path, " into ", table_name)
-    #     #table_out = ibis.read_parquet(tbl_path, )
-    #     tmp_table = connection.read_parquet(tbl_path)
-    #     connection.create_table(name=f"{t}_{SUFFIX}", obj=tmp_table.select(tmp_table.columns), overwrite=True)
-    #     #connection.create_table(name=f"{t}_{SUFFIX}", obj=table_out, overwrite=True, schema=party_schema)
+def run_tests(args):
+    print(dir_path)
+    print()
+    pytest.main(args=[f'{dir_path}/tests', *sys.argv[1:]])
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser = init_config(parser)
+    subparsers = parser.add_subparsers(required=True)
+
+    skeleton = subparsers.add_parser("skeleton")
+    skeleton.set_defaults(func=create_skeleton)
+
+    args = parser.parse_args()
+    args.func(args)
+
+
+    
     # # Do not add help to prevent argparse from capturing any help requests
     # # the -h is present to prevent
     # parser = argparse.ArgumentParser(description=__doc__, add_help=False)
@@ -51,4 +71,4 @@ if __name__ == "__main__":
     # config_singleton = ConfigSingleton()
     # config_singleton.set_config(conf)
 
-    retcode = pytest.main(args=[f'{dir_path}/tests', *sys.argv])
+    # retcode = pytest.main(args=[f'{dir_path}/tests', *sys.argv])

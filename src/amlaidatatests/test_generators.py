@@ -1,7 +1,7 @@
 from typing import Union
 from amlaidatatests.io import get_valid_currency_codes
 from amlaidatatests.schema.v1.common import CurrencyValue, ValueEntity
-from amlaidatatests.tests.base import AbstractColumnTest, TestSeverity, resolve_field
+from amlaidatatests.base import AbstractColumnTest, AMLAITestSeverity, resolve_field
 from amlaidatatests.tests.common import TestAcceptedRange, TestColumnValues, TestConsecutiveEntityDeletions, TestCountValidityStartTimeChanges, TestFieldNeverWhitespaceOnly, TestFieldNeverNull, TestTableCount, TestTableSchema
 from ibis import Schema, Table
 from ibis.expr.datatypes import Array, DataType, Struct
@@ -128,7 +128,7 @@ def non_nullable_field_tests(table: Table):
         tests.append(TestFieldNeverNull(table=table, column=f))
     return tests
 
-def get_generic_table_tests(table: Table,  max_rows_factor: int, severity: TestSeverity = TestSeverity.WARN):
+def get_generic_table_tests(table: Table,  max_rows_factor: int, severity: AMLAITestSeverity = AMLAITestSeverity.ERROR):
     """ Depending on field type, generate a list of tests 
     which depend on """
     return [TestTableSchema(table), TestTableCount(table, severity=severity, max_rows_factor=max_rows_factor)]

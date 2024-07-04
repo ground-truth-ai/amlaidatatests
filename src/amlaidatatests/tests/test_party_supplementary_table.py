@@ -3,19 +3,19 @@
 from amlaidatatests.schema.utils import get_unbound_table
 from amlaidatatests.test_generators import get_entity_mutation_tests, get_generic_table_tests, non_nullable_fields
 from amlaidatatests.tests import common
-from amlaidatatests.tests.base import AbstractColumnTest, AbstractTableTest, TestSeverity
+from amlaidatatests.base import AbstractColumnTest, AbstractTableTest, AMLAITestSeverity
 import pytest
 
 
 TABLE = get_unbound_table("party_supplementary_data")
 
 # Don't error or warn on an empty party_supplementary_data table
-@pytest.mark.parametrize("test", get_generic_table_tests(table=TABLE, max_rows_factor=1e12, severity=TestSeverity.INFO))
+@pytest.mark.parametrize("test", get_generic_table_tests(table=TABLE, max_rows_factor=1e12))
 def test_table(connection, test: AbstractTableTest):
     test(connection=connection)
 
-def test_unique_combination_of_columns(connection):
-    test = common.TestUniqueCombinationOfColumns(table=TABLE, unique_combination_of_columns=["party_supplementary_data_id", "party_id", "validity_start_time"])
+def test_primary_keys(connection):
+    test = common.TestPrimaryKeyColumns(table=TABLE, unique_combination_of_columns=["party_supplementary_data_id", "party_id", "validity_start_time"])
     test(connection)
 
 @pytest.mark.parametrize("test", get_entity_mutation_tests(table=TABLE, primary_keys=["party_id"]))

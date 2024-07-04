@@ -2,7 +2,7 @@
 
 import importlib
 from typing import List, Callable
-from amlaidatatests.tests.base import AbstractBaseTest
+from amlaidatatests.base import AbstractBaseTest
 import ibis
 import yaml
 import jinja2

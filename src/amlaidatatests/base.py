@@ -12,7 +12,7 @@ from ibis import Expr
 import pytest
 from google.api_core.exceptions import NotFound as GoogleTableNotFound
 
-class TestSeverity(enum.Enum):
+class AMLAITestSeverity(enum.Enum):
     ERROR = auto()
     WARN = auto()
     INFO = auto()
@@ -65,7 +65,7 @@ def resolve_field_to_level(table: Table, column: str, level: int):
 
 class AbstractBaseTest(ABC):
 
-    def __init__(self, table: Table, severity: TestSeverity = TestSeverity.ERROR) -> None:
+    def __init__(self, table: Table, severity: AMLAITestSeverity = AMLAITestSeverity.ERROR) -> None:
         self.table = table
         self.severity = severity
 
@@ -82,11 +82,11 @@ class AbstractBaseTest(ABC):
         try:
             self._test(connection=connection)
         except FailTest as e:
-            if self.severity == TestSeverity.ERROR:
+            if self.severity == AMLAITestSeverity.ERROR:
                 raise e
-            if self.severity == TestSeverity.WARN:
+            if self.severity == AMLAITestSeverity.WARN:
                 warnings.warn(e.message)
-            if self.severity == TestSeverity.INFO:
+            if self.severity == AMLAITestSeverity.INFO:
                 pytest.skip(e.message)
         except WarnTest as e:
             warnings.warn(e)
@@ -94,7 +94,7 @@ class AbstractBaseTest(ABC):
 
 class AbstractTableTest(AbstractBaseTest):
 
-    def __init__(self, table: Table, severity: TestSeverity = TestSeverity.ERROR) -> None:
+    def __init__(self, table: Table, severity: AMLAITestSeverity = AMLAITestSeverity.ERROR) -> None:
         self.table = table
         super().__init__(table=table, severity=severity)
 
@@ -132,7 +132,7 @@ class AbstractColumnTest(AbstractTableTest):
                  table: Table, 
                  column: str, 
                  validate: bool = True, 
-                 severity: TestSeverity = TestSeverity.ERROR) -> None:
+                 severity: AMLAITestSeverity = AMLAITestSeverity.ERROR) -> None:
         """ """
         self.column = column
         # Ensure the column is specified on the unbound table

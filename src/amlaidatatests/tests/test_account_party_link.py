@@ -3,7 +3,7 @@
 from amlaidatatests.schema.utils import get_unbound_table
 from amlaidatatests.test_generators import get_entity_mutation_tests, get_generic_table_tests
 from amlaidatatests.tests import common
-from amlaidatatests.tests.base import AbstractColumnTest, AbstractTableTest
+from amlaidatatests.base import AbstractColumnTest, AbstractTableTest
 import pytest
 
 TABLE = get_unbound_table("account_party_link")
@@ -12,8 +12,8 @@ TABLE = get_unbound_table("account_party_link")
 def test_table(connection, test: AbstractTableTest):
     test(connection=connection)
 
-def test_unique_combination_of_columns(connection):
-    test = common.TestUniqueCombinationOfColumns(table=TABLE, unique_combination_of_columns=["party_id", 
+def test_primary_keys(connection):
+    test = common.TestPrimaryKeyColumns(table=TABLE, unique_combination_of_columns=["party_id", 
                                                                                                    "account_id", "validity_start_time"])
     test(connection)
 
@@ -34,11 +34,8 @@ def test_referential_integrity(connection):
     test = common.TestReferentialIntegrity(table=TABLE, to_table=to_table_obj, keys=["party_id"])
     test(connection)
 
-@pytest.mark.parametrize("column,values", [
-    ("role", ['PRIMARY_HOLDER', 'SECONDARY_HOLDER', 'SUPPLEMENTARY_HOLDER'])
-])
-def test_column_values(connection, column, values):
-    test = common.TestColumnValues(values=values, table=TABLE, column=column)
+@pytest.mark.parametrize("test", [common.TestColumnValues(values=['PRIMARY_HOLDER', 'SECONDARY_HOLDER', 'SUPPLEMENTARY_HOLDER'], column="role", table=TABLE)])
+def test_column_values(connection, test):
     test(connection)
 
 @pytest.mark.parametrize("test", get_entity_mutation_tests(table=TABLE, primary_keys=["party_id", "account_id"]))
