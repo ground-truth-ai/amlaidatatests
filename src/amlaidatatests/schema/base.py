@@ -1,8 +1,8 @@
-
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List
 from ibis import Schema
+
 
 @dataclass
 class TableConfig:
@@ -10,8 +10,9 @@ class TableConfig:
     schema: Schema
     optional: bool = False
 
+
 class BaseSchemaConfiguration(ABC):
-    
+
     @property
     @abstractmethod
     def TABLES(self) -> List[TableConfig]:

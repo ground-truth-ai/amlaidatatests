@@ -6,9 +6,8 @@ from .singleton import Singleton
 from urllib.parse import parse_qsl, urlparse
 
 
-
 def infer_database(connection_str: str):
-    """ Infer the database from the provided connection string """
+    """Infer the database from the provided connection string"""
     parsed_url = urlparse(connection_str)
     kwargs = dict(parse_qsl(parsed_url.query))
 
@@ -16,17 +15,19 @@ def infer_database(connection_str: str):
         # "/my_bq_input_dataset" -> "my_bq_input_dataset"
         return parsed_url.path[1:]
 
+
 OmegaConf.register_new_resolver("infer_database", infer_database)
+
 
 @dataclass(kw_only=True)
 class DatatestConfig:
     id: Optional[str] = None
     """ Unique identifier for """
-    
+
     connection_string: str
 
-    schema_version: str = 'v1'
-    table_name_template: str = '\\${table}_\\${id}'
+    schema_version: str = "v1"
+    table_name_template: str = "\\${table}_\\${id}"
     """ Template for building table path. Defaults to <table>
     if id is not set, otherwise <table>_<id>"""
 
@@ -36,15 +37,13 @@ class DatatestConfig:
     scale: float = 1.0
 
 
-
-
 class ConfigSingleton(metaclass=Singleton):
     def __init__(self) -> None:
         self.cfg: Optional[DatatestConfig] = None
 
     def set_config(self, cfg: DatatestConfig) -> None:
         assert cfg is not None
-            
+
         self.cfg = cfg
 
     @staticmethod
@@ -68,36 +67,43 @@ class ConfigSingleton(metaclass=Singleton):
         instance = ConfigSingleton.instance()
         instance.cfg = None
 
+
 STRUCTURED_CONFIG = OmegaConf.structured(DatatestConfig)
 
+
 class IngestConfigAction(argparse.Action):
-    def __init__(self,
-                 option_strings,
-                 dest,
-                 default=None,
-                 required=False,
-                 help=None,
-                 ):
+    def __init__(
+        self,
+        option_strings,
+        dest,
+        default=None,
+        required=False,
+        help=None,
+    ):
 
-        super().__init__(option_strings=option_strings, dest=dest, default=default, required=required, help=help)
-
+        super().__init__(
+            option_strings=option_strings,
+            dest=dest,
+            default=default,
+            required=required,
+            help=help,
+        )
 
     def __call__(self, parser, namespace, values, option_string=None):
         current_conf = ConfigSingleton.get()
-        if option_string == '--conf':
+        if option_string == "--conf":
             conf = OmegaConf.load(values)
             conf = OmegaConf.merge(STRUCTURED_CONFIG, current_conf, conf)
         else:
             # TODO: We're not handling nested configuration here
-            #       
-            conf_for_param = {
-                option_string.replace("--", ""): values
-            }
+            #
+            conf_for_param = {option_string.replace("--", ""): values}
             conf = OmegaConf.merge(STRUCTURED_CONFIG, current_conf, conf_for_param)
         ConfigSingleton().set_config(conf)
 
     def format_usage(self) -> str:
-        return ' | '.join(self.option_strings)
+        return " | ".join(self.option_strings)
+
 
 def init_config(parser, defaults={}):
     ConfigSingleton().set_config(STRUCTURED_CONFIG)
@@ -105,8 +111,11 @@ def init_config(parser, defaults={}):
         parser.addoption = parser.add_argument
     parser.addoption(f"--conf", action=IngestConfigAction)
     for field in fields(DatatestConfig):
-        parser.addoption(f"--{field.name}", action=IngestConfigAction, 
-                         default=defaults.get(field.name) or field.default)
+        parser.addoption(
+            f"--{field.name}",
+            action=IngestConfigAction,
+            default=defaults.get(field.name) or field.default,
+        )
     return parser
 
 

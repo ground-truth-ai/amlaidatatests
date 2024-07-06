@@ -1,3 +1,3 @@
 pytest_plugins = [
-   "amlaidatatests.tests.fixtures.fixtures",
+    "amlaidatatests.tests.fixtures.fixtures",
 ]

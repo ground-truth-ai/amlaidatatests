@@ -1,5 +1,12 @@
 from amlaidatatests.schema.base import BaseSchemaConfiguration, TableConfig
-from . import party_schema, transaction_schema, account_party_link_schema, risk_case_event_schema, party_supplementary_data_schema
+from . import (
+    party_schema,
+    transaction_schema,
+    account_party_link_schema,
+    risk_case_event_schema,
+    party_supplementary_data_schema,
+)
+
 
 class SchemaConfiguration(BaseSchemaConfiguration):
     TABLES = [
@@ -7,5 +14,9 @@ class SchemaConfiguration(BaseSchemaConfiguration):
         TableConfig(name="transaction", schema=transaction_schema),
         TableConfig(name="account_party_link", schema=account_party_link_schema),
         TableConfig(name="risk_case_event", schema=risk_case_event_schema),
-        TableConfig(name="party_supplementary_data", schema=party_supplementary_data_schema, optional=True),
+        TableConfig(
+            name="party_supplementary_data",
+            schema=party_supplementary_data_schema,
+            optional=True,
+        ),
     ]

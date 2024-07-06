@@ -14,6 +14,6 @@ transaction_schema = ibis.Schema(
         "account_id": String(),
         "counterparty_account": Struct(fields={"account_id": String(nullable=True)}),
         "book_time": Timestamp(),
-        "normalized_booked_amount": CurrencyValue()
+        "normalized_booked_amount": CurrencyValue(),
     }
 )

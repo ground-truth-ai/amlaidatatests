@@ -7,16 +7,15 @@ from dataclasses import fields
 import pytest
 
 pytest_plugins = [
-   "amlaidatatests.tests.fixtures.fixtures",
+    "amlaidatatests.tests.fixtures.fixtures",
 ]
 
 STRUCTURED_CONF = OmegaConf.structured(DatatestConfig)
 
 
-
 def pytest_addoption(parser, defaults={}) -> None:
-    """ Pytest hook for adding options to the pytest CLI
-    
+    """Pytest hook for adding options to the pytest CLI
+
     Iterates thought each of each of the config objects in
     the the structured config and adds them to pytest.
 
@@ -30,14 +29,18 @@ def pytest_addoption(parser, defaults={}) -> None:
     ConfigSingleton().set_config(STRUCTURED_CONF)
     parser.addoption(f"--conf", action=IngestConfigAction)
     for field in fields(DatatestConfig):
-        parser.addoption(f"--{field.name}", action=IngestConfigAction, 
-                         default=defaults.get(field.name) or field.default)
+        parser.addoption(
+            f"--{field.name}",
+            action=IngestConfigAction,
+            default=defaults.get(field.name) or field.default,
+        )
     setattr(parser, "__AMLAIDATATESTS_ARGS_ADDED", True)
 
-def pytest_configure(config):
-    """ Pytest hook to configure pytests before tests run
 
-    1) Iterates through each of the configuration variables 
+def pytest_configure(config):
+    """Pytest hook to configure pytests before tests run
+
+    1) Iterates through each of the configuration variables
     and verify that any mandatory variables are set
 
     Args:
@@ -46,6 +49,7 @@ def pytest_configure(config):
     _cfg = ConfigSingleton().get()
     for field in fields(DatatestConfig):
         getattr(_cfg, field.name)
+
 
 def pytest_make_parametrize_id(config, val, argname):
     if isinstance(val, AbstractTableTest):

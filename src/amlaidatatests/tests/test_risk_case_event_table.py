@@ -8,13 +8,20 @@ import pytest
 
 TABLE = get_unbound_table("risk_case_event")
 
-@pytest.mark.parametrize("test", get_generic_table_tests(table=TABLE, max_rows_factor=10e6))
+
+@pytest.mark.parametrize(
+    "test", get_generic_table_tests(table=TABLE, max_rows_factor=10e6)
+)
 def test_table(connection, test: AbstractTableTest):
     test(connection=connection)
 
+
 def test_primary_keys(connection):
-    test = common.TestPrimaryKeyColumns(table=TABLE, unique_combination_of_columns=["risk_case_event_id"])
+    test = common.TestPrimaryKeyColumns(
+        table=TABLE, unique_combination_of_columns=["risk_case_event_id"]
+    )
     test(connection)
+
 
 # For each column in the schema, check all columns are all present
 @pytest.mark.parametrize("column", TABLE.schema().fields.keys())
@@ -22,29 +29,55 @@ def test_column_presence(connection, column: str):
     test = common.TestColumnPresence(table=TABLE, column=column)
     test(connection)
 
+
 # For each column in the schema, check all columns are the correct type
 @pytest.mark.parametrize("column", TABLE.schema().fields.keys())
 def test_column_type(connection, column):
     test = common.TestColumnType(table=TABLE, column=column)
     test(connection)
 
+
 # Validate all fields marked in the schema as being non-nullable are non-nullable. This is in addition
 # to the schema level tests, since it's not possible to enforce an embedded struct is non-nullable.
+
 
 @pytest.mark.parametrize("column", non_nullable_fields(TABLE.schema()))
 def test_non_nullable_fields(connection, column):
     test = common.TestFieldNeverNull(table=TABLE, column=column)
     test(connection)
 
-@pytest.mark.parametrize("test", [
-    common.TestColumnValues(values=['AML_SUSPICIOUS_ACTIVITY_START', 'AML_SUSPICIOUS_ACTIVITY_END','AML_PROCESS_START','AML_PROCESS_END','AML_ALERT_GOOGLE','AML_ALERT_LEGACY','AML_ALERT_ADHOC','AML_ALERT_EXPLORATORY','AML_SAR','AML_EXTERNAL','AML_EXIT'], table=TABLE, column="type")
-])
+
+@pytest.mark.parametrize(
+    "test",
+    [
+        common.TestColumnValues(
+            values=[
+                "AML_SUSPICIOUS_ACTIVITY_START",
+                "AML_SUSPICIOUS_ACTIVITY_END",
+                "AML_PROCESS_START",
+                "AML_PROCESS_END",
+                "AML_ALERT_GOOGLE",
+                "AML_ALERT_LEGACY",
+                "AML_ALERT_ADHOC",
+                "AML_ALERT_EXPLORATORY",
+                "AML_SAR",
+                "AML_EXTERNAL",
+                "AML_EXIT",
+            ],
+            table=TABLE,
+            column="type",
+        )
+    ],
+)
 def test_column_values(connection, test):
     test(connection)
-    
+
+
 def test_referential_integrity(connection):
     to_table_obj = get_unbound_table("party")
-    test = common.TestReferentialIntegrity(table=TABLE, to_table=to_table_obj, keys=["party_id"])
+    test = common.TestReferentialIntegrity(
+        table=TABLE, to_table=to_table_obj, keys=["party_id"]
+    )
     test(connection)
 
 
