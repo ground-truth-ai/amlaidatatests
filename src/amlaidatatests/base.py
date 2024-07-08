@@ -1,8 +1,9 @@
 from abc import ABC
-from enum import Enum, auto
+from enum import auto
 import enum
 from typing import Optional
 import warnings
+from amlaidatatests.schema.base import ResolvedTableConfig
 from ibis import Table
 from ibis import Expr, _
 import ibis
@@ -70,9 +71,12 @@ def resolve_field_to_level(table: Table, column: str, level: int):
 class AbstractBaseTest(ABC):
 
     def __init__(
-        self, table: Table, severity: AMLAITestSeverity = AMLAITestSeverity.ERROR
+        self,
+        table_config: ResolvedTableConfig,
+        severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
     ) -> None:
-        self.table = table
+        self.table = table_config.table
+        self.table_config = table_config
         self.severity = severity
 
     @property
@@ -90,7 +94,7 @@ class AbstractBaseTest(ABC):
             if self.severity == AMLAITestSeverity.ERROR:
                 raise e
             if self.severity == AMLAITestSeverity.WARN:
-                warnings.warn(e.message)
+                warnings.warn(WarnTest(e.message))
             if self.severity == AMLAITestSeverity.INFO:
                 pytest.skip(e.message)
         except WarnTest as e:
@@ -100,10 +104,11 @@ class AbstractBaseTest(ABC):
 class AbstractTableTest(AbstractBaseTest):
 
     def __init__(
-        self, table: Table, severity: AMLAITestSeverity = AMLAITestSeverity.ERROR
+        self,
+        table_config: ResolvedTableConfig,
+        severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
     ) -> None:
-        self.table = table
-        super().__init__(table=table, severity=severity)
+        super().__init__(table_config=table_config, severity=severity)
 
     @property
     def id(self) -> Optional[str]:
@@ -138,7 +143,7 @@ class AbstractColumnTest(AbstractTableTest):
 
     def __init__(
         self,
-        table: Table,
+        table_config: ResolvedTableConfig,
         column: str,
         validate: bool = True,
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
@@ -148,8 +153,8 @@ class AbstractColumnTest(AbstractTableTest):
         # Ensure the column is specified on the unbound table
         # provided
         if validate:
-            resolve_field(table, column)
-        super().__init__(table=table, severity=severity)
+            resolve_field(table_config.table, column)
+        super().__init__(table_config=table_config, severity=severity)
 
     @property
     def id(self) -> Optional[str]:

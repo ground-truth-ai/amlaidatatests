@@ -1,7 +1,6 @@
 from ibis import schema
 import ibis
-from ibis.expr.datatypes.core import DataType
-from ibis.expr.datatypes import String, Int32, Timestamp, Boolean, Date, Struct, Array
+from ibis.expr.datatypes import String, Timestamp, Boolean
 
 
 #            account_id              VARCHAR(255),

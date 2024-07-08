@@ -6,15 +6,15 @@ from amlaidatatests.test_generators import (
     non_nullable_fields,
 )
 from amlaidatatests.tests import common
-from amlaidatatests.schema.utils import get_unbound_table
+from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.base import AbstractColumnTest, AbstractTableTest, AMLAITestSeverity
 import pytest
 
-TABLE = get_unbound_table("transaction")
+TABLE_CONFIG = resolve_table_config("transaction")
 
 
 @pytest.mark.parametrize(
-    "test", get_generic_table_tests(table=TABLE, max_rows_factor=50e9)
+    "test", get_generic_table_tests(table_config=TABLE_CONFIG, max_rows_factor=50e9)
 )
 def test_table(connection, test: AbstractTableTest):
     test(connection=connection)
@@ -22,43 +22,43 @@ def test_table(connection, test: AbstractTableTest):
 
 def test_primary_keys(connection):
     test = common.TestPrimaryKeyColumns(
-        table=TABLE,
+        table_config=TABLE_CONFIG,
         unique_combination_of_columns=["transaction_id", "validity_start_time"],
     )
     test(connection)
 
 
 # For each column in the schema, check all columns are all present
-@pytest.mark.parametrize("column", TABLE.schema().fields.keys())
+@pytest.mark.parametrize("column", TABLE_CONFIG.table.schema().fields.keys())
 def test_column_presence(connection, column: str):
-    test = common.TestColumnPresence(table=TABLE, column=column)
+    test = common.TestColumnPresence(table_config=TABLE_CONFIG, column=column)
     test(connection)
 
 
 # For each column in the schema, check all columns are the correct type
-@pytest.mark.parametrize("column", TABLE.schema().fields.keys())
+@pytest.mark.parametrize("column", TABLE_CONFIG.table.schema().fields.keys())
 def test_column_type(connection, column):
-    test = common.TestColumnType(table=TABLE, column=column)
+    test = common.TestColumnType(table_config=TABLE_CONFIG, column=column)
     test(connection)
 
 
-@pytest.mark.parametrize("column", non_nullable_fields(TABLE.schema()))
+@pytest.mark.parametrize("column", non_nullable_fields(TABLE_CONFIG.table.schema()))
 def test_non_nullable_fields(connection, column):
-    test = common.TestFieldNeverNull(table=TABLE, column=column)
+    test = common.TestFieldNeverNull(table_config=TABLE_CONFIG, column=column)
     test(connection)
 
 
-@pytest.mark.parametrize("to_table,keys", [["account_party_link", (["account_id"])]])
-def test_referential_integrity(connection, to_table: str, keys: list[str]):
-    to_table_obj = get_unbound_table(to_table)
+def test_referential_integrity_account_party_link(connection):
+    to_table_config = resolve_table_config("account_party_link")
     test = common.TestReferentialIntegrity(
-        table=TABLE, to_table=to_table_obj, keys=keys
+        table_config=TABLE_CONFIG, to_table_config=to_table_config, keys=["account_id"]
     )
     test(connection)
 
 
 @pytest.mark.parametrize(
-    "test", get_entity_mutation_tests(table=TABLE, primary_keys=["transaction_id"])
+    "test",
+    get_entity_mutation_tests(table_config=TABLE_CONFIG, entity_ids=["transaction_id"]),
 )
 def test_entity_mutation_tests(connection, test: AbstractColumnTest):
     test(connection=connection)
@@ -70,10 +70,10 @@ def test_entity_mutation_tests(connection, test: AbstractColumnTest):
         common.TestColumnValues(
             column="type",
             values=["WIRE", "CASH", "CHECK", "CARD", "OTHER"],
-            table=TABLE,
+            table_config=TABLE_CONFIG,
         ),
         common.TestColumnValues(
-            column="direction", values=["DEBIT", "CREDIT"], table=TABLE
+            column="direction", values=["DEBIT", "CREDIT"], table_config=TABLE_CONFIG
         ),
     ],
 )
@@ -82,10 +82,11 @@ def test_column_values(connection, test):
 
 
 @pytest.mark.parametrize(
-    "column", entity_columns(schema=TABLE.schema(), entity_types=["CurrencyValue"])
+    "column",
+    entity_columns(schema=TABLE_CONFIG.table.schema(), entity_types=["CurrencyValue"]),
 )
 @pytest.mark.parametrize(
-    "test", get_entity_tests(table=TABLE, entity_name="CurrencyValue")
+    "test", get_entity_tests(table_config=TABLE_CONFIG, entity_name="CurrencyValue")
 )
 def test_currency_value_entity(connection, column, test: AbstractColumnTest):
     test(connection=connection, prefix=column)

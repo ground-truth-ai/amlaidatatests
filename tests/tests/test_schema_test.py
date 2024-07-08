@@ -1,5 +1,6 @@
 from amlaidatatests.base import FailTest
 import amlaidatatests.base
+from amlaidatatests.schema.base import ResolvedTableConfig
 import ibis
 import pytest
 from ibis.expr.datatypes import String, Struct, Int64, Array, Timestamp
@@ -12,8 +13,10 @@ def test_missing_required_column(test_connection, create_test_table):
         name=tbl, schema={"a": String(nullable=False), "b": String(nullable=False)}
     )
 
+    table_config = ResolvedTableConfig(table=table)
+
     with pytest.raises(FailTest, match=r"Missing Required Column: b"):
-        t = common.TestColumnPresence(table=table, column="b")
+        t = common.TestColumnPresence(table_config=table_config, column="b")
         t(test_connection)
 
 
@@ -27,7 +30,9 @@ def test_missing_optional_column_skips_test(test_connection, create_test_table):
         name=tbl, schema={"a": String(nullable=True), "b": String(nullable=False)}
     )
 
-    t = common.TestColumnPresence(table=table, column="a")
+    table_config = ResolvedTableConfig(table=table)
+
+    t = common.TestColumnPresence(table_config=table_config, column="a")
     t(test_connection)
     raise Exception("This test should always be skipped")
 
@@ -40,7 +45,10 @@ def test_all_columns_present(test_connection, create_test_table):
     table = ibis.table(
         name=tbl, schema={"a": String(nullable=True), "b": String(nullable=False)}
     )
-    t = common.TestColumnPresence(table=table, column="a")
+
+    table_config = ResolvedTableConfig(table=table)
+
+    t = common.TestColumnPresence(table_config=table_config, column="a")
     t(test_connection)
 
 
@@ -55,7 +63,10 @@ def test_ignores_order_of_struct_columns(test_connection, create_test_table) -> 
     table = ibis.table(
         name=tbl, schema={"a": Struct(fields={"1": String(), "2": String()})}
     )
-    t = common.TestColumnType(table=table, column="a")
+
+    table_config = ResolvedTableConfig(table=table)
+
+    t = common.TestColumnType(table_config=table_config, column="a")
     t(test_connection)
 
 
@@ -68,7 +79,10 @@ def test_excess_field_in_struct_warns(test_connection, create_test_table) -> Non
     )
 
     table = ibis.table(name=tbl, schema={"a": Struct(fields={"1": String()})})
-    t = common.TestColumnType(table=table, column="a")
+
+    table_config = ResolvedTableConfig(table=table)
+
+    t = common.TestColumnType(table_config=table_config, column="a")
     with pytest.warns(
         amlaidatatests.base.WarnTest, match="Additional fields found in structs in a"
     ):
@@ -86,7 +100,10 @@ def test_missing_field_in_struct(test_connection, create_test_table) -> None:
     table = ibis.table(
         name=tbl, schema={"a": Struct(fields={"1": String(), "3": String()})}
     )
-    t = common.TestColumnType(table=table, column="a")
+
+    table_config = ResolvedTableConfig(table=table)
+
+    t = common.TestColumnType(table_config=table_config, column="a")
     with pytest.raises(
         common.FailTest,
         match="Expected column a to be struct<1: string, 3: string>, found struct<2: string, 1: string>",
@@ -103,7 +120,10 @@ def test_excess_field_in_embedded_struct(test_connection, create_test_table) -> 
     )
 
     table = ibis.table(name=tbl, schema={"a": Array(Struct(fields={"1": String()}))})
-    t = common.TestColumnType(table=table, column="a")
+
+    table_config = ResolvedTableConfig(table=table)
+
+    t = common.TestColumnType(table_config=table_config, column="a")
     with pytest.warns(
         amlaidatatests.base.WarnTest, match="Additional fields found in structs in a"
     ):
@@ -153,7 +173,9 @@ def test_one_excess_column(test_connection, create_test_table):
     )
     table = ibis.table(name=tbl, schema={"a": String()})
 
-    t = common.TestTableSchema(table=table)
+    table_config = ResolvedTableConfig(table=table)
+
+    t = common.TestTableSchema(table_config=table_config)
     with pytest.warns(
         amlaidatatests.base.WarnTest, match="1 unexpected columns found in table"
     ):
@@ -165,8 +187,9 @@ def test_no_warn_on_missing_column_only(test_connection, create_test_table):
         ibis.memtable(data=[{"b": "goodbye"}], schema={"b": String()})
     )
     table = ibis.table(name=tbl, schema={"a": String(), "b": String()})
+    table_config = ResolvedTableConfig(table=table)
 
-    t = common.TestTableSchema(table=table)
+    t = common.TestTableSchema(table_config=table_config)
     t(test_connection)
 
 
@@ -177,9 +200,11 @@ def test_two_excess_columns(test_connection, create_test_table):
             schema={"a": String(), "b": String(), "c": String()},
         )
     )
-    schema = ibis.table(name=tbl, schema={"a": String()})
+    table = ibis.table(name=tbl, schema={"a": String()})
 
-    t = common.TestTableSchema(table=schema)
+    table_config = ResolvedTableConfig(table=table)
+
+    t = common.TestTableSchema(table_config=table_config)
     with pytest.warns(
         amlaidatatests.base.WarnTest, match="2 unexpected columns found in table"
     ):
@@ -192,7 +217,9 @@ def test_column_wrong_type(test_connection, create_test_table):
     )
     schema = ibis.table(name=tbl, schema={"a": Int64()})
 
-    t = common.TestColumnType(table=schema, column="a")
+    table_config = ResolvedTableConfig(table=schema)
+
+    t = common.TestColumnType(table_config=table_config, column="a")
     with pytest.raises(
         common.FailTest, match="Expected column a to be int64, found string"
     ):
@@ -203,9 +230,11 @@ def test_column_non_nullable_type(test_connection, create_test_table):
     tbl = create_test_table(
         ibis.memtable(data=[{"a": "hello"}], schema={"a": String(nullable=True)})
     )
-    schema = ibis.table(name=tbl, schema={"a": String(nullable=False)})
+    table = ibis.table(name=tbl, schema={"a": String(nullable=False)})
 
-    t = common.TestColumnType(table=schema, column="a")
+    table_config = ResolvedTableConfig(table=table)
+
+    t = common.TestColumnType(table_config=table_config, column="a")
     with pytest.raises(
         common.FailTest, match="Expected column a to be !string, found string"
     ):
@@ -216,9 +245,11 @@ def test_column_too_strict(test_connection, create_test_table):
     tbl = create_test_table(
         ibis.memtable(data=[{"a": "hello"}], schema={"a": String(nullable=False)})
     )
-    schema = ibis.table(name=tbl, schema={"a": String(nullable=True)})
+    table = ibis.table(name=tbl, schema={"a": String(nullable=True)})
 
-    t = common.TestColumnType(table=schema, column="a")
+    table_config = ResolvedTableConfig(table=table)
+
+    t = common.TestColumnType(table_config=table_config, column="a")
     with pytest.warns(
         amlaidatatests.base.WarnTest,
         match="Schema is stricter than required: expected column a to be string, found !string",
@@ -235,9 +266,11 @@ def test_column_array(test_connection, create_test_table):
             schema={"a": Array(nullable=False, value_type=String(nullable=False))},
         )
     )
-    schema = ibis.table(
+    table = ibis.table(
         name=tbl, schema={"a": Array(nullable=False, value_type=String(nullable=True))}
     )
 
-    t = common.TestColumnType(table=schema, column="a")
+    table_config = ResolvedTableConfig(table=table)
+
+    t = common.TestColumnType(table_config=table_config, column="a")
     t(test_connection)

@@ -1,4 +1,5 @@
 from amlaidatatests.base import FailTest
+from amlaidatatests.schema.base import ResolvedTableConfig
 import ibis
 import pytest
 from ibis.expr.datatypes import String, Timestamp, Array, Struct
@@ -12,9 +13,9 @@ def test_column_is_always_null(test_connection, create_test_table):
     tbl = create_test_table(
         ibis.memtable(data=[{"id": None}, {"id": None}], schema={"id": String()})
     )
-    table = ibis.table(name=tbl, schema=schema)
+    table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestFieldNeverNull(table=table, column="id")
+    t = common.TestFieldNeverNull(table_config=table_config, column="id")
 
     with pytest.raises(
         expected_exception=FailTest, match=r"2 rows found with null values of id"
@@ -35,9 +36,9 @@ def test_column_optional_parent_always_present(test_connection, create_test_tabl
             data=[{"parent_id": None}, {"parent_id": {"id": "hello"}}], schema=schema
         )
     )
-    table = ibis.table(name=tbl, schema=schema)
+    table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestFieldNeverNull(table=table, column="parent_id.id")
+    t = common.TestFieldNeverNull(table_config=table_config, column="parent_id.id")
 
     t(test_connection)
 
@@ -51,9 +52,9 @@ def test_column_optional_parent_field_missing(test_connection, create_test_table
             schema=schema,
         )
     )
-    table = ibis.table(name=tbl, schema=schema)
+    table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestFieldNeverNull(table=table, column="parent_id.id")
+    t = common.TestFieldNeverNull(table_config=table_config, column="parent_id.id")
 
     with pytest.raises(
         expected_exception=FailTest,
@@ -68,9 +69,9 @@ def test_column_is_sometimes_null(test_connection, create_test_table):
     tbl = create_test_table(
         ibis.memtable(data=[{"id": None}, {"id": "12"}], schema={"id": String()})
     )
-    table = ibis.table(name=tbl, schema=schema)
+    table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestFieldNeverNull(table=table, column="id")
+    t = common.TestFieldNeverNull(table_config=table_config, column="id")
 
     with pytest.raises(
         expected_exception=FailTest, match=r"1 rows found with null values of id"
@@ -84,20 +85,22 @@ def test_column_never_null(test_connection: ibis.BaseBackend, create_test_table)
     tbl = create_test_table(
         ibis.memtable(data=[{"id": "22"}, {"id": "12"}], schema=schema)
     )
-    table = ibis.table(name=tbl, schema=schema)
+    table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestFieldNeverNull(table=table, column="id")
+    t = common.TestFieldNeverNull(table_config=table_config, column="id")
 
     t(test_connection)
 
 
 def test_string_column_blanks(test_connection: ibis.BaseBackend, create_test_table):
+    schema = {"id": String(nullable=False)}
+
     tbl = create_test_table(
         ibis.memtable(data=[{"id": ""}, {"id": "   "}], schema={"id": str})
     )
-    table = ibis.table(name=tbl, schema={"id": String(nullable=False)})
+    table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestFieldNeverWhitespaceOnly(table=table, column="id")
+    t = common.TestFieldNeverWhitespaceOnly(table_config=table_config, column="id")
 
     with pytest.raises(
         expected_exception=FailTest,
@@ -107,32 +110,34 @@ def test_string_column_blanks(test_connection: ibis.BaseBackend, create_test_tab
 
 
 def test_string_column_no_blanks(test_connection: ibis.BaseBackend, create_test_table):
+    schema = {"id": String(nullable=False)}
+
     tbl = create_test_table(
         ibis.memtable(data=[{"id": "   a   "}, {"id": "  1234  "}], schema={"id": str})
     )
 
-    table = ibis.table(name=tbl, schema={"id": String(nullable=False)})
+    table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestFieldNeverWhitespaceOnly(table=table, column="id")
+    t = common.TestFieldNeverWhitespaceOnly(table_config=table_config, column="id")
 
     t(test_connection)
 
 
 def test_date_column_1970(test_connection, create_test_table):
+    schema = {"id": Timestamp(nullable=False, timezone="UTC")}
     tbl = create_test_table(
         ibis.memtable(
             data=[
                 {"id": datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)},
                 {"id": datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)},
             ],
-            schema={"id": Timestamp(nullable=False, timezone="UTC")},
+            schema=schema,
         )
     )
 
-    table = ibis.table(
-        name=tbl, schema={"id": Timestamp(nullable=False, timezone="UTC")}
-    )
-    t = common.TestDatetimeFieldNeverJan1970(table=table, column="id")
+    table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
+
+    t = common.TestDatetimeFieldNeverJan1970(table_config=table_config, column="id")
 
     with pytest.raises(
         expected_exception=FailTest, match=r"2 rows found with date on 1970-01-01"
@@ -141,6 +146,8 @@ def test_date_column_1970(test_connection, create_test_table):
 
 
 def test_date_column_never_1970(test_connection, create_test_table):
+    schema = {"id": Timestamp(nullable=False, timezone="UTC")}
+
     tbl = create_test_table(
         ibis.memtable(
             data=[
@@ -151,9 +158,8 @@ def test_date_column_never_1970(test_connection, create_test_table):
         )
     )
 
-    table = ibis.table(
-        name=tbl, schema={"id": Timestamp(nullable=False, timezone="UTC")}
-    )
-    t = common.TestDatetimeFieldNeverJan1970(table=table, column="id")
+    table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
+
+    t = common.TestDatetimeFieldNeverJan1970(table_config=table_config, column="id")
 
     t(test_connection)

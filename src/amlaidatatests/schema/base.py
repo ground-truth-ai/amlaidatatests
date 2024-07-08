@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List
-from ibis import Schema
+from ibis import Schema, Table
 
 
 @dataclass
@@ -11,15 +11,27 @@ class TableConfig:
     optional: bool = False
 
 
+@dataclass
+class ResolvedTableConfig:
+    name: str = field(init=False)
+    table: Table
+    optional: bool = False
+
+    def __post_init__(self):
+        self.name = self.table.get_name()
+
+
 class BaseSchemaConfiguration(ABC):
 
     @property
     @abstractmethod
-    def TABLES(self) -> List[TableConfig]:
-        pass
+    def TABLES(self) -> List[TableConfig]: ...
 
     def __table_dict(self) -> dict[str, TableConfig]:
         return {t.name: t for t in self.TABLES}
 
-    def get_table_schema(self, n: str) -> TableConfig:
+    def get_table_config(self, n: str) -> TableConfig:
         return self.__table_dict()[n]
+
+    def __getitem__(self, name: str):
+        return self.get_table_config(name)

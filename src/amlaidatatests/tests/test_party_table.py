@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from amlaidatatests.io import get_valid_region_codes
-from amlaidatatests.schema.utils import get_unbound_table
+from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.test_generators import (
     get_generic_table_tests,
     non_nullable_field_tests,
@@ -15,11 +15,12 @@ from amlaidatatests.tests import common
 from amlaidatatests.base import AbstractColumnTest, AbstractTableTest, AMLAITestSeverity
 import pytest
 
-TABLE = get_unbound_table("party")
+TABLE_CONFIG = resolve_table_config("party")
+TABLE = TABLE_CONFIG.table
 
 
 @pytest.mark.parametrize(
-    "test", get_generic_table_tests(table=TABLE, max_rows_factor=50e9)
+    "test", get_generic_table_tests(table_config=TABLE_CONFIG, max_rows_factor=50e9)
 )
 def test_table(connection, test: AbstractTableTest):
     test(connection=connection)
@@ -27,39 +28,42 @@ def test_table(connection, test: AbstractTableTest):
 
 def test_primary_keys(connection):
     test = common.TestPrimaryKeyColumns(
-        table=TABLE, unique_combination_of_columns=["party_id", "validity_start_time"]
+        table_config=TABLE_CONFIG,
+        unique_combination_of_columns=["party_id", "validity_start_time"],
     )
     test(connection)
 
 
 @pytest.mark.parametrize(
-    "test", get_entity_mutation_tests(table=TABLE, primary_keys=["party_id"])
+    "test",
+    get_entity_mutation_tests(table_config=TABLE_CONFIG, entity_ids=["party_id"]),
 )
 def test_entity_mutation_tests(connection, test: AbstractColumnTest):
     test(connection=connection)
 
 
 @pytest.mark.parametrize(
-    "column", entity_columns(schema=TABLE.schema(), entity_types=["CurrencyValue"])
+    "column",
+    entity_columns(schema=TABLE_CONFIG.table.schema(), entity_types=["CurrencyValue"]),
 )
 @pytest.mark.parametrize(
-    "test", get_entity_tests(table=TABLE, entity_name="CurrencyValue")
+    "test", get_entity_tests(table_config=TABLE_CONFIG, entity_name="CurrencyValue")
 )
 def test_currency_value_entity(connection, column, test: AbstractColumnTest):
     test(connection=connection, prefix=column)
 
 
 # For each column in the schema, check all columns are all present
-@pytest.mark.parametrize("column", TABLE.schema().fields.keys())
+@pytest.mark.parametrize("column", TABLE_CONFIG.table.schema().fields.keys())
 def test_column_presence(connection, column: str):
-    test = common.TestColumnPresence(table=TABLE, column=column)
+    test = common.TestColumnPresence(table_config=TABLE_CONFIG, column=column)
     test(connection)
 
 
 # For each column in the schema, check all columns are the correct type
-@pytest.mark.parametrize("column", TABLE.schema().fields.keys())
+@pytest.mark.parametrize("column", TABLE_CONFIG.table.schema().fields.keys())
 def test_column_type(connection, column):
-    test = common.TestColumnType(table=TABLE, column=column)
+    test = common.TestColumnType(table_config=TABLE_CONFIG, column=column)
     test(connection)
 
 
@@ -67,7 +71,7 @@ def test_column_type(connection, column):
 # to the schema level tests, since it's not possible to enforce an embedded struct is non-nullable.
 
 
-@pytest.mark.parametrize("test", non_nullable_field_tests(TABLE))
+@pytest.mark.parametrize("test", non_nullable_field_tests(TABLE_CONFIG))
 def test_non_nullable_fields(connection, test: AbstractColumnTest):
     test(connection)
 
@@ -76,7 +80,7 @@ def test_non_nullable_fields(connection, test: AbstractColumnTest):
     "test",
     [
         common.TestColumnValues(
-            column="type", values=["COMPANY", "CONSUMER"], table=TABLE
+            column="type", values=["COMPANY", "CONSUMER"], table_config=TABLE_CONFIG
         ),
         common.TestColumnValues(
             column="civil_status_code",
@@ -89,7 +93,7 @@ def test_non_nullable_fields(connection, test: AbstractColumnTest):
                 "SEPARATED",
                 "UNKNOWN",
             ],
-            table=TABLE,
+            table_config=TABLE_CONFIG,
         ),
         common.TestColumnValues(
             column="education_level_code",
@@ -106,17 +110,17 @@ def test_non_nullable_fields(connection, test: AbstractColumnTest):
                 "NOT_ELSEWHERE_CLASSIFIED",
                 "UNKNOWN",
             ],
-            table=TABLE,
+            table_config=TABLE_CONFIG,
         ),
         common.TestColumnValues(
             column="nationalities.region_code",
             values=get_valid_region_codes(),
-            table=TABLE,
+            table_config=TABLE_CONFIG,
         ),
         common.TestColumnValues(
             column="residencies.region_code",
             values=get_valid_region_codes(),
-            table=TABLE,
+            table_config=TABLE_CONFIG,
         ),
     ],
 )
@@ -128,18 +132,24 @@ def test_column_values(connection, test):
     "test",
     [
         common.TestNullIf(
-            column="birth_date", table=TABLE, expression=TABLE.type == "COMPANY"
+            column="birth_date",
+            table_config=TABLE_CONFIG,
+            expression=TABLE.type == "COMPANY",
         ),
         common.TestNullIf(
-            column="gender", table=TABLE, expression=TABLE.type == "COMPANY"
+            column="gender",
+            table_config=TABLE_CONFIG,
+            expression=TABLE.type == "COMPANY",
         ),
         common.TestNullIf(
             column="establishment_date",
-            table=TABLE,
+            table_config=TABLE_CONFIG,
             expression=TABLE.type == "CONSUMER",
         ),
         common.TestNullIf(
-            column="occupation", table=TABLE, expression=TABLE.type == "CONSUMER"
+            column="occupation",
+            table_config=TABLE_CONFIG,
+            expression=TABLE.type == "CONSUMER",
         ),
     ],
 )
@@ -149,10 +159,10 @@ def test_null_if(connection, test):
 
 def test_referential_integrity(connection):
     # A warning here means that there are parties without linked accounts
-    to_table_obj = get_unbound_table("account_party_link")
+    to_table_config = resolve_table_config("account_party_link")
     test = common.TestReferentialIntegrity(
-        table=TABLE,
-        to_table=to_table_obj,
+        table_config=TABLE_CONFIG,
+        to_table_config=to_table_config,
         keys=["party_id"],
         severity=AMLAITestSeverity.WARN,
     )

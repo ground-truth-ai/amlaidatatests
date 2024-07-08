@@ -1,6 +1,5 @@
-from amlaidatatests.schema.v1.common import CurrencyValue
 import ibis
-from ibis.expr.datatypes import String, Timestamp, Boolean, Date, Struct, Array, Float64
+from ibis.expr.datatypes import String, Timestamp, Boolean, Struct, Float64
 
 #            party_id                  VARCHAR(255),
 #            validity_start_time     Int,

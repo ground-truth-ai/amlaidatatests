@@ -1,11 +1,15 @@
 import importlib
 from amlaidatatests.config import ConfigSingleton
-from amlaidatatests.schema.base import BaseSchemaConfiguration
+from amlaidatatests.schema.base import (
+    BaseSchemaConfiguration,
+    ResolvedTableConfig,
+    TableConfig,
+)
 import ibis
 from string import Template
 
 
-def get_schema_version_config(version: str) -> BaseSchemaConfiguration:
+def get_amlai_schema(version: str) -> BaseSchemaConfiguration:
     try:
         module = importlib.import_module(f"amlaidatatests.schema.{version}.tables")
         schema_configuration: BaseSchemaConfiguration = module.SchemaConfiguration()
@@ -24,20 +28,24 @@ def get_table_name(name: str):
         return name_template.substitute({"id": config_singleton.id, "table": name})
 
 
-def get_table_schema(name: str) -> ibis.Schema:
+def get_table_config(name: str) -> TableConfig:
     cfg = ConfigSingleton.get()
     version = cfg.schema_version
 
-    return get_schema_version_config(version).get_table_schema(name).schema
+    return get_amlai_schema(version)[name]
 
 
-def get_unbound_table(name: str) -> ibis.Table:
+def resolve_table_config(name: str) -> ResolvedTableConfig:
     """Get the unbound ibis table reference for the unqualified table name specified"""
-    s = get_table_schema(name)
+    table_config = get_table_config(name)
     cfg = ConfigSingleton.get()
     name = get_table_name(name)
-    return ibis.table(schema=s, name=name, database=cfg.database)
+    resolved_table_config = ResolvedTableConfig(
+        table=ibis.table(schema=table_config.schema, name=name, database=cfg.database),
+        optional=table_config.optional,
+    )
+    return resolved_table_config
 
 
 if __name__ == "__main__":
-    get_schema_version_config()
+    get_amlai_schema()

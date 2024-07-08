@@ -1,5 +1,6 @@
-from typing import Union
+from typing import List, Union
 from amlaidatatests.io import get_valid_currency_codes
+from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.schema.v1.common import CurrencyValue, ValueEntity
 from amlaidatatests.base import AbstractColumnTest, AMLAITestSeverity, resolve_field
 from amlaidatatests.tests.common import (
@@ -9,6 +10,7 @@ from amlaidatatests.tests.common import (
     TestCountValidityStartTimeChanges,
     TestFieldNeverWhitespaceOnly,
     TestFieldNeverNull,
+    TestOrphanDeletions,
     TestTableCount,
     TestTableSchema,
 )
@@ -19,7 +21,9 @@ from ibis.expr.datatypes import Array, DataType, Struct
 ENTITIES = {"CurrencyValue": CurrencyValue(), "ValueEntity": ValueEntity()}
 
 
-def get_entity_tests(table: Table, entity_name: str) -> list[AbstractColumnTest]:
+def get_entity_tests(
+    table_config: ResolvedTableConfig, entity_name: str
+) -> list[AbstractColumnTest]:
     """_summary_
 
     Args:
@@ -35,13 +39,21 @@ def get_entity_tests(table: Table, entity_name: str) -> list[AbstractColumnTest]
     if entity_name == "CurrencyValue":
         return [
             TestAcceptedRange(
-                table=table, column="nanos", min=0, max=1e9, validate=False
+                table_config=table_config,
+                column="nanos",
+                min=0,
+                max=1e9,
+                validate=False,
             ),
             TestAcceptedRange(
-                table=table, column="units", min=0, max=None, validate=False
+                table_config=table_config,
+                column="units",
+                min=0,
+                max=None,
+                validate=False,
             ),
             TestColumnValues(
-                table=table,
+                table_config=table_config,
                 column="currency_code",
                 values=get_valid_currency_codes(),
                 validate=False,
@@ -51,7 +63,7 @@ def get_entity_tests(table: Table, entity_name: str) -> list[AbstractColumnTest]
 
 
 def get_entity_mutation_tests(
-    table: Table, primary_keys: list[str]
+    table_config: ResolvedTableConfig, entity_ids: List[str]
 ) -> list[AbstractColumnTest]:
     """_summary_
 
@@ -64,9 +76,12 @@ def get_entity_mutation_tests(
     """
     return [
         TestCountValidityStartTimeChanges(
-            table=table, warn=500, error=1000, primary_keys=primary_keys
+            table_config=table_config, warn=500, error=1000, entity_ids=entity_ids
         ),
-        TestConsecutiveEntityDeletions(table=table, primary_keys=primary_keys),
+        TestConsecutiveEntityDeletions(
+            table_config=table_config, entity_ids=entity_ids
+        ),
+        TestOrphanDeletions(table_config=table_config, entity_ids=entity_ids),
     ]
 
 
@@ -143,30 +158,34 @@ def non_nullable_fields(
     return fields
 
 
-def non_nullable_field_tests(table: Table):
+def non_nullable_field_tests(table_config: ResolvedTableConfig):
     """Depending on field type, generate a list of tests
     which depend on"""
-    fields = non_nullable_fields(schema=table.schema())
+    fields = non_nullable_fields(schema=table_config.table.schema())
     print(fields)
     tests = []
     for f in fields:
-        _, _field = resolve_field(table=table, column=f)
+        _, _field = resolve_field(table=table_config.table, column=f)
         field_type = _field.type()
         if field_type.is_string():
-            tests.append(TestFieldNeverWhitespaceOnly(table=table, column=f))
+            tests.append(
+                TestFieldNeverWhitespaceOnly(table_config=table_config, column=f)
+            )
 
-        tests.append(TestFieldNeverNull(table=table, column=f))
+        tests.append(TestFieldNeverNull(table_config=table_config, column=f))
     return tests
 
 
 def get_generic_table_tests(
-    table: Table,
+    table_config: ResolvedTableConfig,
     max_rows_factor: int,
     severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
 ):
     """Depending on field type, generate a list of tests
     which depend on"""
     return [
-        TestTableSchema(table),
-        TestTableCount(table, severity=severity, max_rows_factor=max_rows_factor),
+        TestTableSchema(table_config),
+        TestTableCount(
+            table_config, severity=severity, max_rows_factor=max_rows_factor
+        ),
     ]

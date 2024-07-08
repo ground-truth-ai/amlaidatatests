@@ -1,5 +1,6 @@
 import datetime
 from amlaidatatests.base import FailTest
+from amlaidatatests.schema.base import ResolvedTableConfig
 import ibis
 import pytest
 from amlaidatatests.tests.common import TestPrimaryKeyColumns
@@ -13,8 +14,11 @@ def test_base_table() -> TestPrimaryKeyColumns:
             name=table,
             schema={"alpha": String(nullable=False), "beta": String(nullable=False)},
         )
+
+        table_config = ResolvedTableConfig(table=table)
+
         return TestPrimaryKeyColumns(
-            unique_combination_of_columns=["alpha", "beta"], table=table
+            unique_combination_of_columns=["alpha", "beta"], table_config=table_config
         )
 
     return _test_base_table
@@ -64,13 +68,18 @@ def test_mixed_types(test_connection, create_test_table):
         "id": String(nullable=False),
         "id2": Timestamp(nullable=False, timezone="UTC"),
     }
-    data = create_test_table(
+    tbl = create_test_table(
         ibis.memtable(
             [{"id": "a", "id2": datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)}],
             schema=schema,
         )
     )
-    tbl = ibis.table(name=data, schema=schema)
-    t = TestPrimaryKeyColumns(unique_combination_of_columns=["id", "id2"], table=tbl)
+    table = ibis.table(name=tbl, schema=schema)
+
+    table_config = ResolvedTableConfig(table=table)
+
+    t = TestPrimaryKeyColumns(
+        unique_combination_of_columns=["id", "id2"], table_config=table_config
+    )
 
     t(test_connection)

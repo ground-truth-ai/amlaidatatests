@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
-from amlaidatatests.schema.utils import get_unbound_table
+from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.test_generators import get_generic_table_tests, non_nullable_fields
 from amlaidatatests.tests import common
 from amlaidatatests.base import AbstractTableTest
 import pytest
 
-TABLE = get_unbound_table("risk_case_event")
+TABLE_CONFIG = resolve_table_config("risk_case_event")
 
 
 @pytest.mark.parametrize(
-    "test", get_generic_table_tests(table=TABLE, max_rows_factor=10e6)
+    "test", get_generic_table_tests(table_config=TABLE_CONFIG, max_rows_factor=10e6)
 )
 def test_table(connection, test: AbstractTableTest):
     test(connection=connection)
@@ -18,22 +18,22 @@ def test_table(connection, test: AbstractTableTest):
 
 def test_primary_keys(connection):
     test = common.TestPrimaryKeyColumns(
-        table=TABLE, unique_combination_of_columns=["risk_case_event_id"]
+        table_config=TABLE_CONFIG, unique_combination_of_columns=["risk_case_event_id"]
     )
     test(connection)
 
 
 # For each column in the schema, check all columns are all present
-@pytest.mark.parametrize("column", TABLE.schema().fields.keys())
+@pytest.mark.parametrize("column", TABLE_CONFIG.table.schema().fields.keys())
 def test_column_presence(connection, column: str):
-    test = common.TestColumnPresence(table=TABLE, column=column)
+    test = common.TestColumnPresence(table_config=TABLE_CONFIG, column=column)
     test(connection)
 
 
 # For each column in the schema, check all columns are the correct type
-@pytest.mark.parametrize("column", TABLE.schema().fields.keys())
+@pytest.mark.parametrize("column", TABLE_CONFIG.table.schema().fields.keys())
 def test_column_type(connection, column):
-    test = common.TestColumnType(table=TABLE, column=column)
+    test = common.TestColumnType(table_config=TABLE_CONFIG, column=column)
     test(connection)
 
 
@@ -41,9 +41,9 @@ def test_column_type(connection, column):
 # to the schema level tests, since it's not possible to enforce an embedded struct is non-nullable.
 
 
-@pytest.mark.parametrize("column", non_nullable_fields(TABLE.schema()))
+@pytest.mark.parametrize("column", non_nullable_fields(TABLE_CONFIG.table.schema()))
 def test_non_nullable_fields(connection, column):
-    test = common.TestFieldNeverNull(table=TABLE, column=column)
+    test = common.TestFieldNeverNull(table_config=TABLE_CONFIG, column=column)
     test(connection)
 
 
@@ -64,7 +64,7 @@ def test_non_nullable_fields(connection, column):
                 "AML_EXTERNAL",
                 "AML_EXIT",
             ],
-            table=TABLE,
+            table_config=TABLE_CONFIG,
             column="type",
         )
     ],
@@ -73,10 +73,10 @@ def test_column_values(connection, test):
     test(connection)
 
 
-def test_referential_integrity(connection):
-    to_table_obj = get_unbound_table("party")
+def test_referential_integrity_party(connection):
+    to_table_config = resolve_table_config("party")
     test = common.TestReferentialIntegrity(
-        table=TABLE, to_table=to_table_obj, keys=["party_id"]
+        table_config=TABLE_CONFIG, to_table_config=to_table_config, keys=["party_id"]
     )
     test(connection)
 
