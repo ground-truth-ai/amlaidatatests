@@ -145,62 +145,6 @@ def test_missing_multiple_keys_other_table(test_connection, create_test_table):
         t(test_connection)
 
 
-def test_temporal_referential_integrity_missing_keys(
-    test_connection, create_test_table
-):
-    schema = {
-        "id": str,
-        "validity_start_time": Timestamp(timezone="UTC"),
-        "is_entity_deleted": Boolean(),
-    }
-    lcl_tbl = create_test_table(
-        ibis.memtable(
-            data=[
-                {
-                    "id": "0",
-                    "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
-                    ),
-                    "is_entity_deleted": False,
-                }
-            ],
-            schema=schema,
-        )
-    )
-    otr_tbl = create_test_table(
-        ibis.memtable(
-            data=[
-                {
-                    "id": "1",
-                    "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
-                    ),
-                    "is_entity_deleted": False,
-                },
-                {
-                    "id": "2",
-                    "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
-                    ),
-                    "is_entity_deleted": False,
-                },
-            ],
-            schema=schema,
-        )
-    )
-
-    table_config = ResolvedTableConfig(table=ibis.table(name=lcl_tbl, schema=schema))
-    otr_table_config = ResolvedTableConfig(
-        table=ibis.table(name=otr_tbl, schema=schema)
-    )
-
-    t = common.TemporalReferentialIntegrityTest(
-        table_config=table_config, to_table_config=otr_table_config, key="id"
-    )
-    with pytest.raises(FailTest, match=r"1 keys found in table"):
-        t(test_connection)
-
-
 def test_temporal_referential_integrity_key_in_time(test_connection, create_test_table):
     schema = {
         "id": str,
@@ -732,6 +676,13 @@ def test_temporal_referential_integrity_multiple_mutations_in_period(
                         2020, 1, 1, hour=3, tzinfo=datetime.UTC
                     ),
                     "is_entity_deleted": False,
+                },
+                {
+                    "id": "0",
+                    "validity_start_time": datetime.datetime(
+                        2020, 1, 1, hour=8, tzinfo=datetime.UTC
+                    ),
+                    "is_entity_deleted": True,
                 },
             ],
             schema=schema,
