@@ -56,6 +56,10 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
     # Test with a full repository
     steps:
       - uses: actions/download-artifact@v4
