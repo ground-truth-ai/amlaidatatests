@@ -1,8 +1,11 @@
-from amlaidatatests.schema.utils import get_table_name
-from .connection import connection_factory
+import importlib.resources
+
 import pandas as pd
 from ibis import literal
-import importlib.resources
+
+from amlaidatatests.schema.utils import get_table_name
+
+from .connection import connection_factory
 
 tables = [
     "party_supplementary_data"

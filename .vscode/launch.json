@@ -7,10 +7,10 @@
         {"name":"Python Debugger: Module",
         "type":"debugpy",
         "request":"launch",
-        "module":"amlaidatatests.main",
-        "args": ["--connection_string=duckdb://duckdb.ddb", "--id=1234", "tests"],
-        "justMyCode": true,
-        "env": {"PYTEST_ADDOPTS": "--no-cov"}
+        "module":"pytest",
+        "args": ["--pyargs", "amlaidatatests.tests", "--connection_string=duckdb://duckdb.ddb", "--id=1234", "tests"],
+        "justMyCode": false,
+        "env": {"PYTEST_ADDOPTS": "--no-cov  --disable-pytest-warnings --html=report.html --self-contained-html"}
     },
         {
             "name": "Python: Debug Tests",
@@ -19,8 +19,8 @@
             "program": "${file}",
             "purpose": ["debug-test"],
             "console": "integratedTerminal",
-            "justMyCode": true,
-            "env": {"PYTEST_ADDOPTS": "--no-cov"}
+            "justMyCode": false,
+            "env": {"PYTEST_ADDOPTS": "--no-cov --disable-pytest-warnings --disable-pytest-warnings --html=report.html --self-contained-html"}
           }          
     ]
 }

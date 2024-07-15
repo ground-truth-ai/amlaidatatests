@@ -1,28 +1,39 @@
-from datetime import datetime
-from typing import Any, List, Literal, Optional, Union, cast
-from amlaidatatests.config import ConfigSingleton
+import datetime
+import warnings
+from typing import Any, List, Literal, Optional, cast
+
+import ibis
+from ibis import BaseBackend, Expr, _
+from ibis.common.exceptions import IbisTypeError
+from ibis.expr.datatypes import Array, DataType, Struct, Timestamp
+
 from amlaidatatests.base import (
     AbstractColumnTest,
     AbstractTableTest,
-    FailTest,
     AMLAITestSeverity,
+    FailTest,
     WarnTest,
+    check_table_exists,
     resolve_field,
     resolve_field_to_level,
 )
+from amlaidatatests.config import ConfigSingleton
 from amlaidatatests.schema.base import ResolvedTableConfig
-from ibis import BaseBackend, Table
-import ibis
-from ibis.expr.datatypes import Struct, Array, Timestamp, DataType
-from ibis import Expr, _
-import warnings
-from ibis.common.exceptions import IbisTypeError
-import warnings
 
 
-class TestTableSchema(AbstractTableTest):
+class TableSchemaTest(AbstractTableTest):
+    """_summary_
+
+    Args:
+        AbstractTableTest: _description_
+    """
 
     def __init__(self, table_config: ResolvedTableConfig) -> None:
+        """_summary_
+
+        Args:
+            table_config: _description_
+        """
         super().__init__(table_config)
 
     def _test(self, *, connection: BaseBackend):
@@ -31,12 +42,18 @@ class TestTableSchema(AbstractTableTest):
         excess_columns = actual_columns.difference(schema_columns)
         if len(excess_columns) > 0:
             raise WarnTest(
-                f"{len(excess_columns)} unexpected columns found in table {self.table.get_name()}"
+                f"{len(excess_columns)} unexpected columns found in table"
+                f" {self.table.get_name()}"
             )
         # Schema table
 
 
-class TestTableCount(AbstractTableTest):
+class TableCountTest(AbstractTableTest):
+    """_summary_
+
+    Args:
+        AbstractTableTest: _description_
+    """
 
     def __init__(
         self,
@@ -44,6 +61,13 @@ class TestTableCount(AbstractTableTest):
         max_rows_factor: int,
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
     ) -> None:
+        """_summary_
+
+        Args:
+            table_config: _description_
+            max_rows_factor: _description_
+            severity: _description_. Defaults to AMLAITestSeverity.ERROR.
+        """
         self.max_rows_factor = max_rows_factor
         self.scale = ConfigSingleton.get().scale
         super().__init__(table_config, severity)
@@ -57,17 +81,24 @@ class TestTableCount(AbstractTableTest):
             raise FailTest(f"Table {self.table.get_name()} is empty")
         if count > max_rows:
             raise FailTest(
-                f"Table {self.table.get_name()} has more rows than seems feasible: {count} vs maximum {max_rows}. "
-                "To stop this error triggering, review the data provided or increase the scale setting"
+                f"Table {self.table.get_name()} has more rows than seems feasible:"
+                f" {count} vs maximum {max_rows}. To stop this error triggering, review"
+                " the data provided or increase the scale setting"
             )
         if count > (max_rows) * 0.9:
             raise WarnTest(
-                f"Table {self.table.get_name()} is close to the feasibility ceiling: {count} vs maximum {max_rows}. "
-                "To stop this error triggering, review the data provided or increase the scale setting"
+                f"Table {self.table.get_name()} is close to the feasibility ceiling:"
+                f" {count} vs maximum {max_rows}. To stop this error triggering, review"
+                " the data provided or increase the scale setting"
             )
 
 
-class TestPrimaryKeyColumns(AbstractTableTest):
+class PrimaryKeyColumnsTest(AbstractTableTest):
+    """_summary_
+
+    Args:
+        AbstractTableTest: _description_
+    """
 
     def __init__(
         self,
@@ -75,6 +106,12 @@ class TestPrimaryKeyColumns(AbstractTableTest):
         table_config: ResolvedTableConfig,
         unique_combination_of_columns: List[str],
     ) -> None:
+        """_summary_
+
+        Args:
+            table_config: _description_
+            unique_combination_of_columns: _description_
+        """
         super().__init__(table_config=table_config)
         # Check columns provided are in table
         for col in unique_combination_of_columns:
@@ -93,7 +130,12 @@ class TestPrimaryKeyColumns(AbstractTableTest):
             raise FailTest(f"Found {n_total - n_pairs} duplicate values")
 
 
-class TestCountValidityStartTimeChanges(AbstractTableTest):
+class CountValidityStartTimeChangesTest(AbstractTableTest):
+    """_summary_
+
+    Args:
+        AbstractTableTest: _description_
+    """
 
     def __init__(
         self,
@@ -103,12 +145,23 @@ class TestCountValidityStartTimeChanges(AbstractTableTest):
         warn=500,
         error=1000,
     ) -> None:
+        """_summary_
+
+        Args:
+            table_config: _description_
+            entity_ids: _description_
+            warn: _description_. Defaults to 500.
+            error: _description_. Defaults to 1000.
+
+        Raises:
+            ValueError: _description_
+        """
         super().__init__(table_config=table_config)
         self.warn = warn
         self.error = error
         self.entity_ids = entity_ids
         if warn > error:
-            raise Exception("")
+            raise ValueError(f"Warn value: {warn} cannot be greater than Error value: {error}")
 
     def _test(self, *, connection: BaseBackend) -> None:
         # References to validity_start_time are unnecessary, but they do ensure that the column is present on the table
@@ -117,33 +170,50 @@ class TestCountValidityStartTimeChanges(AbstractTableTest):
             min_validity_start_time=_.validity_start_time.min(),
             max_validity_start_time=_.validity_start_time.max(),
         )
-        warn_number = counted.count(_.count_per_pk > self.warn)
-        error_number = counted.count(_.count_per_pk > self.error)
+        warn_number = counted.filter(_.count_per_pk > self.warn)
+        error_number = counted.filter(_.count_per_pk > self.error)
 
         result = connection.execute(
-            self.table.select(warn_number=warn_number, error_number=error_number)
+            self.table.select(
+                warn_number=warn_number.count(), error_number=error_number.count()
+            )
         )
         if len(result.index) == 0:
-            raise Exception("No rows in table")
+            raise FailTest("No rows in table")
 
         no_errors = result["error_number"][0]
         no_warnings = result["warn_number"][0]
 
         if result["error_number"][0] > 0:
             raise FailTest(
-                f"{no_errors} entities found with more than {self.error} validity_start_time changes in table {self.table}"
+                f"{no_errors} entities found with more than"
+                f" {self.error} validity_start_time changes in table {self.table}",
+                expr=error_number,
             )
         if result["warn_number"][0] > 0:
             raise WarnTest(
-                f"{no_warnings} entities found with more than {self.warn} validity_start_time changes in table {self.table}"
+                f"{no_warnings} entities found with more than"
+                f" {self.warn} validity_start_time changes in table {self.table}",
+                expr=warn_number,
             )
 
 
-class TestConsecutiveEntityDeletions(AbstractTableTest):
+class ConsecutiveEntityDeletionsTest(AbstractTableTest):
+    """_summary_
+
+    Args:
+        AbstractTableTest: _description_
+    """
 
     def __init__(
         self, *, table_config: ResolvedTableConfig, entity_ids: List[str]
     ) -> None:
+        """_summary_
+
+        Args:
+            table_config: _description_
+            entity_ids: _description_
+        """
         super().__init__(table_config=table_config, severity=AMLAITestSeverity.WARN)
         self.entity_ids = entity_ids
 
@@ -157,12 +227,18 @@ class TestConsecutiveEntityDeletions(AbstractTableTest):
         results = connection.execute(expr)
         if results > 0:
             raise FailTest(
-                f"{results} rows found with consecutive entity deletions. Entities should generally only be deleted once.",
+                f"{results} rows found with consecutive entity deletions. Entities"
+                " should generally only be deleted once.",
                 expr=expr,
             )
 
 
-class TestOrphanDeletions(AbstractTableTest):
+class OrphanDeletionsTest(AbstractTableTest):
+    """_summary_
+
+    Args:
+        AbstractTableTest: _description_
+    """
     def __init__(
         self,
         *,
@@ -170,6 +246,13 @@ class TestOrphanDeletions(AbstractTableTest):
         entity_ids: List[str],
         severity: AMLAITestSeverity = AMLAITestSeverity.WARN,
     ) -> None:
+        """_summary_
+
+        Args:
+            table_config: _description_
+            entity_ids: _description_
+            severity: _description_. Defaults to AMLAITestSeverity.WARN.
+        """
         super().__init__(table_config=table_config, severity=severity)
         self.entity_ids = entity_ids
 
@@ -193,12 +276,13 @@ class TestOrphanDeletions(AbstractTableTest):
         results = connection.execute(expr.count())
         if results > 0:
             raise FailTest(
-                f"{results} rows found with orphaned entity deletions. These rows had no previously values where is_entity_deleted = True",
+                f"{results} rows found with orphaned entity deletions. These rows had"
+                " no previously values where is_entity_deleted = True",
                 expr=expr.select(*self.entity_ids),
             )
 
 
-class TestColumnPresence(AbstractColumnTest):
+class ColumnPresenceTest(AbstractColumnTest):
 
     def _test(self, *, connection: BaseBackend):
         try:
@@ -208,10 +292,20 @@ class TestColumnPresence(AbstractColumnTest):
 
 
 class FieldComparisonInterrupt(Exception):
+    """_summary_
+
+    Args:
+        Exception: _description_
+    """
     pass
 
 
-class TestColumnType(AbstractColumnTest):
+class ColumnTypeTest(AbstractColumnTest):
+    """_summary_
+
+    Args:
+        AbstractColumnTest: _description_
+    """
 
     def _test(self, *, connection: BaseBackend):
         """_summary_
@@ -239,21 +333,24 @@ class TestColumnType(AbstractColumnTest):
                 # If no expcetion
                 warnings.warn(
                     message=WarnTest(
-                        f"Additional fields found in structs in {self.column}. Full path to the extra fields were: {extra_fields}"
+                        f"Additional fields found in structs in {self.column}. Full"
+                        f" path to the extra fields were: {extra_fields}"
                     )
                 )
                 return
-            except FieldComparisonInterrupt as e:
+            except FieldComparisonInterrupt:
                 pass
             if schema_data_type.nullable and not actual_type.nullable:
                 warnings.warn(
                     message=WarnTest(
-                        f"Schema is stricter than required: expected column {self.column} to be {schema_data_type}, found {actual_type}"
+                        "Schema is stricter than required: expected column"
+                        f" {self.column} to be {schema_data_type}, found {actual_type}"
                     )
                 )
                 return
             raise FailTest(
-                f"Expected column {self.column} to be {schema_data_type}, found {actual_type}"
+                f"Expected column {self.column} to be {schema_data_type}, found"
+                f" {actual_type}",
             )
 
     @classmethod
@@ -335,17 +432,15 @@ class TestColumnType(AbstractColumnTest):
             # so this shouldn't happen, but it could happen in another
             # database
             if a.timezone and a.timezone != "UTC":
-                warnings.warn(
-                    f"""Timezone of column {a.name} is not UTC. This
+                warnings.warn(f"""Timezone of column {a.name} is not UTC. This
                               could cause problems with bigquery, since the timezone
-                              is always UTC"""
-                )
+                              is always UTC""")
             # Scale varies by database
             return a.copy(nullable=nullable, scale=None, timezone=None)
         return a.copy(nullable=nullable)
 
 
-class TestColumnValues(AbstractColumnTest):
+class ColumnValuesTest(AbstractColumnTest):
 
     def __init__(
         self,
@@ -376,12 +471,13 @@ class TestColumnValues(AbstractColumnTest):
 
         if result > 0:
             raise FailTest(
-                f"{result} rows found with invalid values. Valid values are: {' '.join(self.values)}.",
+                f"{result} rows found with invalid values. Valid values are:"
+                f" {" ".join(self.values)}.",
                 expr=expr,
             )
 
 
-class TestFieldNeverWhitespaceOnly(AbstractColumnTest):
+class FieldNeverWhitespaceOnlyTest(AbstractColumnTest):
 
     def filter_null_parent_fields(self):
         # If subfields exist (struct or array), we need to compare the nullness of
@@ -409,16 +505,20 @@ class TestFieldNeverWhitespaceOnly(AbstractColumnTest):
 
         predicates = [field.strip() == "", *self.filter_null_parent_fields()]
 
-        count_blank = connection.execute(table.filter(predicates).count())
+        expr = table.filter(predicates)
+
+        count_blank = connection.execute(expr.count())
 
         if count_blank == 0:
             return
         raise FailTest(
-            f"{count_blank} rows found with whitespace-only values of {self.column} in table {self.table.get_name()}"
+            f"{count_blank} rows found with whitespace-only values of {self.column} in"
+            f" table {self.table.get_name()}",
+            expr=expr,
         )
 
 
-class TestFieldNeverNull(TestFieldNeverWhitespaceOnly):
+class FieldNeverNullTest(FieldNeverWhitespaceOnlyTest):
 
     def _test(self, *, connection: BaseBackend):
         """_summary_
@@ -433,17 +533,20 @@ class TestFieldNeverNull(TestFieldNeverWhitespaceOnly):
         table, field = resolve_field(self.table, self.column)
 
         predicates = [field.isnull(), *self.filter_null_parent_fields()]
+        expr = table.filter(predicates)
 
-        count_null = connection.execute(table.filter(predicates).count())
+        count_null = connection.execute(expr.count())
 
         if count_null == 0:
             return
         raise FailTest(
-            f"{count_null} rows found with null values of {self.column} in table {self.table.get_name()}"
+            f"{count_null} rows found with null values of {self.column} in table"
+            f" {self.table.get_name()}",
+            expr=expr,
         )
 
 
-class TestDatetimeFieldNeverJan1970(TestFieldNeverWhitespaceOnly):
+class DatetimeFieldNeverJan1970Test(FieldNeverWhitespaceOnlyTest):
 
     def _test(self, *, connection: BaseBackend):
         """_summary_
@@ -458,17 +561,20 @@ class TestDatetimeFieldNeverJan1970(TestFieldNeverWhitespaceOnly):
         table, field = resolve_field(self.table, self.column)
 
         predicates = [field.epoch_seconds() == 0, *self.filter_null_parent_fields()]
+        expr = table.filter(predicates)
 
-        count_null = connection.execute(table.filter(predicates).count())
+        count_null = connection.execute(expr.count())
 
         if count_null == 0:
             return
         raise FailTest(
-            f"{count_null} rows found with date on 1970-01-01 {self.column} in table {self.table.get_name()}. This value is often nullable"
+            f"{count_null} rows found with date on 1970-01-01 {self.column} in table"
+            f" {self.table.get_name()}. This value is often nullable",
+            expr=expr,
         )
 
 
-class TestNullIf(AbstractColumnTest):
+class NullIfTest(AbstractColumnTest):
 
     def __init__(
         self, *, table_config: ResolvedTableConfig, column: str, expression: Expr
@@ -481,29 +587,31 @@ class TestNullIf(AbstractColumnTest):
         return self.expression.get_name()
 
     def _test(self, *, connection: BaseBackend):
-        result = connection.execute(
-            self.table.filter(self.expression).count(self.table[self.column].notnull())
+        expr = self.table.filter(self.expression).filter(
+            self.table[self.column].notnull()
         )
+        result = connection.execute(expr.count())
         if result > 0:
             raise FailTest(
-                f"{result} rows not fulfilling criteria {ibis.to_sql(self.expression)}"
+                f"{result} rows not fulfilling criteria {ibis.to_sql(self.expression)}",
+                expr=expr,
             )
 
 
-class TestAcceptedRange(AbstractColumnTest):
+class AcceptedRangeTest(AbstractColumnTest):
 
     def __init__(
         self,
         *,
         table_config: ResolvedTableConfig,
         column: str,
-        min: Optional[int] = None,
-        max: Optional[int] = None,
+        min_value: Optional[int] = None,
+        max_value: Optional[int] = None,
         validate: bool = True,
     ) -> None:
         super().__init__(table_config=table_config, column=column, validate=validate)
-        self.min = min
-        self.max = max
+        self.min = min_value
+        self.max = max_value
 
     def _test(self, *, connection: BaseBackend):
         table, field = resolve_field(self.table, self.column)
@@ -512,15 +620,18 @@ class TestAcceptedRange(AbstractColumnTest):
         max_pred = field > self.max if self.max is not None else False
 
         predicates = [min_pred | max_pred]
+        expr = table.filter(predicates)
 
-        result = connection.execute(table.filter(predicates).count())
+        result = connection.execute(expr.count())
         if result > 0:
             raise FailTest(
-                f"{result} rows in column {self.column} in table {self.table} were outside of inclusive range {self.min} - {self.max}"
+                f"{result} rows in column {self.column} in table {self.table} were"
+                f" outside of inclusive range {self.min} - {self.max}",
+                expr=expr,
             )
 
 
-class TestReferentialIntegrity(AbstractTableTest):
+class ReferentialIntegrityTest(AbstractTableTest):
 
     def __init__(
         self,
@@ -533,30 +644,30 @@ class TestReferentialIntegrity(AbstractTableTest):
         super().__init__(table_config=table_config, severity=severity)
         self.to_table_config = to_table_config
         self.to_table = to_table_config.table
-        if isinstance(keys, list):
-            self.keys = keys
-        else:
-            # TODO: Validate provided keys
-            raise Exception("Expecting a list of keys present in both tables")
+        self.keys = keys
 
     def _test(self, *, connection: BaseBackend):
-        result = connection.execute(
-            self.table.select(*[self.keys]).anti_join(self.to_table, self.keys).count()
-        )
+        # The superclass does not skip the test if the to_table is optional,
+        # which it may be. If it is, skip the test.
+        check_table_exists(connection=connection, table_config=self.to_table_config)
+        expr = self.table.select(*[self.keys]).anti_join(self.to_table, self.keys)
+        result = connection.execute(expr.count())
         if result > 0:
             msg = f"""{result} keys found in table {self.table.get_name()} which were not in {self.to_table.get_name()}. 
                            Key column(s) were {" ".join(self.keys)}"""
-            raise FailTest(msg)
+            raise FailTest(msg, expr=expr)
         return
 
 
-class TestTemporalReferentialIntegrity(AbstractTableTest):
+class TemporalReferentialIntegrityTest(AbstractTableTest):
     """_summary_
 
 
     Args:
         AbstractTableTest (_type_): _description_
     """
+
+    MAX_DATETIME_VALUE = datetime.datetime(9995, 1, 1, tzinfo=datetime.UTC)
 
     def __init__(
         self,
@@ -588,7 +699,7 @@ class TestTemporalReferentialIntegrity(AbstractTableTest):
         self.tolerance = tolerance
         self.key = key
 
-    def get_entity_state_windows(self, table: Table):
+    def get_entity_state_windows(self, table_config: ResolvedTableConfig):
         # For a table with flipping is_entity_deleted:
         #
         # | party_id | validity_start_time | is_entity_deleted |
@@ -599,6 +710,7 @@ class TestTemporalReferentialIntegrity(AbstractTableTest):
         #
         # | party_id | window_id  | window_start_time | window_end_time   | is_entity_deleted
         # |    1     |     0      |      00:00:00     |      null         |      False
+        table = table_config.table
         w = ibis.window(group_by=self.key, order_by="validity_start_time")
         # is_entity_deleted is a nullable field, so we assume if it is null, we mean False
         cte0 = ibis.coalesce(table.is_entity_deleted, False)
@@ -625,19 +737,39 @@ class TestTemporalReferentialIntegrity(AbstractTableTest):
             )
         )
 
-        return (
-            # Only return useful rows, not ones where the entities deletion state didn't change
-            cte2.filter(
-                (_.previous_row_validity_start_time == None)  # first row
-                | (_.next_row_validity_start_time == None)  # last row
-                | (_.is_entity_deleted != _.previous_entity_deleted)  # state flips
-            ).group_by(self.key)
-            # At the moment, we only pay attention to the first/last dates, not where there are multiple flips
-            .agg(
-                first_date=_.validity_start_time.min(),  # null handling not required as validity_start_time is a non-nullable field
-                last_date=_.validity_start_time.max(),
+        # Only return useful rows, not ones where the entities deletion state didn't change
+        cte3 = cte2.filter(
+            (_.previous_row_validity_start_time == None)  # first row
+            | (_.next_row_validity_start_time == None)  # last row
+            | (_.is_entity_deleted != _.previous_entity_deleted)  # state flips
+        ).group_by(self.key)
+
+        if table_config.is_open_ended_entity:
+            # For open ended entities, e.g. parties, we need to assume the entity persists until it is deleted.
+            # This means that the maximum validity date time
+            return (
+                cte3
+                # At the moment, we only pay attention to the first/last dates, not where there are multiple flips
+                .agg(
+                    first_date=_.validity_start_time.min(),  # null handling not required as validity_start_time is a non-nullable field
+                    last_date=ibis.ifelse(
+                        condition=_.next_row_validity_start_time.isnull()
+                        & _.is_entity_deleted.negate(),
+                        true_expr=TemporalReferentialIntegrityTest.MAX_DATETIME_VALUE,
+                        false_expr=_.validity_start_time,
+                    ).max(),  # if the only row and the row isn't yet deleted, we need to make the validity end time far into the future
+                )
             )
-        )
+        else:
+            # The entity's validity is counted only as of the last datetime provided
+            return (
+                cte3
+                # At the moment, we only pay attention to the first/last dates, not where there are multiple flips
+                .agg(
+                    first_date=_.validity_start_time.min(),
+                    last_date=_.validity_start_time.max(),
+                )
+            )
 
     def _test(self, *, connection: BaseBackend):
         # Table 1
@@ -652,8 +784,8 @@ class TestTemporalReferentialIntegrity(AbstractTableTest):
         # |    1     |     1      |      01:00:00     |      02:00:00     |      True
         # |    1     |     2      |      02:00:00     |        null       |      False
         # Get the first and last validity periods of the entities in both tables
-        tbl = self.get_entity_state_windows(self.table)
-        totbl = self.get_entity_state_windows(self.to_table)
+        tbl = self.get_entity_state_windows(self.table_config)
+        totbl = self.get_entity_state_windows(self.to_table_config)
         # First, associate keys by joining
         # self.table.mutate(row_number=ibis.row_number().over(group_by=_.party_id, ))
         # We want to find items where the
@@ -702,27 +834,56 @@ class TestTemporalReferentialIntegrity(AbstractTableTest):
         # Anti-join, only return rows which aren't in both.
         # This does have the side effect of not being able to differentiate between
         # missing keys and problems with the date alignment
-        join_check = tbl.anti_join(
+        # join_check = tbl.anti_join(
+        #     right=totbl,
+        #     predicates=(
+        #         (tbl[self.key] == totbl[self.key])
+        #         # If this item is before the first date on the base table
+        #         & tbl.first_date.between(
+        #             lower=first_date_with_tolerance, upper=last_date_with_tolerance
+        #         )
+        #         &
+        #         # If this item is after the last date on the base table
+        #         tbl.last_date.between(
+        #             lower=first_date_with_tolerance, upper=last_date_with_tolerance
+        #         )
+        #     ),
+        # )
+
+        expr = tbl.join(
             right=totbl,
             predicates=(
                 (tbl[self.key] == totbl[self.key])
                 # If this item is before the first date on the base table
-                & tbl.first_date.between(
-                    lower=first_date_with_tolerance, upper=last_date_with_tolerance
+                & (
+                    tbl.first_date.between(
+                        lower=first_date_with_tolerance, upper=last_date_with_tolerance
+                    ).negate()
+                    |
+                    # If this item is after the last date on the base table
+                    tbl.last_date.between(
+                        lower=first_date_with_tolerance, upper=last_date_with_tolerance
+                    ).negate()
                 )
-                &
-                # If this item is after the last date on the base table
-                tbl.last_date.between(
-                    lower=first_date_with_tolerance, upper=last_date_with_tolerance
-                )
+            ),
+        ).mutate(
+            last_date=ibis.ifelse(
+                condition=_.last_date == self.MAX_DATETIME_VALUE,
+                true_expr=None,
+                false_expr=_.last_date,
+            ),
+            last_date_right=ibis.ifelse(
+                condition=_.last_date_right == self.MAX_DATETIME_VALUE,
+                true_expr=None,
+                false_expr=_.last_date_right,
             ),
         )
 
-        result = connection.execute(expr=join_check.count())
+        result = connection.execute(expr=expr.count())
         if result > 0:
             msg = f"""{result} keys found in table {self.table.get_name()} which were either not in {self.to_table.get_name()},
                         or had inconsistent time periods, where validity_start_time and is_entity deleted keys in {self.table.get_name()}
                          did not correspond to the time periods for the same entity in {self.to_table.get_name()}
                            """
-            raise FailTest(msg, expr=join_check)
+            raise FailTest(msg, expr=expr)
         return

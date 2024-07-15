@@ -1,9 +1,10 @@
-from amlaidatatests.base import FailTest
-import amlaidatatests.base
-from amlaidatatests.schema.base import ResolvedTableConfig
 import ibis
 import pytest
-from ibis.expr.datatypes import String, Struct, Int64, Array, Timestamp
+from ibis.expr.datatypes import Array, Int64, String, Struct, Timestamp
+
+import amlaidatatests.base
+from amlaidatatests.base import FailTest, SkipTest
+from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests import common
 
 
@@ -16,7 +17,7 @@ def test_missing_required_column(test_connection, create_test_table):
     table_config = ResolvedTableConfig(table=table)
 
     with pytest.raises(FailTest, match=r"Missing Required Column: b"):
-        t = common.TestColumnPresence(table_config=table_config, column="b")
+        t = common.ColumnPresenceTest(table_config=table_config, column="b")
         t(test_connection)
 
 
@@ -24,7 +25,9 @@ def test_missing_required_column(test_connection, create_test_table):
 # way of directly testing this because pytest does not expose the
 # Skipped Exception it uses internally so we can't catch it without
 # accessing the internal pytest API
-def test_missing_optional_column_skips_test(test_connection, create_test_table):
+def test_missing_optional_column_skips_test(
+    test_connection, create_test_table, test_raise_on_skip
+):
     tbl = create_test_table(ibis.memtable(data=[{"b": "alpha"}], schema={"b": str}))
     table = ibis.table(
         name=tbl, schema={"a": String(nullable=True), "b": String(nullable=False)}
@@ -32,9 +35,9 @@ def test_missing_optional_column_skips_test(test_connection, create_test_table):
 
     table_config = ResolvedTableConfig(table=table)
 
-    t = common.TestColumnPresence(table_config=table_config, column="a")
-    t(test_connection)
-    raise Exception("This test should always be skipped")
+    t = common.ColumnPresenceTest(table_config=table_config, column="a")
+    with pytest.raises(SkipTest, match=r"Skipping running test on non-existent"):
+        t(test_connection)
 
 
 def test_all_columns_present(test_connection, create_test_table):
@@ -48,7 +51,7 @@ def test_all_columns_present(test_connection, create_test_table):
 
     table_config = ResolvedTableConfig(table=table)
 
-    t = common.TestColumnPresence(table_config=table_config, column="a")
+    t = common.ColumnPresenceTest(table_config=table_config, column="a")
     t(test_connection)
 
 
@@ -66,7 +69,7 @@ def test_ignores_order_of_struct_columns(test_connection, create_test_table) -> 
 
     table_config = ResolvedTableConfig(table=table)
 
-    t = common.TestColumnType(table_config=table_config, column="a")
+    t = common.ColumnTypeTest(table_config=table_config, column="a")
     t(test_connection)
 
 
@@ -82,7 +85,7 @@ def test_excess_field_in_struct_warns(test_connection, create_test_table) -> Non
 
     table_config = ResolvedTableConfig(table=table)
 
-    t = common.TestColumnType(table_config=table_config, column="a")
+    t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.warns(
         amlaidatatests.base.WarnTest, match="Additional fields found in structs in a"
     ):
@@ -103,10 +106,13 @@ def test_missing_field_in_struct(test_connection, create_test_table) -> None:
 
     table_config = ResolvedTableConfig(table=table)
 
-    t = common.TestColumnType(table_config=table_config, column="a")
+    t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.raises(
         common.FailTest,
-        match="Expected column a to be struct<1: string, 3: string>, found struct<2: string, 1: string>",
+        match=(
+            "Expected column a to be struct<1: string, 3: string>, found struct<2:"
+            " string, 1: string>"
+        ),
     ):
         t(test_connection)
 
@@ -123,7 +129,7 @@ def test_excess_field_in_embedded_struct(test_connection, create_test_table) -> 
 
     table_config = ResolvedTableConfig(table=table)
 
-    t = common.TestColumnType(table_config=table_config, column="a")
+    t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.warns(
         amlaidatatests.base.WarnTest, match="Additional fields found in structs in a"
     ):
@@ -131,7 +137,7 @@ def test_excess_field_in_embedded_struct(test_connection, create_test_table) -> 
 
 
 def test_path_from_excess_field(test_connection, create_test_table) -> None:
-    t = common.TestColumnType._find_extra_struct_fields(
+    t = common.ColumnTypeTest._find_extra_struct_fields(
         expected_type=Struct(fields={"1": String()}),
         actual_type=Struct(fields={"1": String(), "2": String()}),
         path="col",
@@ -142,7 +148,7 @@ def test_path_from_excess_field(test_connection, create_test_table) -> None:
 def test_path_from_embedded_excess_struct_field(
     test_connection, create_test_table
 ) -> None:
-    t = common.TestColumnType._find_extra_struct_fields(
+    t = common.ColumnTypeTest._find_extra_struct_fields(
         expected_type=Struct(fields={"1": String()}),
         actual_type=Struct(fields={"1": String(), "2": Struct(fields={"3": String()})}),
         path="col",
@@ -153,7 +159,7 @@ def test_path_from_embedded_excess_struct_field(
 def test_path_from_excess_field_in_embedded_struct(
     test_connection, create_test_table
 ) -> None:
-    t = common.TestColumnType._find_extra_struct_fields(
+    t = common.ColumnTypeTest._find_extra_struct_fields(
         expected_type=Struct(
             fields={"1": String(), "2": Struct(fields={"3": String()})}
         ),
@@ -175,7 +181,7 @@ def test_one_excess_column(test_connection, create_test_table):
 
     table_config = ResolvedTableConfig(table=table)
 
-    t = common.TestTableSchema(table_config=table_config)
+    t = common.TableSchemaTest(table_config=table_config)
     with pytest.warns(
         amlaidatatests.base.WarnTest, match="1 unexpected columns found in table"
     ):
@@ -189,7 +195,7 @@ def test_no_warn_on_missing_column_only(test_connection, create_test_table):
     table = ibis.table(name=tbl, schema={"a": String(), "b": String()})
     table_config = ResolvedTableConfig(table=table)
 
-    t = common.TestTableSchema(table_config=table_config)
+    t = common.TableSchemaTest(table_config=table_config)
     t(test_connection)
 
 
@@ -204,7 +210,7 @@ def test_two_excess_columns(test_connection, create_test_table):
 
     table_config = ResolvedTableConfig(table=table)
 
-    t = common.TestTableSchema(table_config=table_config)
+    t = common.TableSchemaTest(table_config=table_config)
     with pytest.warns(
         amlaidatatests.base.WarnTest, match="2 unexpected columns found in table"
     ):
@@ -219,7 +225,7 @@ def test_column_wrong_type(test_connection, create_test_table):
 
     table_config = ResolvedTableConfig(table=schema)
 
-    t = common.TestColumnType(table_config=table_config, column="a")
+    t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.raises(
         common.FailTest, match="Expected column a to be int64, found string"
     ):
@@ -234,7 +240,7 @@ def test_column_non_nullable_type(test_connection, create_test_table):
 
     table_config = ResolvedTableConfig(table=table)
 
-    t = common.TestColumnType(table_config=table_config, column="a")
+    t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.raises(
         common.FailTest, match="Expected column a to be !string, found string"
     ):
@@ -249,10 +255,13 @@ def test_column_too_strict(test_connection, create_test_table):
 
     table_config = ResolvedTableConfig(table=table)
 
-    t = common.TestColumnType(table_config=table_config, column="a")
+    t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.warns(
         amlaidatatests.base.WarnTest,
-        match="Schema is stricter than required: expected column a to be string, found !string",
+        match=(
+            "Schema is stricter than required: expected column a to be string, found"
+            " !string"
+        ),
     ):
         t(test_connection)
 
@@ -272,5 +281,5 @@ def test_column_array(test_connection, create_test_table):
 
     table_config = ResolvedTableConfig(table=table)
 
-    t = common.TestColumnType(table_config=table_config, column="a")
+    t = common.ColumnTypeTest(table_config=table_config, column="a")
     t(test_connection)

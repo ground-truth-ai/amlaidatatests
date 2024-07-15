@@ -1,19 +1,34 @@
 import argparse
 from dataclasses import dataclass, fields
 from typing import Any, Optional
-from omegaconf import OmegaConf
-from .singleton import Singleton
 from urllib.parse import parse_qsl, urlparse
 
+from omegaconf import OmegaConf
 
-def infer_database(connection_str: str):
-    """Infer the database from the provided connection string"""
+from .singleton import Singleton
+
+
+def infer_database(connection_str: str) -> str | None:
+    """Infer the database from the provided connection string
+
+    For example if the connection string provided is:
+    bigquery://my-project/my_dataset?location=us-central1, this function
+    will return my_dataset
+
+    Args:
+        connection_str: An ibis connection string
+
+    Returns:
+        The inferred database, or None
+    """
     parsed_url = urlparse(connection_str)
-    kwargs = dict(parse_qsl(parsed_url.query))
 
     if parsed_url.scheme == "bigquery":
         # "/my_bq_input_dataset" -> "my_bq_input_dataset"
         return parsed_url.path[1:]
+    if parsed_url.scheme == "duckdb":
+        return None
+    raise ValueError(f"Unsupported database: {parsed_url.scheme}")
 
 
 OmegaConf.register_new_resolver("infer_database", infer_database)
@@ -22,9 +37,10 @@ OmegaConf.register_new_resolver("infer_database", infer_database)
 @dataclass(kw_only=True)
 class DatatestConfig:
     id: Optional[str] = None
-    """ Unique identifier for """
+    """ Unique identifier for a set of associated tables"""
 
     connection_string: str
+    """ The ibis connection string """
 
     schema_version: str = "v1"
     table_name_template: str = "\\${table}_\\${id}"
@@ -96,7 +112,6 @@ class IngestConfigAction(argparse.Action):
             conf = OmegaConf.merge(STRUCTURED_CONFIG, current_conf, conf)
         else:
             # TODO: We're not handling nested configuration here
-            #
             conf_for_param = {option_string.replace("--", ""): values}
             conf = OmegaConf.merge(STRUCTURED_CONFIG, current_conf, conf_for_param)
         ConfigSingleton().set_config(conf)

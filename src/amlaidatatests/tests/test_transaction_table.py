@@ -1,3 +1,8 @@
+from amlaidatatests.utils import get_columns
+import pytest
+
+from amlaidatatests.base import AbstractColumnTest, AbstractTableTest
+from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.test_generators import (
     entity_columns,
     get_entity_mutation_tests,
@@ -6,9 +11,6 @@ from amlaidatatests.test_generators import (
     non_nullable_fields,
 )
 from amlaidatatests.tests import common
-from amlaidatatests.schema.utils import resolve_table_config
-from amlaidatatests.base import AbstractColumnTest, AbstractTableTest, AMLAITestSeverity
-import pytest
 
 TABLE_CONFIG = resolve_table_config("transaction")
 
@@ -21,7 +23,7 @@ def test_table(connection, test: AbstractTableTest):
 
 
 def test_primary_keys(connection):
-    test = common.TestPrimaryKeyColumns(
+    test = common.PrimaryKeyColumnsTest(
         table_config=TABLE_CONFIG,
         unique_combination_of_columns=["transaction_id", "validity_start_time"],
     )
@@ -29,28 +31,42 @@ def test_primary_keys(connection):
 
 
 # For each column in the schema, check all columns are all present
-@pytest.mark.parametrize("column", TABLE_CONFIG.table.schema().fields.keys())
+@pytest.mark.parametrize("column", get_columns(TABLE_CONFIG))
 def test_column_presence(connection, column: str):
-    test = common.TestColumnPresence(table_config=TABLE_CONFIG, column=column)
+    test = common.ColumnPresenceTest(table_config=TABLE_CONFIG, column=column)
     test(connection)
 
 
 # For each column in the schema, check all columns are the correct type
-@pytest.mark.parametrize("column", TABLE_CONFIG.table.schema().fields.keys())
+@pytest.mark.parametrize("column", get_columns(TABLE_CONFIG))
 def test_column_type(connection, column):
-    test = common.TestColumnType(table_config=TABLE_CONFIG, column=column)
+    test = common.ColumnTypeTest(table_config=TABLE_CONFIG, column=column)
+    test(connection)
+
+@pytest.mark.parametrize("column", get_columns(TABLE_CONFIG))
+def test_datetime_consistency(connection, column):
+    test = common.ColumnTypeTest(table_config=TABLE_CONFIG, column=column)
     test(connection)
 
 
 @pytest.mark.parametrize("column", non_nullable_fields(TABLE_CONFIG.table.schema()))
 def test_non_nullable_fields(connection, column):
-    test = common.TestFieldNeverNull(table_config=TABLE_CONFIG, column=column)
+    test = common.FieldNeverNullTest(table_config=TABLE_CONFIG, column=column)
     test(connection)
+
+
+def test_temporal_referential_integrity_account_party_link(connection):
+    to_table_config = resolve_table_config("account_party_link")
+    test = common.TemporalReferentialIntegrityTest(
+        table_config=TABLE_CONFIG, to_table_config=to_table_config, key="account_id"
+    )
+    test(connection)
+
 
 
 def test_referential_integrity_account_party_link(connection):
     to_table_config = resolve_table_config("account_party_link")
-    test = common.TestReferentialIntegrity(
+    test = common.ReferentialIntegrityTest(
         table_config=TABLE_CONFIG, to_table_config=to_table_config, keys=["account_id"]
     )
     test(connection)
@@ -67,12 +83,12 @@ def test_entity_mutation_tests(connection, test: AbstractColumnTest):
 @pytest.mark.parametrize(
     "test",
     [
-        common.TestColumnValues(
+        common.ColumnValuesTest(
             column="type",
             values=["WIRE", "CASH", "CHECK", "CARD", "OTHER"],
             table_config=TABLE_CONFIG,
         ),
-        common.TestColumnValues(
+        common.ColumnValuesTest(
             column="direction", values=["DEBIT", "CREDIT"], table_config=TABLE_CONFIG
         ),
     ],

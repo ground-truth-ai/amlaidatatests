@@ -1,22 +1,23 @@
 from typing import List, Union
+
+from ibis import Schema
+from ibis.expr.datatypes import Array, DataType, Struct
+
+from amlaidatatests.base import AbstractBaseTest, AbstractColumnTest, AMLAITestSeverity, resolve_field
 from amlaidatatests.io import get_valid_currency_codes
 from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.schema.v1.common import CurrencyValue, ValueEntity
-from amlaidatatests.base import AbstractColumnTest, AMLAITestSeverity, resolve_field
 from amlaidatatests.tests.common import (
-    TestAcceptedRange,
-    TestColumnValues,
-    TestConsecutiveEntityDeletions,
-    TestCountValidityStartTimeChanges,
-    TestFieldNeverWhitespaceOnly,
-    TestFieldNeverNull,
-    TestOrphanDeletions,
-    TestTableCount,
-    TestTableSchema,
+    AcceptedRangeTest,
+    ColumnValuesTest,
+    ConsecutiveEntityDeletionsTest,
+    CountValidityStartTimeChangesTest,
+    FieldNeverNullTest,
+    FieldNeverWhitespaceOnlyTest,
+    OrphanDeletionsTest,
+    TableCountTest,
+    TableSchemaTest,
 )
-from ibis import Schema, Table
-from ibis.expr.datatypes import Array, DataType, Struct
-
 
 ENTITIES = {"CurrencyValue": CurrencyValue(), "ValueEntity": ValueEntity()}
 
@@ -27,39 +28,39 @@ def get_entity_tests(
     """_summary_
 
     Args:
-        table (Table): _description_
-        entity_name (str): _description_
+        table: _description_
+        entity_name: _description_
 
     Raises:
-        Exception: _description_
+        _description_
 
     Returns:
-        list[AbstractColumnTest]: _description_
+        _description_
     """
     if entity_name == "CurrencyValue":
         return [
-            TestAcceptedRange(
+            AcceptedRangeTest(
                 table_config=table_config,
                 column="nanos",
-                min=0,
-                max=1e9,
+                min_value=0,
+                max_value=1e9,
                 validate=False,
             ),
-            TestAcceptedRange(
+            AcceptedRangeTest(
                 table_config=table_config,
                 column="units",
-                min=0,
-                max=None,
+                min_value=0,
+                max_value=None,
                 validate=False,
             ),
-            TestColumnValues(
+            ColumnValuesTest(
                 table_config=table_config,
                 column="currency_code",
                 values=get_valid_currency_codes(),
                 validate=False,
             ),
         ]
-    raise Exception(f"Unknown Entity {entity_name}")
+    raise ValueError(f"Unknown Entity {entity_name}")
 
 
 def get_entity_mutation_tests(
@@ -68,20 +69,20 @@ def get_entity_mutation_tests(
     """_summary_
 
     Args:
-        table (Table): _description_
-        primary_keys (list[str]): _description_
+        table: _description_
+        primary_keys: _description_
 
     Returns:
-        list[AbstractColumnTest]: _description_
+        _description_
     """
     return [
-        TestCountValidityStartTimeChanges(
+        CountValidityStartTimeChangesTest(
             table_config=table_config, warn=500, error=1000, entity_ids=entity_ids
         ),
-        TestConsecutiveEntityDeletions(
+        ConsecutiveEntityDeletionsTest(
             table_config=table_config, entity_ids=entity_ids
         ),
-        TestOrphanDeletions(table_config=table_config, entity_ids=entity_ids),
+        OrphanDeletionsTest(table_config=table_config, entity_ids=entity_ids),
     ]
 
 
@@ -93,12 +94,12 @@ def entity_columns(
     """_summary_
 
     Args:
-        schema (Union[Schema, Array, Struct, DataType]): _description_
-        entity_types (_type_, optional): _description_. Defaults to ENTITIES.keys().
-        path (list[str], optional): _description_. Defaults to [].
+        schema: _description_
+        entity_types: _description_. Defaults to ENTITIES.keys().
+        path: _description_. Defaults to [].
 
     Returns:
-        _type_: _description_
+        _description_
     """
     fields = {}
     for n, dtype in schema.items():
@@ -132,8 +133,8 @@ def non_nullable_fields(
     """_summary_
 
     Args:
-        schema (Union[Schema, Array, Struct, DataType]): _description_
-        path (list[str], optional): _description_. Defaults to [].
+        schema: _description_
+        path: _description_. Defaults to [].
 
     Returns:
         _type_: _description_
@@ -158,21 +159,26 @@ def non_nullable_fields(
     return fields
 
 
-def non_nullable_field_tests(table_config: ResolvedTableConfig):
-    """Depending on field type, generate a list of tests
-    which depend on"""
+def non_nullable_field_tests(table_config: ResolvedTableConfig) -> list[AbstractBaseTest]:
+    """_summary_
+
+    Args:
+        table_config: _description_
+
+    Returns:
+        _description_
+    """
     fields = non_nullable_fields(schema=table_config.table.schema())
-    print(fields)
     tests = []
     for f in fields:
         _, _field = resolve_field(table=table_config.table, column=f)
         field_type = _field.type()
         if field_type.is_string():
             tests.append(
-                TestFieldNeverWhitespaceOnly(table_config=table_config, column=f)
+                FieldNeverWhitespaceOnlyTest(table_config=table_config, column=f)
             )
 
-        tests.append(TestFieldNeverNull(table_config=table_config, column=f))
+        tests.append(FieldNeverNullTest(table_config=table_config, column=f))
     return tests
 
 
@@ -180,12 +186,20 @@ def get_generic_table_tests(
     table_config: ResolvedTableConfig,
     max_rows_factor: int,
     severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
-):
-    """Depending on field type, generate a list of tests
-    which depend on"""
+) -> list[AbstractBaseTest]:
+    """Generate tests which are completely generic and agnostic to the underlying table
+
+    Args:
+        table_config: _description_
+        max_rows_factor: _description_
+        severity: _description_. Defaults to AMLAITestSeverity.ERROR.
+
+    Returns:
+        _description_
+    """
     return [
-        TestTableSchema(table_config),
-        TestTableCount(
+        TableSchemaTest(table_config),
+        TableCountTest(
             table_config, severity=severity, max_rows_factor=max_rows_factor
         ),
     ]

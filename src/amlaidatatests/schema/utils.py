@@ -1,12 +1,14 @@
 import importlib
+from string import Template
+
+import ibis
+
 from amlaidatatests.config import ConfigSingleton
 from amlaidatatests.schema.base import (
     BaseSchemaConfiguration,
     ResolvedTableConfig,
     TableConfig,
 )
-import ibis
-from string import Template
 
 
 def get_amlai_schema(version: str) -> BaseSchemaConfiguration:
@@ -16,7 +18,7 @@ def get_amlai_schema(version: str) -> BaseSchemaConfiguration:
         return schema_configuration
 
     except ModuleNotFoundError:
-        raise Exception(f"Schema version {version} not found")
+        raise ValueError(f"Schema version {version} not found")
 
 
 def get_table_name(name: str):
@@ -43,6 +45,7 @@ def resolve_table_config(name: str) -> ResolvedTableConfig:
     resolved_table_config = ResolvedTableConfig(
         table=ibis.table(schema=table_config.schema, name=name, database=cfg.database),
         optional=table_config.optional,
+        is_open_ended_entity=table_config.is_open_ended_entity,
     )
     return resolved_table_config
 

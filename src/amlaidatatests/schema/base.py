@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List
+
 from ibis import Schema, Table
 
 
@@ -9,6 +10,7 @@ class TableConfig:
     name: str
     schema: Schema
     optional: bool = False
+    is_open_ended_entity = True
 
 
 @dataclass
@@ -16,6 +18,7 @@ class ResolvedTableConfig:
     name: str = field(init=False)
     table: Table
     optional: bool = False
+    is_open_ended_entity: bool = True
 
     def __post_init__(self):
         self.name = self.table.get_name()

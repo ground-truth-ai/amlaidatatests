@@ -1,7 +1,6 @@
-from ibis import schema
 import ibis
-from ibis.expr.datatypes import String, Timestamp, Boolean
-
+from ibis import schema
+from ibis.expr.datatypes import Boolean, String, Timestamp
 
 #            account_id              VARCHAR(255),
 #            party_id                VARCHAR(255),

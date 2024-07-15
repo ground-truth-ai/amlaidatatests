@@ -1,14 +1,16 @@
 import datetime
-from amlaidatatests.base import FailTest
-from amlaidatatests.schema.base import ResolvedTableConfig
+
 import ibis
 import pytest
-from amlaidatatests.tests.common import TestPrimaryKeyColumns
 from ibis.expr.datatypes import String, Timestamp
+
+from amlaidatatests.base import FailTest
+from amlaidatatests.schema.base import ResolvedTableConfig
+from amlaidatatests.tests.common import PrimaryKeyColumnsTest
 
 
 @pytest.fixture
-def test_base_table() -> TestPrimaryKeyColumns:
+def test_base_table() -> PrimaryKeyColumnsTest:
     def _test_base_table(table: str):
         table = ibis.table(
             name=table,
@@ -17,7 +19,7 @@ def test_base_table() -> TestPrimaryKeyColumns:
 
         table_config = ResolvedTableConfig(table=table)
 
-        return TestPrimaryKeyColumns(
+        return PrimaryKeyColumnsTest(
             unique_combination_of_columns=["alpha", "beta"], table_config=table_config
         )
 
@@ -78,7 +80,7 @@ def test_mixed_types(test_connection, create_test_table):
 
     table_config = ResolvedTableConfig(table=table)
 
-    t = TestPrimaryKeyColumns(
+    t = PrimaryKeyColumnsTest(
         unique_combination_of_columns=["id", "id2"], table_config=table_config
     )
 

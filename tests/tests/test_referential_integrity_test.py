@@ -1,9 +1,11 @@
 import datetime
-from amlaidatatests.base import FailTest
-from amlaidatatests.schema.base import ResolvedTableConfig
+
 import ibis
 import pytest
-from ibis.expr.datatypes import String, Timestamp, Boolean
+from ibis.expr.datatypes import Boolean, String, Timestamp
+
+from amlaidatatests.base import FailTest, SkipTest
+from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests import common
 
 
@@ -22,11 +24,30 @@ def test_missing_key_local_table(test_connection, create_test_table):
         table=ibis.table(name=otr_tbl, schema=schema)
     )
 
-    t = common.TestReferentialIntegrity(
+    t = common.ReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, keys=["id"]
     )
     # Should pass - RI works one way only
     t(test_connection)
+
+
+def test_skips_optional_to_table(
+    test_connection, create_test_table, test_raise_on_skip
+):
+    schema = {"id": String(nullable=False)}
+    lcl_tbl = create_test_table(ibis.memtable(data=[{"id": "1"}], schema=schema))
+
+    table_config = ResolvedTableConfig(table=ibis.table(name=lcl_tbl, schema=schema))
+    otr_table_config = ResolvedTableConfig(
+        table=ibis.table(name="DOES_NOT_EXIST", schema=schema), optional=True
+    )
+
+    t = common.ReferentialIntegrityTest(
+        table_config=table_config, to_table_config=otr_table_config, keys=["id"]
+    )
+    # Should pass - RI works one way only
+    with pytest.raises(SkipTest, match=r"Skipping test: optional table"):
+        t(test_connection)
 
 
 def test_missing_key_other_table(test_connection, create_test_table):
@@ -45,7 +66,7 @@ def test_missing_key_other_table(test_connection, create_test_table):
 
     # Should fail - key doesn't exist
     with pytest.raises(FailTest, match=r"1 keys found in table"):
-        t = common.TestReferentialIntegrity(
+        t = common.ReferentialIntegrityTest(
             table_config=table_config, to_table_config=otr_table_config, keys=["id"]
         )
         t(test_connection)
@@ -69,7 +90,7 @@ def test_passes_multiple_keys(test_connection, create_test_table):
     otr_table_config = ResolvedTableConfig(
         table=ibis.table(name=otr_tbl, schema=schema)
     )
-    t = common.TestReferentialIntegrity(
+    t = common.ReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, keys=["id1", "id2"]
     )
     t(test_connection)
@@ -94,7 +115,7 @@ def test_passes_duplicated_keys(test_connection, create_test_table):
         table=ibis.table(name=otr_tbl, schema=schema)
     )
 
-    t = common.TestReferentialIntegrity(
+    t = common.ReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, keys=["id1", "id2"]
     )
     t(test_connection)
@@ -116,7 +137,7 @@ def test_missing_multiple_keys_other_table(test_connection, create_test_table):
     )
     # Should fail - key doesn't exist
     with pytest.raises(FailTest, match=r"1 keys found in table"):
-        t = common.TestReferentialIntegrity(
+        t = common.ReferentialIntegrityTest(
             table_config=table_config,
             to_table_config=otr_table_config,
             keys=["id1", "id2"],
@@ -173,7 +194,7 @@ def test_temporal_referential_integrity_missing_keys(
         table=ibis.table(name=otr_tbl, schema=schema)
     )
 
-    t = common.TestTemporalReferentialIntegrity(
+    t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
     with pytest.raises(FailTest, match=r"1 keys found in table"):
@@ -234,7 +255,7 @@ def test_temporal_referential_integrity_key_in_time(test_connection, create_test
         table=ibis.table(name=otr_tbl, schema=schema)
     )
 
-    t = common.TestTemporalReferentialIntegrity(
+    t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
     t(test_connection)
@@ -296,7 +317,7 @@ def test_temporal_referential_integrity_key_out_of_time(
         table=ibis.table(name=otr_tbl, schema=schema)
     )
 
-    t = common.TestTemporalReferentialIntegrity(
+    t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
     with pytest.raises(FailTest, match=r"1 keys found in table"):
@@ -359,7 +380,7 @@ def test_temporal_referential_integrity_key_within_time_tolerance(
         table=ibis.table(name=otr_tbl, schema=schema)
     )
 
-    t = common.TestTemporalReferentialIntegrity(
+    t = common.TemporalReferentialIntegrityTest(
         table_config=table_config,
         to_table_config=otr_table_config,
         key="id",
@@ -424,7 +445,7 @@ def test_temporal_referential_integrity_key_out_of_time_tolerance(
         table=ibis.table(name=otr_tbl, schema=schema)
     )
 
-    t = common.TestTemporalReferentialIntegrity(
+    t = common.TemporalReferentialIntegrityTest(
         table_config=table_config,
         to_table_config=otr_table_config,
         key="id",
@@ -490,7 +511,7 @@ def test_temporal_referential_integrity_fails_before_period(
         table=ibis.table(name=otr_tbl, schema=schema)
     )
 
-    t = common.TestTemporalReferentialIntegrity(
+    t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
     with pytest.raises(FailTest, match=r"1 keys found in table"):
@@ -553,7 +574,7 @@ def test_temporal_referential_integrity_fails_after_period(
         table=ibis.table(name=otr_tbl, schema=schema)
     )
 
-    t = common.TestTemporalReferentialIntegrity(
+    t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
     with pytest.raises(FailTest, match=r"1 keys found in table"):
@@ -616,7 +637,7 @@ def test_temporal_referential_integrity_fails_encompassing_period(
         table=ibis.table(name=otr_tbl, schema=schema)
     )
 
-    t = common.TestTemporalReferentialIntegrity(
+    t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
     with pytest.raises(FailTest, match=r"1 keys found in table"):
@@ -674,7 +695,7 @@ def test_temporal_referential_integrity_immediate_delete_in_period(
         table=ibis.table(name=otr_tbl, schema=schema)
     )
 
-    t = common.TestTemporalReferentialIntegrity(
+    t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
     t(test_connection)
@@ -743,7 +764,7 @@ def test_temporal_referential_integrity_multiple_mutations_in_period(
         table=ibis.table(name=otr_tbl, schema=schema)
     )
 
-    t = common.TestTemporalReferentialIntegrity(
+    t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
     t(test_connection)
@@ -812,7 +833,7 @@ def test_temporal_referential_integrity_multiple_mutations_out_of_period(
         table=ibis.table(name=otr_tbl, schema=schema)
     )
 
-    t = common.TestTemporalReferentialIntegrity(
+    t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
     with pytest.raises(FailTest, match=r"1 keys found in table"):

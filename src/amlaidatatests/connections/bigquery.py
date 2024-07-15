@@ -1,5 +1,5 @@
-import ibis
 import google.auth
+import ibis
 
 
 # TODO: Configure connections properly

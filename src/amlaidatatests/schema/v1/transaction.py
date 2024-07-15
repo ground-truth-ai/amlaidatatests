@@ -1,10 +1,10 @@
-from amlaidatatests.schema.v1.common import CurrencyValue
 import ibis
-from ibis.expr.datatypes import String, Timestamp, Boolean, Struct
+from ibis.expr.datatypes import Boolean, String, Struct, Timestamp
 
+from amlaidatatests.schema.v1.common import CurrencyValue
 
 transaction_schema = ibis.Schema(
-    {
+    fields={
         "transaction_id": String(nullable=False),
         "validity_start_time": Timestamp(nullable=False),
         "is_entity_deleted": Boolean(),

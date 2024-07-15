@@ -1,8 +1,9 @@
-from amlaidatatests.base import FailTest
-from amlaidatatests.schema.base import ResolvedTableConfig
 import ibis
 import pytest
-from ibis.expr.datatypes import Int64, Float64
+from ibis.expr.datatypes import Float64, Int64
+
+from amlaidatatests.base import FailTest
+from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests import common
 
 
@@ -14,7 +15,9 @@ def test_equals_low_threshold(test_connection, create_test_table):
     )
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestAcceptedRange(table_config=table_config, min=1, column="column")
+    t = common.AcceptedRangeTest(
+        table_config=table_config, min_value=1, column="column"
+    )
     t(test_connection)  # should succeed
 
 
@@ -26,7 +29,9 @@ def test_equals_high_threshold(test_connection, create_test_table):
     )
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestAcceptedRange(table_config=table_config, max=10, column="column")
+    t = common.AcceptedRangeTest(
+        table_config=table_config, max_value=10, column="column"
+    )
     t(test_connection)  # should succeed
 
 
@@ -38,8 +43,8 @@ def test_float_in_range(test_connection, create_test_table):
     )
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestAcceptedRange(
-        table_config=table_config, min=0, max=20, column="column"
+    t = common.AcceptedRangeTest(
+        table_config=table_config, min_value=0, max_value=20, column="column"
     )
     t(test_connection)
 
@@ -52,8 +57,8 @@ def test_int_in_range(test_connection, create_test_table):
     )
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestAcceptedRange(
-        table_config=table_config, min=0, max=20, column="column"
+    t = common.AcceptedRangeTest(
+        table_config=table_config, min_value=0, max_value=20, column="column"
     )
     t(test_connection)
 
@@ -66,8 +71,8 @@ def test_int_out_of_range_max(test_connection, create_test_table):
     )
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestAcceptedRange(
-        table_config=table_config, min=0, max=20, column="column"
+    t = common.AcceptedRangeTest(
+        table_config=table_config, min_value=0, max_value=20, column="column"
     )
 
     with pytest.raises(expected_exception=FailTest, match=r"1 rows in column"):
@@ -82,7 +87,9 @@ def test_int_out_of_range_min(test_connection, create_test_table):
     )
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestAcceptedRange(table_config=table_config, min=0, column="column")
+    t = common.AcceptedRangeTest(
+        table_config=table_config, min_value=0, column="column"
+    )
 
     with pytest.raises(expected_exception=FailTest, match=r"1 rows in column"):
         t(test_connection)

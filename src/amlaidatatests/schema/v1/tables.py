@@ -1,10 +1,11 @@
 from amlaidatatests.schema.base import BaseSchemaConfiguration, TableConfig
+
 from . import (
-    party_schema,
-    transaction_schema,
     account_party_link_schema,
-    risk_case_event_schema,
+    party_schema,
     party_supplementary_data_schema,
+    risk_case_event_schema,
+    transaction_schema,
 )
 
 

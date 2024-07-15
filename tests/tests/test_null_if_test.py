@@ -1,8 +1,9 @@
-from amlaidatatests.base import FailTest
-from amlaidatatests.schema.base import ResolvedTableConfig
 import ibis
 import pytest
 from ibis.expr.datatypes import String
+
+from amlaidatatests.base import FailTest
+from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests import common
 
 
@@ -17,7 +18,7 @@ def test_null_if_succeeds(test_connection, create_test_table):
 
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestNullIf(
+    t = common.NullIfTest(
         table_config=table_config,
         column="b",
         expression=table_config.table.type == "card",
@@ -36,7 +37,7 @@ def test_null_if_fails(test_connection, create_test_table):
     )
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestNullIf(
+    t = common.NullIfTest(
         table_config=table_config,
         column="b",
         expression=table_config.table.type == "card",

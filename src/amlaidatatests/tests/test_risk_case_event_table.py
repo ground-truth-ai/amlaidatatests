@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
+import pytest
+
+from amlaidatatests.base import AbstractTableTest
 from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.test_generators import get_generic_table_tests, non_nullable_fields
 from amlaidatatests.tests import common
-from amlaidatatests.base import AbstractTableTest
-import pytest
 
 TABLE_CONFIG = resolve_table_config("risk_case_event")
 
@@ -17,7 +18,7 @@ def test_table(connection, test: AbstractTableTest):
 
 
 def test_primary_keys(connection):
-    test = common.TestPrimaryKeyColumns(
+    test = common.PrimaryKeyColumnsTest(
         table_config=TABLE_CONFIG, unique_combination_of_columns=["risk_case_event_id"]
     )
     test(connection)
@@ -26,14 +27,14 @@ def test_primary_keys(connection):
 # For each column in the schema, check all columns are all present
 @pytest.mark.parametrize("column", TABLE_CONFIG.table.schema().fields.keys())
 def test_column_presence(connection, column: str):
-    test = common.TestColumnPresence(table_config=TABLE_CONFIG, column=column)
+    test = common.ColumnPresenceTest(table_config=TABLE_CONFIG, column=column)
     test(connection)
 
 
 # For each column in the schema, check all columns are the correct type
 @pytest.mark.parametrize("column", TABLE_CONFIG.table.schema().fields.keys())
 def test_column_type(connection, column):
-    test = common.TestColumnType(table_config=TABLE_CONFIG, column=column)
+    test = common.ColumnTypeTest(table_config=TABLE_CONFIG, column=column)
     test(connection)
 
 
@@ -43,14 +44,14 @@ def test_column_type(connection, column):
 
 @pytest.mark.parametrize("column", non_nullable_fields(TABLE_CONFIG.table.schema()))
 def test_non_nullable_fields(connection, column):
-    test = common.TestFieldNeverNull(table_config=TABLE_CONFIG, column=column)
+    test = common.FieldNeverNullTest(table_config=TABLE_CONFIG, column=column)
     test(connection)
 
 
 @pytest.mark.parametrize(
     "test",
     [
-        common.TestColumnValues(
+        common.ColumnValuesTest(
             values=[
                 "AML_SUSPICIOUS_ACTIVITY_START",
                 "AML_SUSPICIOUS_ACTIVITY_END",
@@ -75,7 +76,7 @@ def test_column_values(connection, test):
 
 def test_referential_integrity_party(connection):
     to_table_config = resolve_table_config("party")
-    test = common.TestReferentialIntegrity(
+    test = common.ReferentialIntegrityTest(
         table_config=TABLE_CONFIG, to_table_config=to_table_config, keys=["party_id"]
     )
     test(connection)

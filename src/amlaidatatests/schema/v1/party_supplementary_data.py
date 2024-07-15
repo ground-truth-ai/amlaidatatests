@@ -1,5 +1,5 @@
 import ibis
-from ibis.expr.datatypes import String, Timestamp, Boolean, Struct, Float64
+from ibis.expr.datatypes import Boolean, Float64, String, Struct, Timestamp
 
 #            party_id                  VARCHAR(255),
 #            validity_start_time     Int,
@@ -19,7 +19,7 @@ from ibis.expr.datatypes import String, Timestamp, Boolean, Struct, Float64
 #    education_level_code    VARCHAR(255)
 
 party_supplementary_data_schema = ibis.Schema(
-    {
+    fields={
         "party_supplementary_data_id": String(nullable=False),
         "validity_start_time": Timestamp(nullable=False),
         "is_entity_deleted": Boolean(),

@@ -1,10 +1,12 @@
-from amlaidatatests.base import FailTest
-from amlaidatatests.schema.base import ResolvedTableConfig
+import datetime
+
 import ibis
 import pytest
-from ibis.expr.datatypes import String, Timestamp, Array, Struct
+from ibis.expr.datatypes import Array, String, Struct, Timestamp
+
+from amlaidatatests.base import FailTest
+from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests import common
-import datetime
 
 
 def test_column_is_always_null(test_connection, create_test_table):
@@ -15,7 +17,7 @@ def test_column_is_always_null(test_connection, create_test_table):
     )
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestFieldNeverNull(table_config=table_config, column="id")
+    t = common.FieldNeverNullTest(table_config=table_config, column="id")
 
     with pytest.raises(
         expected_exception=FailTest, match=r"2 rows found with null values of id"
@@ -38,7 +40,7 @@ def test_column_optional_parent_always_present(test_connection, create_test_tabl
     )
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestFieldNeverNull(table_config=table_config, column="parent_id.id")
+    t = common.FieldNeverNullTest(table_config=table_config, column="parent_id.id")
 
     t(test_connection)
 
@@ -54,7 +56,7 @@ def test_column_optional_parent_field_missing(test_connection, create_test_table
     )
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestFieldNeverNull(table_config=table_config, column="parent_id.id")
+    t = common.FieldNeverNullTest(table_config=table_config, column="parent_id.id")
 
     with pytest.raises(
         expected_exception=FailTest,
@@ -71,7 +73,7 @@ def test_column_is_sometimes_null(test_connection, create_test_table):
     )
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestFieldNeverNull(table_config=table_config, column="id")
+    t = common.FieldNeverNullTest(table_config=table_config, column="id")
 
     with pytest.raises(
         expected_exception=FailTest, match=r"1 rows found with null values of id"
@@ -87,7 +89,7 @@ def test_column_never_null(test_connection: ibis.BaseBackend, create_test_table)
     )
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestFieldNeverNull(table_config=table_config, column="id")
+    t = common.FieldNeverNullTest(table_config=table_config, column="id")
 
     t(test_connection)
 
@@ -100,7 +102,7 @@ def test_string_column_blanks(test_connection: ibis.BaseBackend, create_test_tab
     )
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestFieldNeverWhitespaceOnly(table_config=table_config, column="id")
+    t = common.FieldNeverWhitespaceOnlyTest(table_config=table_config, column="id")
 
     with pytest.raises(
         expected_exception=FailTest,
@@ -118,7 +120,7 @@ def test_string_column_no_blanks(test_connection: ibis.BaseBackend, create_test_
 
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestFieldNeverWhitespaceOnly(table_config=table_config, column="id")
+    t = common.FieldNeverWhitespaceOnlyTest(table_config=table_config, column="id")
 
     t(test_connection)
 
@@ -137,7 +139,7 @@ def test_date_column_1970(test_connection, create_test_table):
 
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestDatetimeFieldNeverJan1970(table_config=table_config, column="id")
+    t = common.DatetimeFieldNeverJan1970Test(table_config=table_config, column="id")
 
     with pytest.raises(
         expected_exception=FailTest, match=r"2 rows found with date on 1970-01-01"
@@ -160,6 +162,6 @@ def test_date_column_never_1970(test_connection, create_test_table):
 
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
-    t = common.TestDatetimeFieldNeverJan1970(table_config=table_config, column="id")
+    t = common.DatetimeFieldNeverJan1970Test(table_config=table_config, column="id")
 
     t(test_connection)

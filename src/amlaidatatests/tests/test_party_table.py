@@ -1,19 +1,18 @@
 #!/usr/bin/env python
 
+import pytest
+
+from amlaidatatests.base import AbstractColumnTest, AbstractTableTest, AMLAITestSeverity
 from amlaidatatests.io import get_valid_region_codes
 from amlaidatatests.schema.utils import resolve_table_config
-from amlaidatatests.test_generators import (
-    get_generic_table_tests,
-    non_nullable_field_tests,
-)
 from amlaidatatests.test_generators import (
     entity_columns,
     get_entity_mutation_tests,
     get_entity_tests,
+    get_generic_table_tests,
+    non_nullable_field_tests,
 )
 from amlaidatatests.tests import common
-from amlaidatatests.base import AbstractColumnTest, AbstractTableTest, AMLAITestSeverity
-import pytest
 
 TABLE_CONFIG = resolve_table_config("party")
 TABLE = TABLE_CONFIG.table
@@ -27,7 +26,7 @@ def test_table(connection, test: AbstractTableTest):
 
 
 def test_primary_keys(connection):
-    test = common.TestPrimaryKeyColumns(
+    test = common.PrimaryKeyColumnsTest(
         table_config=TABLE_CONFIG,
         unique_combination_of_columns=["party_id", "validity_start_time"],
     )
@@ -56,14 +55,14 @@ def test_currency_value_entity(connection, column, test: AbstractColumnTest):
 # For each column in the schema, check all columns are all present
 @pytest.mark.parametrize("column", TABLE_CONFIG.table.schema().fields.keys())
 def test_column_presence(connection, column: str):
-    test = common.TestColumnPresence(table_config=TABLE_CONFIG, column=column)
+    test = common.ColumnPresenceTest(table_config=TABLE_CONFIG, column=column)
     test(connection)
 
 
 # For each column in the schema, check all columns are the correct type
 @pytest.mark.parametrize("column", TABLE_CONFIG.table.schema().fields.keys())
 def test_column_type(connection, column):
-    test = common.TestColumnType(table_config=TABLE_CONFIG, column=column)
+    test = common.ColumnTypeTest(table_config=TABLE_CONFIG, column=column)
     test(connection)
 
 
@@ -79,10 +78,10 @@ def test_non_nullable_fields(connection, test: AbstractColumnTest):
 @pytest.mark.parametrize(
     "test",
     [
-        common.TestColumnValues(
+        common.ColumnValuesTest(
             column="type", values=["COMPANY", "CONSUMER"], table_config=TABLE_CONFIG
         ),
-        common.TestColumnValues(
+        common.ColumnValuesTest(
             column="civil_status_code",
             values=[
                 "SINGLE",
@@ -95,7 +94,7 @@ def test_non_nullable_fields(connection, test: AbstractColumnTest):
             ],
             table_config=TABLE_CONFIG,
         ),
-        common.TestColumnValues(
+        common.ColumnValuesTest(
             column="education_level_code",
             values=[
                 "LESS_THAN_PRIMARY_EDUCATION",
@@ -112,12 +111,12 @@ def test_non_nullable_fields(connection, test: AbstractColumnTest):
             ],
             table_config=TABLE_CONFIG,
         ),
-        common.TestColumnValues(
+        common.ColumnValuesTest(
             column="nationalities.region_code",
             values=get_valid_region_codes(),
             table_config=TABLE_CONFIG,
         ),
-        common.TestColumnValues(
+        common.ColumnValuesTest(
             column="residencies.region_code",
             values=get_valid_region_codes(),
             table_config=TABLE_CONFIG,
@@ -131,22 +130,22 @@ def test_column_values(connection, test):
 @pytest.mark.parametrize(
     "test",
     [
-        common.TestNullIf(
+        common.NullIfTest(
             column="birth_date",
             table_config=TABLE_CONFIG,
             expression=TABLE.type == "COMPANY",
         ),
-        common.TestNullIf(
+        common.NullIfTest(
             column="gender",
             table_config=TABLE_CONFIG,
             expression=TABLE.type == "COMPANY",
         ),
-        common.TestNullIf(
+        common.NullIfTest(
             column="establishment_date",
             table_config=TABLE_CONFIG,
             expression=TABLE.type == "CONSUMER",
         ),
-        common.TestNullIf(
+        common.NullIfTest(
             column="occupation",
             table_config=TABLE_CONFIG,
             expression=TABLE.type == "CONSUMER",
@@ -160,10 +159,22 @@ def test_null_if(connection, test):
 def test_referential_integrity(connection):
     # A warning here means that there are parties without linked accounts
     to_table_config = resolve_table_config("account_party_link")
-    test = common.TestReferentialIntegrity(
+    test = common.ReferentialIntegrityTest(
         table_config=TABLE_CONFIG,
         to_table_config=to_table_config,
         keys=["party_id"],
+        severity=AMLAITestSeverity.WARN,
+    )
+    test(connection)
+
+
+def test_referential_integrity_party_supplementary_table(connection):
+    # A warning here means that there are parties without linked accounts
+    to_table_config = resolve_table_config("party_supplementary_data")
+    test = common.TemporalReferentialIntegrityTest(
+        table_config=TABLE_CONFIG,
+        to_table_config=to_table_config,
+        key="party_id",
         severity=AMLAITestSeverity.WARN,
     )
     test(connection)

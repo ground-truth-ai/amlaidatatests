@@ -1,7 +1,9 @@
 from typing import Optional
-from amlaidatatests.config import ConfigSingleton
-import ibis
 from urllib.parse import parse_qsl, urlparse
+
+import ibis
+
+from amlaidatatests.config import ConfigSingleton
 
 
 def connection_factory(default: Optional[str] = None):
