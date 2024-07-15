@@ -72,7 +72,7 @@ def test_mixed_types(test_connection, create_test_table):
     }
     tbl = create_test_table(
         ibis.memtable(
-            [{"id": "a", "id2": datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)}],
+            [{"id": "a", "id2": datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)}],
             schema=schema,
         )
     )

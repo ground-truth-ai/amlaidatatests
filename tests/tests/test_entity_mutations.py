@@ -23,7 +23,7 @@ def test_orphaned_deleted_entity(test_connection, create_test_table):
                     "id": "ent1",
                     "is_entity_deleted": True,
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 2, tzinfo=datetime.UTC
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
                     ),
                 }
             ],
@@ -52,14 +52,14 @@ def test_not_orphaned_deleted_entity(test_connection, create_test_table):
                     "id": "ent1",
                     "is_entity_deleted": False,
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 2, tzinfo=datetime.UTC
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
                     ),
                 },
                 {
                     "id": "ent1",
                     "is_entity_deleted": True,
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 2, tzinfo=datetime.UTC
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
                     ),
                 },
             ],

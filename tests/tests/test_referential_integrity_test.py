@@ -157,14 +157,14 @@ def test_temporal_referential_integrity_key_in_time(test_connection, create_test
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 2, tzinfo=datetime.UTC
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
@@ -178,14 +178,14 @@ def test_temporal_referential_integrity_key_in_time(test_connection, create_test
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 2, tzinfo=datetime.UTC
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
@@ -219,14 +219,14 @@ def test_temporal_referential_integrity_key_out_of_time(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 2, hour=1, tzinfo=datetime.UTC
+                        2020, 1, 2, hour=1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
@@ -240,14 +240,14 @@ def test_temporal_referential_integrity_key_out_of_time(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 2, tzinfo=datetime.UTC
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
@@ -282,14 +282,14 @@ def test_temporal_referential_integrity_key_within_time_tolerance(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 2, hour=1, tzinfo=datetime.UTC
+                        2020, 1, 2, hour=1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
@@ -303,14 +303,14 @@ def test_temporal_referential_integrity_key_within_time_tolerance(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 2, tzinfo=datetime.UTC
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
@@ -347,14 +347,14 @@ def test_temporal_referential_integrity_key_out_of_time_tolerance(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2022, 1, 1, hour=1, tzinfo=datetime.UTC
+                        2022, 1, 1, hour=1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
@@ -368,14 +368,14 @@ def test_temporal_referential_integrity_key_out_of_time_tolerance(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 2, tzinfo=datetime.UTC
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
@@ -413,14 +413,14 @@ def test_temporal_referential_integrity_fails_before_period(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2019, 1, 1, tzinfo=datetime.UTC
+                        2019, 1, 1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, hour=1, tzinfo=datetime.UTC
+                        2020, 1, 1, hour=1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
@@ -434,14 +434,14 @@ def test_temporal_referential_integrity_fails_before_period(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 2, tzinfo=datetime.UTC
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
@@ -476,14 +476,14 @@ def test_temporal_referential_integrity_fails_after_period(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2022, 1, 1, hour=1, tzinfo=datetime.UTC
+                        2022, 1, 1, hour=1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
@@ -497,14 +497,14 @@ def test_temporal_referential_integrity_fails_after_period(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 2, tzinfo=datetime.UTC
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
@@ -539,14 +539,14 @@ def test_temporal_referential_integrity_fails_encompassing_period(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2019, 1, 1, tzinfo=datetime.UTC
+                        2019, 1, 1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2022, 1, 1, hour=1, tzinfo=datetime.UTC
+                        2022, 1, 1, hour=1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
@@ -560,14 +560,14 @@ def test_temporal_referential_integrity_fails_encompassing_period(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 2, tzinfo=datetime.UTC
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
@@ -604,7 +604,7 @@ def test_temporal_referential_integrity_immediate_delete_in_period(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, hour=1, tzinfo=datetime.UTC
+                        2020, 1, 1, hour=1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 }
@@ -618,14 +618,14 @@ def test_temporal_referential_integrity_immediate_delete_in_period(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 2, tzinfo=datetime.UTC
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
@@ -659,28 +659,28 @@ def test_temporal_referential_integrity_multiple_mutations_in_period(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, hour=1, tzinfo=datetime.UTC
+                        2020, 1, 1, hour=1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, hour=2, tzinfo=datetime.UTC
+                        2020, 1, 1, hour=2, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, hour=3, tzinfo=datetime.UTC
+                        2020, 1, 1, hour=3, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, hour=8, tzinfo=datetime.UTC
+                        2020, 1, 1, hour=8, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
@@ -694,14 +694,14 @@ def test_temporal_referential_integrity_multiple_mutations_in_period(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 2, tzinfo=datetime.UTC
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
@@ -735,21 +735,21 @@ def test_temporal_referential_integrity_multiple_mutations_out_of_period(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, hour=1, tzinfo=datetime.UTC
+                        2020, 1, 1, hour=1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, hour=2, tzinfo=datetime.UTC
+                        2020, 1, 1, hour=2, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 3, tzinfo=datetime.UTC
+                        2020, 1, 3, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
@@ -763,14 +763,14 @@ def test_temporal_referential_integrity_multiple_mutations_out_of_period(
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 1, tzinfo=datetime.UTC
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": False,
                 },
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 2, tzinfo=datetime.UTC
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
                     ),
                     "is_entity_deleted": True,
                 },

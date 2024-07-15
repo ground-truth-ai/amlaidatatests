@@ -126,18 +126,25 @@ class AbstractBaseTest(ABC):
 
     def _test(self, *, connection: BaseBackend) -> None: ...
 
+    def _raise_warning(self, warning: WarnTest):
+        # We double log here to try and capture the logs
+        # both to pytest and to pytest-html
+        logging.warning(warning)
+        warnings.warn(warning)
+
+
     def _run_with_severity(self, f: Callable, **kwargs):
         try:
             f(**kwargs)
         except FailTest as e:
+            if isinstance(e, WarnTest):
+                self._raise_warning(e)
+                return
             if self.severity == AMLAITestSeverity.ERROR:
                 raise e
             if self.severity == AMLAITestSeverity.WARN:
                 warning = WarnTest(e.message, expr=e.expr)
-                # We double log here to try and capture the logs
-                # both to pytest and to pytest-html
-                logging.warning(warning)
-                warnings.warn(warning)
+                self._raise_warning(warning)
             if self.severity == AMLAITestSeverity.INFO:
                 # We need to know if we're running in unittest
                 # mode or not

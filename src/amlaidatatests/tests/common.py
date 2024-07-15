@@ -667,7 +667,7 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
         AbstractTableTest (_type_): _description_
     """
 
-    MAX_DATETIME_VALUE = datetime.datetime(9995, 1, 1, tzinfo=datetime.UTC)
+    MAX_DATETIME_VALUE = datetime.datetime(9995, 1, 1, tzinfo=datetime.timezone.utc)
 
     def __init__(
         self,

@@ -130,8 +130,8 @@ def test_date_column_1970(test_connection, create_test_table):
     tbl = create_test_table(
         ibis.memtable(
             data=[
-                {"id": datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)},
-                {"id": datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)},
+                {"id": datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)},
+                {"id": datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)},
             ],
             schema=schema,
         )
@@ -153,8 +153,8 @@ def test_date_column_never_1970(test_connection, create_test_table):
     tbl = create_test_table(
         ibis.memtable(
             data=[
-                {"id": datetime.datetime(1970, 2, 1, tzinfo=datetime.UTC)},
-                {"id": datetime.datetime(1970, 2, 1, tzinfo=datetime.UTC)},
+                {"id": datetime.datetime(1970, 2, 1, tzinfo=datetime.timezone.utc)},
+                {"id": datetime.datetime(1970, 2, 1, tzinfo=datetime.timezone.utc)},
             ],
             schema={"id": Timestamp(nullable=False, timezone="UTC")},
         )
