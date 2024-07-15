@@ -3,3 +3,7 @@
 Run tests
 
 ### Resources:
+
+### Developing
+
+```pre-commit install```
