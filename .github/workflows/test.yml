@@ -11,7 +11,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -45,3 +44,40 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
+    - name: Store the distribution packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+
+  integration-test:
+    needs:
+    - build
+
+    # Test with a full repository
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.12
+
+      - name: Install
+        run: |
+          pip install dist/*.whl
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          create_credentials_file: true
+          export_environment_variables: true
+          workload_identity_provider: '${{ secrets.CI_WORKLOAD_IDENTITY_PROVIDER }}'
+
+      - name: Test against bigquery
+        run: |
+          python -m amlaidatatests.tests --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}?location=US --database=bigquery-public-data.aml_ai_input_dataset
