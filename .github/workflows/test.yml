@@ -87,4 +87,4 @@ jobs:
 
       - name: Test against bigquery
         run: |
-          python -m amlaidatatests.tests --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}?location=US --database=bigquery-public-data.aml_ai_input_dataset
+          python -m amlaidatatests.tests --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}?location=US --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset
