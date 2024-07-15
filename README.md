@@ -1,9 +1,5 @@
-### Using the starter project
+### AMLAIDatatests
 
-Run tests
+This is a work in progress, early development build of amlaidatatests.
 
-### Resources:
-
-### Developing
-
-```pre-commit install```
+User guide and documentation are located at https://amlaidatatests.readthedocs.io/en/latest/
