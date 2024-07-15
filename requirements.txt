@@ -1,3 +1,4 @@
+ibis-framework>=10.0.0.dev97
 ibis-framework[bigquery]
 ibis-framework[duckdb]
 pytest

@@ -6,9 +6,6 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-from amlaidatatests.config import ConfigSingleton, DatatestConfig
-
-
 project = "AML AI Datatests"
 copyright = "2024, Groundtruth AI Ltd"
 author = "Groundtruth AI Ltd"
@@ -29,7 +26,3 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "sphinxawesome_theme"
 html_static_path = ["_static"]
-
-# Initialize ConfigSingleton to allow the creation of documentation
-cfg = DatatestConfig(connection_string="")
-ConfigSingleton().set_config(cfg)
