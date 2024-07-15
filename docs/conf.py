@@ -13,9 +13,7 @@ author = "Groundtruth AI Ltd"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["sphinx.ext.napoleon",
-              "sphinx.ext.autodoc",
-              "sphinx_toolbox.confval"]
+extensions = ["sphinx.ext.napoleon", "sphinx.ext.autodoc", "sphinx_toolbox.confval"]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]

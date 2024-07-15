@@ -2,7 +2,7 @@
 Quickstart
 ==========
 
-This document provides the basic information you need to start using amlaidatatests. 
+This document provides the basic information you need to start using amlaidatatests.
 
 It will run the full suite of tests against the a publically accessible AML AI sample dataset.
 
@@ -51,4 +51,3 @@ Steps
         src/amlaidatatests/tests/test_party_table.py ......ssssss.......s.....sss.......s.....sss.........ssssssss.ss.....s..                                                  [ 62%]
         src/amlaidatatests/tests/test_risk_case_event_table.py ....................                                                                                            [ 73%]
         src/amlaidatatests/tests/test_transaction_table.py ..................................................                                                                  [100%]
-

@@ -6,7 +6,7 @@ AML AI Datatests documentation
 Introduction
 ============
 
-This utility tests data for consistency and data integrity in the format of the 
+This utility tests data for consistency and data integrity in the format of the
 `Google Anti Money Laundering AI API <https://cloud.google.com/financial-services/anti-money-laundering/docs>`_.
 
 It aims to:
@@ -30,7 +30,7 @@ This section describes the configuration to
 
    usage/installing
    usage/quickstart
-   
+
 Reference
 =========
 

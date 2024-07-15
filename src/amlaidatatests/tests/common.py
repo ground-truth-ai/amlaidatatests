@@ -472,7 +472,7 @@ class ColumnValuesTest(AbstractColumnTest):
         if result > 0:
             raise FailTest(
                 f"{result} rows found with invalid values. Valid values are:"
-                f" {" ".join(self.values)}.",
+                f" {' '.join(self.values)}.",
                 expr=expr,
             )
 
@@ -653,7 +653,7 @@ class ReferentialIntegrityTest(AbstractTableTest):
         expr = self.table.select(*[self.keys]).anti_join(self.to_table, self.keys)
         result = connection.execute(expr.count())
         if result > 0:
-            msg = f"""{result} keys found in table {self.table.get_name()} which were not in {self.to_table.get_name()}. 
+            msg = f"""{result} keys found in table {self.table.get_name()} which were not in {self.to_table.get_name()}.
                            Key column(s) were {" ".join(self.keys)}"""
             raise FailTest(msg, expr=expr)
         return

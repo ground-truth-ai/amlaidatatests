@@ -5,7 +5,7 @@ from amlaidatatests.schema.utils import get_amlai_schema, get_table_name
 
 
 def create_empty_schema_tables():
-    
+
     cfg = ConfigSingleton.get()
     version = cfg.schema_version
     schema = get_amlai_schema(version)

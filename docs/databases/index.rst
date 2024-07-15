@@ -15,4 +15,3 @@ Supported backends are listed below.
 
    bigquery
    duckdb
-

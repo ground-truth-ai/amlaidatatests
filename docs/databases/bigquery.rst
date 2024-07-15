@@ -9,7 +9,7 @@ Connection String
 
 ``bigquery://project/dataset``
 
-:project: The Google cloud project 
+:project: The Google cloud project
 :dataset: Field content
 
 Authentication
