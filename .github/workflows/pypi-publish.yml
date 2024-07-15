@@ -47,6 +47,7 @@ jobs:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
     steps:
+      # retrieve your distributions here
       - uses: actions/download-artifact@v4
         with:
           name: python-package-distributions
