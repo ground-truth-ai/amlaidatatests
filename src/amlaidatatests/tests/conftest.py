@@ -89,4 +89,4 @@ def pytest_runtest_makereport(item, call):
 
 def pytest_collection_modifyitems(items):
     # will execute as late as possible
-    print(items)
+    pass

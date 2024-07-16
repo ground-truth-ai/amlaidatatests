@@ -220,6 +220,10 @@ class AbstractColumnTest(AbstractTableTest):
         test to pytest to identify the test"""
         return f"{self.__class__.__name__}-{self.column}"
 
+    @property
+    def full_column_path(self):
+        return f"{self.table.get_name()}.{self.column}"
+
     def get_bound_table(self, connection: BaseBackend):
         return connection.table(self.table.get_name())
 

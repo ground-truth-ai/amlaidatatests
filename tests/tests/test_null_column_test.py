@@ -20,7 +20,7 @@ def test_column_is_always_null(test_connection, create_test_table):
     t = common.FieldNeverNullTest(table_config=table_config, column="id")
 
     with pytest.raises(
-        expected_exception=FailTest, match=r"2 rows found with null values of id"
+        expected_exception=FailTest, match=f"2 rows found with null values of {t.full_column_path}"
     ):
         t(test_connection)
 
@@ -60,7 +60,7 @@ def test_column_optional_parent_field_missing(test_connection, create_test_table
 
     with pytest.raises(
         expected_exception=FailTest,
-        match=r"1 rows found with null values of parent_id.id",
+        match=f"1 rows found with null values of {t.full_column_path}",
     ):
         t(test_connection)
 
@@ -76,7 +76,7 @@ def test_column_is_sometimes_null(test_connection, create_test_table):
     t = common.FieldNeverNullTest(table_config=table_config, column="id")
 
     with pytest.raises(
-        expected_exception=FailTest, match=r"1 rows found with null values of id"
+        expected_exception=FailTest, match=f"1 rows found with null values of {t.full_column_path}"
     ):
         t(test_connection)
 
@@ -106,7 +106,7 @@ def test_string_column_blanks(test_connection: ibis.BaseBackend, create_test_tab
 
     with pytest.raises(
         expected_exception=FailTest,
-        match=r"2 rows found with whitespace-only values of id",
+        match=f"2 rows found with whitespace-only values of {t.full_column_path}",
     ):
         t(test_connection)
 

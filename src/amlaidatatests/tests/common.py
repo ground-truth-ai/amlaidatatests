@@ -288,7 +288,7 @@ class ColumnPresenceTest(AbstractColumnTest):
         try:
             self.get_bound_table(connection)[self.column]
         except IbisTypeError as e:
-            raise FailTest(f"Missing Required Column: {self.column}") from e
+            raise FailTest(f"Missing Required Column: {self.full_column_path}") from e
 
 
 class FieldComparisonInterrupt(Exception):
@@ -333,7 +333,7 @@ class ColumnTypeTest(AbstractColumnTest):
                 # If no expcetion
                 warnings.warn(
                     message=WarnTest(
-                        f"Additional fields found in structs in {self.column}. Full"
+                        f"Additional fields found in structs in {self.full_column_path}. Full"
                         f" path to the extra fields were: {extra_fields}"
                     )
                 )
@@ -344,12 +344,12 @@ class ColumnTypeTest(AbstractColumnTest):
                 warnings.warn(
                     message=WarnTest(
                         "Schema is stricter than required: expected column"
-                        f" {self.column} to be {schema_data_type}, found {actual_type}"
+                        f" {self.full_column_path} to be {schema_data_type}, found {actual_type}"
                     )
                 )
                 return
             raise FailTest(
-                f"Expected column {self.column} to be {schema_data_type}, found"
+                f"Expected column {self.full_column_path} to be {schema_data_type}, found"
                 f" {actual_type}",
             )
 
@@ -471,7 +471,7 @@ class ColumnValuesTest(AbstractColumnTest):
 
         if result > 0:
             raise FailTest(
-                f"{result} rows found with invalid values. Valid values are:"
+                f"{result} rows found with invalid values in {self.full_column_path}. Valid values are:"
                 f" {' '.join(self.values)}.",
                 expr=expr,
             )
@@ -512,7 +512,7 @@ class FieldNeverWhitespaceOnlyTest(AbstractColumnTest):
         if count_blank == 0:
             return
         raise FailTest(
-            f"{count_blank} rows found with whitespace-only values of {self.column} in"
+            f"{count_blank} rows found with whitespace-only values of {self.full_column_path} in"
             f" table {self.table.get_name()}",
             expr=expr,
         )
@@ -540,7 +540,7 @@ class FieldNeverNullTest(FieldNeverWhitespaceOnlyTest):
         if count_null == 0:
             return
         raise FailTest(
-            f"{count_null} rows found with null values of {self.column} in table"
+            f"{count_null} rows found with null values of {self.full_column_path} in table"
             f" {self.table.get_name()}",
             expr=expr,
         )
@@ -568,8 +568,7 @@ class DatetimeFieldNeverJan1970Test(FieldNeverWhitespaceOnlyTest):
         if count_null == 0:
             return
         raise FailTest(
-            f"{count_null} rows found with date on 1970-01-01 {self.column} in table"
-            f" {self.table.get_name()}. This value is often nullable",
+            f"{count_null} rows found with date on 1970-01-01 in {self.full_column_path}. This value is often nullable",
             expr=expr,
         )
 
@@ -593,7 +592,7 @@ class NullIfTest(AbstractColumnTest):
         result = connection.execute(expr.count())
         if result > 0:
             raise FailTest(
-                f"{result} rows not fulfilling criteria {ibis.to_sql(self.expression)}",
+                f"{result} rows not fulfilling criteria {ibis.to_sql(self.expression)} in {self.full_column_path}",
                 expr=expr,
             )
 
@@ -625,7 +624,7 @@ class AcceptedRangeTest(AbstractColumnTest):
         result = connection.execute(expr.count())
         if result > 0:
             raise FailTest(
-                f"{result} rows in column {self.column} in table {self.table} were"
+                f"{result} rows in column {self.full_column_path} in table {self.table} were"
                 f" outside of inclusive range {self.min} - {self.max}",
                 expr=expr,
             )

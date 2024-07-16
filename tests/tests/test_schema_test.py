@@ -16,8 +16,10 @@ def test_missing_required_column(test_connection, create_test_table):
 
     table_config = ResolvedTableConfig(table=table)
 
-    with pytest.raises(FailTest, match=r"Missing Required Column: b"):
-        t = common.ColumnPresenceTest(table_config=table_config, column="b")
+    t = common.ColumnPresenceTest(table_config=table_config, column="b")
+
+
+    with pytest.raises(FailTest, match=rf"Missing Required Column: {t.full_column_path}"):
         t(test_connection)
 
 
@@ -87,7 +89,7 @@ def test_excess_field_in_struct_warns(test_connection, create_test_table) -> Non
 
     t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.warns(
-        amlaidatatests.base.WarnTest, match="Additional fields found in structs in a"
+        amlaidatatests.base.WarnTest, match=f"Additional fields found in structs in {t.full_column_path}"
     ):
         t(test_connection)
 
@@ -110,7 +112,7 @@ def test_missing_field_in_struct(test_connection, create_test_table) -> None:
     with pytest.raises(
         common.FailTest,
         match=(
-            "Expected column a to be struct<1: string, 3: string>, found struct<2:"
+            f"Expected column {t.full_column_path} to be struct<1: string, 3: string>, found struct<2:"
             " string, 1: string>"
         ),
     ):
@@ -131,7 +133,7 @@ def test_excess_field_in_embedded_struct(test_connection, create_test_table) -> 
 
     t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.warns(
-        amlaidatatests.base.WarnTest, match="Additional fields found in structs in a"
+        amlaidatatests.base.WarnTest, match=f"Additional fields found in structs in {t.full_column_path}"
     ):
         t(test_connection)
 
@@ -227,7 +229,7 @@ def test_column_wrong_type(test_connection, create_test_table):
 
     t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.raises(
-        common.FailTest, match="Expected column a to be int64, found string"
+        common.FailTest, match=f"Expected column {t.full_column_path} to be int64, found string"
     ):
         t(test_connection)
 
@@ -242,7 +244,7 @@ def test_column_non_nullable_type(test_connection, create_test_table):
 
     t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.raises(
-        common.FailTest, match="Expected column a to be !string, found string"
+        common.FailTest, match=f"Expected column {t.full_column_path} to be !string, found string"
     ):
         t(test_connection)
 
@@ -259,7 +261,7 @@ def test_column_too_strict(test_connection, create_test_table):
     with pytest.warns(
         amlaidatatests.base.WarnTest,
         match=(
-            "Schema is stricter than required: expected column a to be string, found"
+            f"Schema is stricter than required: expected column {t.full_column_path} to be string, found"
             " !string"
         ),
     ):
