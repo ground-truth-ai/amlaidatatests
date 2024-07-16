@@ -19,7 +19,6 @@ def connection_factory(default: Optional[str] = None):
     if result.scheme == "bigquery":
         import google.auth
         credentials, _ = google.auth.default()
-        print()
         kwargs["credentials"] = credentials
 
     connection = ibis.connect(connection_string, **kwargs)
