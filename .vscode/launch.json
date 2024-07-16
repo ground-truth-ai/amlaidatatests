@@ -7,10 +7,10 @@
         {"name":"Python Debugger: Module",
         "type":"debugpy",
         "request":"launch",
-        "module":"pytest",
-        "args": ["--pyargs", "amlaidatatests.tests", "--connection_string=duckdb://duckdb.ddb", "--id=1234", "tests"],
+        "module":"amlaidatatests.tests",
+        "args": ["--connection_string=bigquery://bigquery-public-data/aml_ai_input_dataset", "--database=bigquery-public-data.aml_ai_input_dataset"],
         "justMyCode": false,
-        "env": {"PYTEST_ADDOPTS": "--no-cov  --disable-pytest-warnings --html=report.html --self-contained-html"}
+        "env": {"PYTEST_ADDOPTS": "--no-cov  --disable-pytest-warnings"}
     },
         {
             "name": "Python: Debug Tests",
@@ -20,7 +20,7 @@
             "purpose": ["debug-test"],
             "console": "integratedTerminal",
             "justMyCode": false,
-            "env": {"PYTEST_ADDOPTS": "--no-cov --disable-pytest-warnings --disable-pytest-warnings --html=report.html --self-contained-html"}
+            "env": {"PYTEST_ADDOPTS": "--no-cov --disable-pytest-warnings --disable-pytest-warnings --connection_string=bigquery://gtai-amlai-sandbox-uat/my_bq_input_dataset"}
           }
     ]
 }
