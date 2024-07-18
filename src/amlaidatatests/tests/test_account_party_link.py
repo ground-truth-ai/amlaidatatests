@@ -12,6 +12,18 @@ from amlaidatatests.tests import common
 TABLE_CONFIG = resolve_table_config("account_party_link")
 
 
+def test_referential_integrity_party(connection):
+    # A warning here means that there are parties without linked accounts
+    to_table_config = resolve_table_config("party")
+    test = common.ReferentialIntegrityTest(
+        table_config=TABLE_CONFIG,
+        to_table_config=to_table_config,
+        keys=["party_id"],
+        test_id="RI001",
+    )
+    test(connection)
+
+
 @pytest.mark.parametrize(
     "test", get_generic_table_tests(table_config=TABLE_CONFIG, max_rows_factor=500e6)
 )
@@ -69,7 +81,10 @@ def test_temporal_referential_integrity_party(connection):
     # A warning here means that there are parties without linked accounts
     to_table_config = resolve_table_config("party")
     test = common.TemporalReferentialIntegrityTest(
-        table_config=TABLE_CONFIG, to_table_config=to_table_config, key="party_id"
+        table_config=TABLE_CONFIG,
+        to_table_config=to_table_config,
+        key="party_id",
+        test_id="RI009",
     )
     test(connection)
 
@@ -82,9 +97,10 @@ def test_temporal_referential_integrity_transaction(connection):
         to_table_config=to_table_config,
         key="account_id",
         severity=AMLAITestSeverity.WARN,
-        test_id="RI010"
+        test_id="RI010",
     )
     test(connection)
+
 
 @pytest.mark.parametrize(
     "test",
@@ -95,7 +111,7 @@ def test_temporal_referential_integrity_transaction(connection):
             keys=["account_id"],
             severity=AMLAITestSeverity.WARN,
             max_proportion=0.05,
-            test_id="P031"
+            test_id="P031",
         ),
         common.ReferentialIntegrityTest(
             table_config=TABLE_CONFIG,
@@ -103,12 +119,12 @@ def test_temporal_referential_integrity_transaction(connection):
             keys=["account_id"],
             severity=AMLAITestSeverity.ERROR,
             max_proportion=0.20,
-            test_id="P030"
-        )
-    ]
+            test_id="P030",
+        ),
+    ],
 )
 def test_transaction_referential_integrity(connection, test):
-    """ Tests referential integrity between the """
+    """Tests referential integrity between the"""
     test(connection)
 
 
@@ -121,7 +137,7 @@ def test_transaction_referential_integrity(connection, test):
             max_number=10000,
             severity=AMLAITestSeverity.ERROR,
             group_by=["party_id"],
-            test_id="P015"
+            test_id="P015",
         ),
         common.ColumnCardinalityTest(
             column="account_id",
@@ -129,7 +145,7 @@ def test_transaction_referential_integrity(connection, test):
             max_number=1000,
             severity=AMLAITestSeverity.WARN,
             group_by=["party_id"],
-            test_id="P016"
+            test_id="P016",
         ),
         common.ColumnCardinalityTest(
             column="party_id",
@@ -137,7 +153,7 @@ def test_transaction_referential_integrity(connection, test):
             max_number=10000,
             severity=AMLAITestSeverity.ERROR,
             group_by=["account_id"],
-            test_id="P017"
+            test_id="P017",
         ),
         common.ColumnCardinalityTest(
             column="party_id",
@@ -145,14 +161,14 @@ def test_transaction_referential_integrity(connection, test):
             max_number=5000,
             severity=AMLAITestSeverity.WARN,
             group_by=["account_id"],
-            test_id="P018"
+            test_id="P018",
         ),
         common.ColumnCardinalityTest(
             column="source_system",
             table_config=TABLE_CONFIG,
             max_number=500,
             severity=AMLAITestSeverity.WARN,
-            test_id="P019"
+            test_id="P019",
         ),
     ],
 )

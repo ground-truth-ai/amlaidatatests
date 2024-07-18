@@ -4,7 +4,6 @@ import ibis
 import pytest
 from ibis import BaseBackend, Table
 
-from amlaidatatests.config import ConfigSingleton
 from amlaidatatests.connection import connection_factory
 from amlaidatatests.tests.conftest import (
     pytest_addoption as passthrough_pytest_addoption,

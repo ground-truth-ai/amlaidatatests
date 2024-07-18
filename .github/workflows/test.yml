@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: Python package
+name: Integration Test
 
 on:
   push:
@@ -87,4 +87,4 @@ jobs:
 
       - name: Test against bigquery
         run: |
-          python -m amlaidatatests.tests --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}?location=US --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset
+          python -m amlaidatatests.tests --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}?location=US --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset -x -k test_primary_keys

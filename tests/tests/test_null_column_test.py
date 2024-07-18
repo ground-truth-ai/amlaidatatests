@@ -2,7 +2,7 @@ import datetime
 
 import ibis
 import pytest
-from ibis.expr.datatypes import Array, String, Struct, Timestamp
+from ibis.expr.datatypes import String, Struct, Timestamp
 
 from amlaidatatests.base import FailTest
 from amlaidatatests.schema.base import ResolvedTableConfig
@@ -20,7 +20,8 @@ def test_column_is_always_null(test_connection, create_test_table):
     t = common.FieldNeverNullTest(table_config=table_config, column="id")
 
     with pytest.raises(
-        expected_exception=FailTest, match=f"2 rows found with null values of {t.full_column_path}"
+        expected_exception=FailTest,
+        match=f"2 rows found with null values of {t.full_column_path}",
     ):
         t(test_connection)
 
@@ -76,7 +77,8 @@ def test_column_is_sometimes_null(test_connection, create_test_table):
     t = common.FieldNeverNullTest(table_config=table_config, column="id")
 
     with pytest.raises(
-        expected_exception=FailTest, match=f"1 rows found with null values of {t.full_column_path}"
+        expected_exception=FailTest,
+        match=f"1 rows found with null values of {t.full_column_path}",
     ):
         t(test_connection)
 

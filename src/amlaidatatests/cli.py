@@ -23,6 +23,7 @@ def create_skeleton(args):
 def run_tests(args):
     pytest.main(args=[f"{dir_path}/tests", *sys.argv[1:]])
 
+
 def entry_point():
     parser = argparse.ArgumentParser()
     parser = init_config(parser)

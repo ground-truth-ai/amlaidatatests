@@ -4,7 +4,11 @@ from amlaidatatests.config import cfg
 from ibis import Schema, literal
 from ibis.expr.datatypes import Array, DataType, Struct
 
-from amlaidatatests.base import AbstractBaseTest, AbstractColumnTest, AMLAITestSeverity, resolve_field
+from amlaidatatests.base import (
+    AbstractBaseTest,
+    AbstractColumnTest,
+    AMLAITestSeverity,
+)
 from amlaidatatests.io import get_valid_currency_codes
 from amlaidatatests.schema.base import ResolvedTableConfig, TableType
 from amlaidatatests.schema.v1.common import CurrencyValue, ValueEntity
@@ -15,7 +19,6 @@ from amlaidatatests.tests.common import (
     CountFrequencyValues,
     CountValidityStartTimeChangesTest,
     FieldNeverNullTest,
-    FieldNeverWhitespaceOnlyTest,
     NoMatchingRows,
     OrphanDeletionsTest,
     TableCountTest,
@@ -160,7 +163,9 @@ def non_nullable_fields(
     return fields
 
 
-def non_nullable_field_tests(table_config: ResolvedTableConfig) -> list[AbstractBaseTest]:
+def non_nullable_field_tests(
+    table_config: ResolvedTableConfig,
+) -> list[AbstractBaseTest]:
     """_summary_
 
     Args:
@@ -198,14 +203,35 @@ def get_generic_table_tests(
     Returns:
         _description_
     """
-    table = table_config.table
     tests = [
         TableSchemaTest(table_config),
         TableCountTest(
             table_config, severity=severity, max_rows_factor=max_rows_factor
-        )]
-    if table_config.table_type in (TableType.CLOSED_ENDED_ENTITY, TableType.OPEN_ENDED_ENTITY):
-        tests += [NoMatchingRows(table_config=table_config, column="validity_start_time", expression=table.validity_start_time.date() > cfg().interval_end_date),
-                  CountFrequencyValues(table_config=table_config, column="is_entity_deleted", having=lambda c: c.is_entity_deleted == literal(True), proportion=0.4, severity=AMLAITestSeverity.WARN),
-                  CountFrequencyValues(table_config=table_config, column="validity_start_time", proportion=0.01, severity=AMLAITestSeverity.WARN)]
+        ),
+    ]
+    if table_config.table_type in (
+        TableType.CLOSED_ENDED_ENTITY,
+        TableType.OPEN_ENDED_ENTITY,
+    ):
+        tests += [
+            NoMatchingRows(
+                table_config=table_config,
+                column="validity_start_time",
+                expression=lambda t: t.validity_start_time.date()
+                > cfg().interval_end_date,
+            ),
+            CountFrequencyValues(
+                table_config=table_config,
+                column="is_entity_deleted",
+                having=lambda c: c.is_entity_deleted == literal(True),
+                proportion=0.4,
+                severity=AMLAITestSeverity.WARN,
+            ),
+            CountFrequencyValues(
+                table_config=table_config,
+                column="validity_start_time",
+                proportion=0.01,
+                severity=AMLAITestSeverity.WARN,
+            ),
+        ]
     return tests

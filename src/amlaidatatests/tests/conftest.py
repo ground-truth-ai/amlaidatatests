@@ -63,6 +63,7 @@ def pytest_make_parametrize_id(config, val, argname):
     # return None to let pytest handle the formatting
     return None
 
+
 @pytest.hookimpl(optionalhook=True)
 def pytest_html_results_summary(prefix, summary, postfix):
     prefix.extend(
@@ -72,9 +73,11 @@ def pytest_html_results_summary(prefix, summary, postfix):
         ]
     )
 
+
 @pytest.hookimpl(optionalhook=True)
 def pytest_html_results_table_header(cells):
     cells.insert(1, '<th class="sortable int" data-column-type="int">Warnings</th>')
+
 
 @pytest.hookimpl(optionalhook=True)
 def pytest_html_results_table_row(report, cells):
@@ -86,6 +89,7 @@ def pytest_runtest_makereport(item, call):
     outcome = yield
     report = outcome.get_result()
     report.warning = report.caplog.count("WARNING")
+
 
 def pytest_collection_modifyitems(items):
     # will execute as late as possible

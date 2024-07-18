@@ -18,6 +18,7 @@ def connection_factory(default: Optional[str] = None):
     # in more detail
     if result.scheme == "bigquery":
         import google.auth
+
         credentials, _ = google.auth.default()
         kwargs["credentials"] = credentials
 

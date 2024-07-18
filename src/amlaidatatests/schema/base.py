@@ -6,6 +6,7 @@ from enum import auto
 
 from ibis import Schema, Table
 
+
 class TableType(enum.Enum):
     OPEN_ENDED_ENTITY = auto()
     CLOSED_ENDED_ENTITY = auto()

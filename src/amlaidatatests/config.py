@@ -2,11 +2,12 @@ import argparse
 from dataclasses import dataclass, fields, field
 import datetime
 from typing import Any, Optional
-from urllib.parse import parse_qsl, urlparse
+from urllib.parse import urlparse
 
-from omegaconf import OmegaConf, SI
+from omegaconf import OmegaConf
 
 from .singleton import Singleton
+
 
 def cfg() -> "DatatestConfig":
     return ConfigSingleton.get()
@@ -56,7 +57,9 @@ class DatatestConfig:
 
     scale: float = 1.0
 
-    interval_end_date: str = field(default_factory=lambda: datetime.date.today().isoformat())
+    interval_end_date: str = field(
+        default_factory=lambda: datetime.date.today().isoformat()
+    )
 
 
 class ConfigSingleton(metaclass=Singleton):
@@ -130,12 +133,12 @@ def init_config(parser, defaults={}):
     ConfigSingleton().set_config(STRUCTURED_CONFIG)
     if isinstance(parser, argparse.ArgumentParser):
         parser.addoption = parser.add_argument
-    parser.addoption(f"--conf", action=IngestConfigAction)
-    for field in fields(DatatestConfig):
+    parser.addoption("--conf", action=IngestConfigAction)
+    for f in fields(DatatestConfig):
         parser.addoption(
-            f"--{field.name}",
+            f"--{f.name}",
             action=IngestConfigAction,
-            default=defaults.get(field.name) or field.default,
+            default=defaults.get(f.name) or f.default,
         )
     return parser
 
