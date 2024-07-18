@@ -1,23 +1,27 @@
 from typing import List, Union
 
-from ibis import Schema
+from amlaidatatests.config import cfg
+from ibis import Schema, literal
 from ibis.expr.datatypes import Array, DataType, Struct
 
 from amlaidatatests.base import AbstractBaseTest, AbstractColumnTest, AMLAITestSeverity, resolve_field
 from amlaidatatests.io import get_valid_currency_codes
-from amlaidatatests.schema.base import ResolvedTableConfig
+from amlaidatatests.schema.base import ResolvedTableConfig, TableType
 from amlaidatatests.schema.v1.common import CurrencyValue, ValueEntity
 from amlaidatatests.tests.common import (
     AcceptedRangeTest,
     ColumnValuesTest,
     ConsecutiveEntityDeletionsTest,
+    CountFrequencyValues,
     CountValidityStartTimeChangesTest,
     FieldNeverNullTest,
     FieldNeverWhitespaceOnlyTest,
+    NoMatchingRows,
     OrphanDeletionsTest,
     TableCountTest,
     TableSchemaTest,
 )
+
 
 ENTITIES = {"CurrencyValue": CurrencyValue(), "ValueEntity": ValueEntity()}
 
@@ -44,20 +48,17 @@ def get_entity_tests(
                 column="nanos",
                 min_value=0,
                 max_value=1e9,
-                validate=False,
             ),
             AcceptedRangeTest(
                 table_config=table_config,
                 column="units",
                 min_value=0,
                 max_value=None,
-                validate=False,
             ),
             ColumnValuesTest(
                 table_config=table_config,
                 column="currency_code",
                 values=get_valid_currency_codes(),
-                validate=False,
             ),
         ]
     raise ValueError(f"Unknown Entity {entity_name}")
@@ -171,12 +172,12 @@ def non_nullable_field_tests(table_config: ResolvedTableConfig) -> list[Abstract
     fields = non_nullable_fields(schema=table_config.table.schema())
     tests = []
     for f in fields:
-        _, _field = resolve_field(table=table_config.table, column=f)
-        field_type = _field.type()
-        if field_type.is_string():
-            tests.append(
-                FieldNeverWhitespaceOnlyTest(table_config=table_config, column=f)
-            )
+        # _, _field = resolve_field(table=table_config.table, column=f)
+        # field_type = _field.type()
+        # if field_type.is_string():
+        #     tests.append(
+        #         FieldNeverWhitespaceOnlyTest(table_config=table_config, column=f)
+        #     )
 
         tests.append(FieldNeverNullTest(table_config=table_config, column=f))
     return tests
@@ -197,9 +198,14 @@ def get_generic_table_tests(
     Returns:
         _description_
     """
-    return [
+    table = table_config.table
+    tests = [
         TableSchemaTest(table_config),
         TableCountTest(
             table_config, severity=severity, max_rows_factor=max_rows_factor
-        ),
-    ]
+        )]
+    if table_config.table_type in (TableType.CLOSED_ENDED_ENTITY, TableType.OPEN_ENDED_ENTITY):
+        tests += [NoMatchingRows(table_config=table_config, column="validity_start_time", expression=table.validity_start_time.date() > cfg().interval_end_date),
+                  CountFrequencyValues(table_config=table_config, column="is_entity_deleted", having=lambda c: c.is_entity_deleted == literal(True), proportion=0.4, severity=AMLAITestSeverity.WARN),
+                  CountFrequencyValues(table_config=table_config, column="validity_start_time", proportion=0.01, severity=AMLAITestSeverity.WARN)]
+    return tests

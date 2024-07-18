@@ -1,11 +1,15 @@
 import argparse
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, field
+import datetime
 from typing import Any, Optional
 from urllib.parse import parse_qsl, urlparse
 
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, SI
 
 from .singleton import Singleton
+
+def cfg() -> "DatatestConfig":
+    return ConfigSingleton.get()
 
 
 def infer_database(connection_str: str) -> str | None:
@@ -51,6 +55,8 @@ class DatatestConfig:
     """ For bigquery, the dataset being used """
 
     scale: float = 1.0
+
+    interval_end_date: str = field(default_factory=lambda: datetime.date.today().isoformat())
 
 
 class ConfigSingleton(metaclass=Singleton):

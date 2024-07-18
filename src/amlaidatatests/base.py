@@ -1,3 +1,4 @@
+import copy
 import enum
 import logging
 import warnings
@@ -6,12 +7,13 @@ from enum import auto
 from typing import Callable, Optional
 
 import ibis
+from ibis import _, selectors as s
 import pytest
 from google.api_core.exceptions import NotFound as GoogleTableNotFound
 from ibis import BaseBackend, Expr, IbisError, Table
 from ibis.common.exceptions import IbisTypeError
 
-from amlaidatatests.schema.base import ResolvedTableConfig
+from amlaidatatests.schema.base import ResolvedTableConfig, TableType
 
 logger = logging.getLogger(__name__)
 
@@ -22,43 +24,19 @@ class AMLAITestSeverity(enum.Enum):
     INFO = auto()
 
 
-def check_table_exists(connection: BaseBackend, table_config: ResolvedTableConfig):
-    try:
-        connection.table(table_config.table.get_name())
-        return
-    # Ibis has no consistent API around missing tables:
-    # https://github.com/ibis-project/ibis/issues/9468
-    # We have to workaround this whilst ensuring we don't
-    # catch any errors we don't want to catch. This is
-    # easier with some backends than others
-    except GoogleTableNotFound as e:
-        if connection.name != "bigquery":
-            raise e
-    except IbisError as e:
-        if connection.name != "duckdb":
-            raise e
-    _skip_test_if_optional_table(table_config=table_config)
-
-
-def _skip_test_if_optional_table(table_config: ResolvedTableConfig):
-    if table_config.optional:  # is optional
-        raise SkipTest(
-            f"Skipping test: optional table {table_config.table.get_name()} does not"
-            " exist"
-        )
-    else:
-        raise FailTest(f"Required table {table_config.table.get_name()} does not exist")
 
 
 class FailTest(Exception):
-    def __init__(self, message: str, expr: Optional[Expr] = None) -> None:
+    def __init__(self, message: str, expr: Optional[Expr] = None, description: Optional[str] = None) -> None:
         self.message = message
         self.expr = expr
+        self.description = description
 
         self.sql = str(ibis.get_backend().compile(expr)) if expr is not None else None
 
     def friendly_message(self):
-        msg = self.message
+        msg = f'{self.description}\n' if self.description else ''
+        msg += self.message
         if self.sql:
             msg += "\nTo reproduce this result, run:\n"
             msg += self.sql
@@ -69,8 +47,9 @@ class FailTest(Exception):
 
 
 class WarnTest(Warning, FailTest):
-    def __init__(self, message: str, expr: Optional[Expr] = None) -> None:
+    def __init__(self, message: str, expr: Optional[Expr] = None, description: Optional[str] = None) -> None:
         self.message = message
+        self.description = description
 
         self.sql = str(ibis.get_backend().compile(expr)) if expr is not None else None
 
@@ -87,17 +66,19 @@ def resolve_field(table: Table, column: str) -> tuple[Table, Expr]:
     # Given a path x.y.z, resolve the field object
     # on the table
     splits = column.split(".")
-    table = table.select(splits[0])
-    field = table
-    for i, p in enumerate(splits):
+
+    table = table.mutate({splits[0]: splits[0]})
+    field = table[splits[0]]
+    for p in splits[1:]:
         # The first field is a table. If the table
         # has a field called table, this loo
-        if i > 0 and field.type().is_array():
+        if field.type().is_struct():
+            field = field[p]
+        if field.type().is_array():
             # Arrays must be unnested and then addressed so
             # we can access all the levels of the array
             table = table.mutate(unest=field.unnest())
             field = table["unest"]
-        field = field[p]
     return table, field
 
 
@@ -113,16 +94,21 @@ class AbstractBaseTest(ABC):
         self,
         table_config: ResolvedTableConfig,
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
+        test_id: Optional[str] = None
     ) -> None:
-        self.table = table_config.table
+        self.table: Optional[Table] = None
         self.table_config = table_config
         self.severity = severity
+        self.test_id = test_id
 
     @property
     def id(self) -> Optional[str]:
         """Override to provide additional information about the
-        test to pytest"""
-        return None
+        test to pytest to identify the test"""
+        if self.test_id:
+            return f"{self.test_id}-{self.__class__.__name__}-{self.table_config.name}"
+        else:
+            return f"{self.__class__.__name__}-{self.table_config.name}"
 
     def _test(self, *, connection: BaseBackend) -> None: ...
 
@@ -135,7 +121,7 @@ class AbstractBaseTest(ABC):
 
     def _run_with_severity(self, f: Callable, **kwargs):
         try:
-            f(**kwargs)
+            return f(**kwargs)
         except FailTest as e:
             if isinstance(e, WarnTest):
                 self._raise_warning(e)
@@ -169,6 +155,7 @@ class AbstractTableTest(AbstractBaseTest):
         self,
         table_config: ResolvedTableConfig,
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
+        test_id: Optional[str] = None
     ) -> None:
         """_summary_
 
@@ -176,23 +163,52 @@ class AbstractTableTest(AbstractBaseTest):
             table_config: _description_
             severity: _description_. Defaults to AMLAITestSeverity.ERROR.
         """
-        super().__init__(table_config=table_config, severity=severity)
+        table_config = copy.deepcopy(table_config)
+        # We don't want to get resolved table at test definition time, only at test time
+        self.resolved_table: Optional[Table] = None
+        super().__init__(table_config=table_config, severity=severity, test_id = test_id)
 
-    @property
-    def id(self) -> Optional[str]:
-        """Override to provide additional information about the
-        test to pytest to identify the test"""
-        return f"{self.__class__.__name__}"
+    def check_table_exists(self, connection: BaseBackend, table_config: ResolvedTableConfig):
+        try:
+            return connection.table(table_config.table.get_name())
+        # Ibis has no consistent API around missing tables:
+        # https://github.com/ibis-project/ibis/issues/9468
+        # We have to workaround this whilst ensuring we don't
+        # catch any errors we don't want to catch. This is
+        # easier with some backends than others
+        except GoogleTableNotFound as e:
+            if connection.name != "bigquery":
+                raise e
+        except IbisError as e:
+            if connection.name != "duckdb":
+                raise e
+        self._skip_test_if_optional_table(table_config=table_config)
+
+
+    def _skip_test_if_optional_table(self, table_config: ResolvedTableConfig):
+        if table_config.optional:  # is optional
+            raise SkipTest(
+                f"Skipping test: optional table {table_config.table.get_name()} does not"
+                " exist"
+            )
+        else:
+            raise FailTest(f"Required table {table_config.table.get_name()} does not exist")
 
     def _test(self, *, connection: BaseBackend) -> None: ...
 
     def optional_table(self):
         pass
 
+    def get_latest_rows(self, table: Table):
+        if self.table_config.table_type not in (TableType.CLOSED_ENDED_ENTITY, TableType.OPEN_ENDED_ENTITY):
+            raise ValueError(f"{self.table_config.table_type} is not a valid table type to retrieve latest entity row")
+        return table.filter(_["is_entity_deleted"] == ibis.literal(False)).select(s.all(), row_num=ibis.row_number().over(group_by=self.table_config.entity_keys, order_by=ibis.desc("validity_start_time"))).filter(_.row_num == 0)
+
+
     def __call__(self, connection: BaseBackend):
         # Check if table exists
-        self._run_with_severity(
-            connection=connection, f=check_table_exists, table_config=self.table_config
+        self.table = self._run_with_severity(
+            connection=connection, f=self.check_table_exists, table_config=self.table_config
         )
         self._run_with_severity(connection=connection, f=self._test)
 
@@ -203,38 +219,35 @@ class AbstractColumnTest(AbstractTableTest):
         self,
         table_config: ResolvedTableConfig,
         column: str,
-        validate: bool = True,
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
+        test_id: Optional[str] = None
     ) -> None:
         """ """
         self.column = column
-        # Ensure the column is specified on the unbound table
-        # provided
-        if validate:
-            resolve_field(table_config.table, column)
-        super().__init__(table_config=table_config, severity=severity)
+        super().__init__(table_config=table_config, severity=severity, test_id=test_id)
 
     @property
     def id(self) -> Optional[str]:
         """Override to provide additional information about the
         test to pytest to identify the test"""
-        return f"{self.__class__.__name__}-{self.column}"
+        if self.test_id:
+            return f"{self.test_id}-{self.__class__.__name__}-{self.column}"
+        else:
+            return f"{self.__class__.__name__}-{self.column}"
 
     @property
     def full_column_path(self):
-        return f"{self.table.get_name()}.{self.column}"
+        return f"{self.table_config.table.get_name()}.{self.column}"
 
-    def get_bound_table(self, connection: BaseBackend):
-        return connection.table(self.table.get_name())
 
     def _check_column_exists(self, connection):
         try:
             resolve_field_to_level(
-                table=self.get_bound_table(connection), column=self.column, level=1
+                table=self.table, column=self.column, level=1
             )
         except IbisTypeError as e:
             parent_column = self.column.split(".")[0]
-            if self.table.schema()[parent_column].nullable:
+            if self.table_config.schema[parent_column].nullable:
                 raise SkipTest(
                     "Skipping running test on non-existent (but not required) column"
                     f" {self.column}"
@@ -245,8 +258,8 @@ class AbstractColumnTest(AbstractTableTest):
     def __call__(self, connection: BaseBackend, prefix: Optional[str] = None):
         # It's fine for the top level column to be missing if it's
         # an optional field. If it is, we can skip the whole test
-        self._run_with_severity(
-            connection=connection, f=check_table_exists, table_config=self.table_config
+        self.table = self._run_with_severity(
+            connection=connection, f=self.check_table_exists, table_config=self.table_config
         )
         __prefix_revert = None
         if prefix:

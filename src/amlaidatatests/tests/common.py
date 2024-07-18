@@ -1,8 +1,9 @@
 import datetime
 import warnings
-from typing import Any, List, Literal, Optional, cast
+from typing import Any, Callable, List, Literal, Optional, cast
 
 import ibis
+import sqlglot
 from ibis import BaseBackend, Expr, _
 from ibis.common.exceptions import IbisTypeError
 from ibis.expr.datatypes import Array, DataType, Struct, Timestamp
@@ -13,12 +14,30 @@ from amlaidatatests.base import (
     AMLAITestSeverity,
     FailTest,
     WarnTest,
-    check_table_exists,
     resolve_field,
     resolve_field_to_level,
 )
 from amlaidatatests.config import ConfigSingleton
-from amlaidatatests.schema.base import ResolvedTableConfig
+from amlaidatatests.schema.base import ResolvedTableConfig, TableType
+import itertools
+
+import sqlglot.optimizer
+
+from sqlglot.optimizer.annotate_types import annotate_types
+from sqlglot.optimizer.canonicalize import canonicalize
+from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
+from sqlglot.optimizer.eliminate_joins import eliminate_joins
+from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
+from sqlglot.optimizer.merge_subqueries import merge_subqueries
+from sqlglot.optimizer.normalize import normalize
+from sqlglot.optimizer.optimize_joins import optimize_joins
+from sqlglot.optimizer.pushdown_predicates import pushdown_predicates
+from sqlglot.optimizer.pushdown_projections import pushdown_projections
+from sqlglot.optimizer.qualify import qualify
+from sqlglot.optimizer.qualify_columns import quote_identifiers
+from sqlglot.optimizer.simplify import simplify
+from sqlglot.optimizer.unnest_subqueries import unnest_subqueries
+
 
 
 class TableSchemaTest(AbstractTableTest):
@@ -38,7 +57,7 @@ class TableSchemaTest(AbstractTableTest):
 
     def _test(self, *, connection: BaseBackend):
         actual_columns = set(connection.table(name=self.table.get_name()).columns)
-        schema_columns = set(self.table.columns)
+        schema_columns = set(self.table_config.table.columns)
         excess_columns = actual_columns.difference(schema_columns)
         if len(excess_columns) > 0:
             raise WarnTest(
@@ -115,7 +134,7 @@ class PrimaryKeyColumnsTest(AbstractTableTest):
         super().__init__(table_config=table_config)
         # Check columns provided are in table
         for col in unique_combination_of_columns:
-            resolve_field(self.table, col)
+            resolve_field(self.table_config.table, col)
         self.unique_combination_of_columns = unique_combination_of_columns
 
     def _test(self, *, connection: BaseBackend) -> None:
@@ -128,6 +147,243 @@ class PrimaryKeyColumnsTest(AbstractTableTest):
         n_total = result["count"]
         if n_pairs != n_total:
             raise FailTest(f"Found {n_total - n_pairs} duplicate values")
+
+class ColumnCardinalityTest(AbstractColumnTest):
+    """Check for the number of values of column, optionally
+    grouped by group_by.
+
+    For example:
+        if column = party_id, group_by = None
+            - Check for the number of distinct party_id
+        if column = party_id, group_by = ["account_id"]
+            - Check for the number of distinct party_ids
+                for each account
+
+
+    Args:
+        AbstractTableTest: _description_
+    """
+
+    def __init__(
+        self,
+        *,
+        table_config: ResolvedTableConfig,
+        column: str,
+        max_number: Optional[int] = None,
+        min_number: Optional[int] = None,
+        test_id: Optional[str] = None,
+        where: Optional[Callable[[Expr], Expr]] = None,
+        having: Optional[Callable[[Expr], Expr]] = None,
+        severity: AMLAITestSeverity = AMLAITestSeverity.WARN,
+        group_by: Optional[list[str]] = None
+    ) -> None:
+        super().__init__(table_config=table_config, column=column, severity=severity)
+        self.max_number = max_number
+        self.min_number = min_number
+        self.test_id = test_id
+        self.group_by = group_by
+        if self.group_by is None:
+            self.group_by = ibis.literal(1)
+        self.where = where
+        self.having = having
+
+
+    def _test(self, *, connection: BaseBackend) -> None:
+        # References to validity_start_time are unnecessary, but they do ensure that the column is present on the table
+        table = self.table
+        if self.table_config.table_type in (TableType.CLOSED_ENDED_ENTITY, TableType.OPEN_ENDED_ENTITY):
+            # For these tables, we need to identify the latest row
+            table = self.get_latest_rows(table)
+
+        table, column = resolve_field(table=table, column=self.column)
+
+        if self.where is not None:
+            table = table.filter(self.where)
+
+        expr = table.group_by(self.group_by).agg(value_cnt=column.nunique())
+
+        boolean_expr = None
+        if self.max_number: #if self.number: - checked during init
+            boolean_expr |=  _.value_cnt > self.max_number
+        if self.min_number: #if self.number: - checked during init
+            boolean_expr |=  _.value_cnt < self.min_number
+
+        expr = expr.filter(boolean_expr)
+
+        if self.having is not None:
+            expr = expr.filter(self.having)
+
+        results = connection.execute(expr.count())
+
+        if results > 0:
+            message = f"column {self.full_column_path} has an unusually high number of distinct values"
+            raise FailTest(
+                message=message,
+                expr=expr,
+            )
+
+
+class CountFrequencyValues(AbstractColumnTest):
+    """Check for the proportion or number of rows containing any
+    particular value in column
+
+    Args:
+        AbstractTableTest: _description_
+    """
+
+    def __init__(
+        self,
+        *,
+        table_config: ResolvedTableConfig,
+        column: str,
+        test_id: Optional[str] = None,
+        proportion: Optional[float] = None,
+        max_number: Optional[int] = None,
+        where: Optional[Callable[[Expr], Expr]] = None,
+        having: Optional[Callable[[Expr], Expr]] = None,
+        severity: AMLAITestSeverity = AMLAITestSeverity.WARN,
+        group_by: Optional[list[str]] = None
+    ) -> None:
+        """_summary_
+
+        Args:
+            table_config: _description_
+            entity_ids: _description_
+            warn: _description_. Defaults to 500.
+            error: _description_. Defaults to 1000.
+
+        Raises:
+            ValueError: _description_
+        """
+        super().__init__(table_config=table_config, column=column, severity=severity, test_id = test_id)
+        if (proportion) and any([max_number]):
+            raise ValueError("Only proportion or number must be set, not both")
+        if not any([proportion, max_number]):
+            raise ValueError("One of proportion and number must be set")
+        if (proportion) and (proportion < 0 or proportion > 1):
+            raise ValueError("Proportion must be between 0 and 1")
+        self.proportion = proportion
+        self.max_number = max_number
+        self.where = where
+        self.having = having
+        self.group_by = group_by if group_by else []
+
+    def _test(self, *, connection: BaseBackend) -> None:
+        table = self.table
+        if self.table_config.table_type in (TableType.CLOSED_ENDED_ENTITY, TableType.OPEN_ENDED_ENTITY):
+            # For these tables, we need to identify the latest row
+            table = self.get_latest_rows(table)
+        if self.where is not None:
+            table = table.filter(self.where)
+        table, column = resolve_field(table=table, column=self.column)
+        expr = table.group_by([column, *self.group_by]).agg(value_cnt=column.count()).mutate(proportion=_.value_cnt/_.value_cnt.sum().over(group_by=self.group_by))
+
+        boolean_expr = None
+        if self.proportion:
+            boolean_expr |=  _.proportion >= self.proportion
+        if self.max_number: #if self.number: - checked during init
+            boolean_expr |=  _.value_cnt > self.max_number
+
+        expr = expr.filter(boolean_expr)
+
+        if self.having is not None:
+            expr = expr.filter(self.having)
+
+        results = connection.execute(expr.count())
+
+
+        if results > 0:
+            raise FailTest(
+                message=f"{results} values of {self.full_column_path} appeared unusually frequently",
+                expr=expr,
+            )
+
+class VerifyTypedValuePresence(AbstractColumnTest):
+    """Check for the proportion or number of rows containing any
+    particular value in column relative to group_by.
+
+    For example,
+    group_by = transaction_id, min_proportion = 1, column = type, value = CARD,
+    will check if all transaction_id have at least one row containing type = CARD.
+
+    group_by = transaction_id, min_proportion = 1, column = type, value = CARD,
+    where = type = "AML_EXIT"
+    will check the proportion of transaction_id with at least one row containing type = CARD to
+    the count of rows with type = AML_EXIT
+
+    Args:
+        AbstractTableTest: _description_
+    """
+
+    def __init__(
+        self,
+        *,
+        table_config: ResolvedTableConfig,
+        column: str,
+        value: str,
+        group_by: list[str],
+        test_id: Optional[str] = None,
+        min_number: Optional[int] = None,
+        max_number: Optional[int] = None,
+        max_proportion: Optional[float] = None,
+        min_proportion: Optional[float] = None,
+        where: Optional[Callable[[Expr], Expr]] = None,
+        severity: AMLAITestSeverity = AMLAITestSeverity.WARN,
+    ) -> None:
+        """_summary_
+
+        Args:
+            table_config: _description_
+            entity_ids: _description_
+            warn: _description_. Defaults to 500.
+            error: _description_. Defaults to 1000.
+
+        Raises:
+            ValueError: _description_
+        """
+        super().__init__(table_config=table_config, column=column, severity=severity)
+        self.min_number = min_number
+        self.max_number = max_number
+        self.max_proportion = max_proportion
+        self.min_proportion = min_proportion
+        self.test_id = test_id
+        self.value = value
+        self.group_by = group_by
+        self.where = where
+
+    def _test(self, *, connection: BaseBackend) -> None:
+        table = self.table
+        if self.table_config.table_type in (TableType.CLOSED_ENDED_ENTITY, TableType.OPEN_ENDED_ENTITY):
+            # For these tables, we need to identify the latest row
+            table = self.get_latest_rows(table)
+        table, column = resolve_field(table=table, column=self.column)
+
+        where_group_kwargs = {"where": self.where(_)} if self.where else {}
+
+
+        expr = table.mutate(concat=ibis.array([_[i] for i in self.group_by])).agg(value_cnt=_["concat"].nunique(column == self.value), group_count=_["concat"].nunique(**where_group_kwargs)).mutate(proportion=_.value_cnt/_.group_count)
+        results = connection.execute(expr).iloc[0]
+
+        if self.min_number and results["value_cnt"] < self.min_number:
+            raise FailTest(
+                message=f"{results["value_cnt"]} rows {self.group_by} found with a {self.value} across the entire dataset",
+                expr=expr,
+            )
+        if self.max_number and results["value_cnt"] > self.max_number:
+            raise FailTest(
+                message=f"{results["value_cnt"]} {self.group_by} found with with more than {self.max_number} values of {self.value}",
+                expr=expr,
+            )
+        if self.max_proportion and results["proportion"] >= self.max_proportion:
+            raise FailTest(
+                message=f"{results["proportion"]:.0%} of {self.group_by} had values of {self.value}",
+                expr=expr,
+            )
+        if self.min_proportion and results["proportion"] <= self.min_proportion:
+            raise FailTest(
+                message=f"{results["proportion"]:.0%} of {self.group_by} had values of {self.value}",
+                expr=expr,
+            )
 
 
 class CountValidityStartTimeChangesTest(AbstractTableTest):
@@ -170,8 +426,8 @@ class CountValidityStartTimeChangesTest(AbstractTableTest):
             min_validity_start_time=_.validity_start_time.min(),
             max_validity_start_time=_.validity_start_time.max(),
         )
-        warn_number = counted.filter(_.count_per_pk > self.warn)
-        error_number = counted.filter(_.count_per_pk > self.error)
+        warn_number = counted.filter(_.count_per_pk >= self.warn)
+        error_number = counted.filter(_.count_per_pk >= self.error)
 
         result = connection.execute(
             self.table.select(
@@ -286,7 +542,7 @@ class ColumnPresenceTest(AbstractColumnTest):
 
     def _test(self, *, connection: BaseBackend):
         try:
-            self.get_bound_table(connection)[self.column]
+            self.table[self.column]
         except IbisTypeError as e:
             raise FailTest(f"Missing Required Column: {self.full_column_path}") from e
 
@@ -317,9 +573,9 @@ class ColumnTypeTest(AbstractColumnTest):
         Raises:
             FailTest: _description_
         """
-        actual_table = self.get_bound_table(connection)
+        actual_table = self.table
         actual_type = actual_table.schema()[self.column]
-        schema_data_type = self.table.schema()[self.column]
+        schema_data_type = self.table_config.schema[self.column]
 
         # Check the child types
         if self._strip_type_for_comparison(
@@ -447,10 +703,9 @@ class ColumnValuesTest(AbstractColumnTest):
         *,
         values: List[Any],
         table_config: ResolvedTableConfig,
-        column: str,
-        validate: bool = True,
+        column: str
     ) -> None:
-        super().__init__(table_config=table_config, column=column, validate=validate)
+        super().__init__(table_config=table_config, column=column)
         self.values = values
 
     def _test(self, *, connection: BaseBackend):
@@ -592,9 +847,79 @@ class NullIfTest(AbstractColumnTest):
         result = connection.execute(expr.count())
         if result > 0:
             raise FailTest(
-                f"{result} rows not fulfilling criteria {ibis.to_sql(self.expression)} in {self.full_column_path}",
+                f"{result} rows not fulfilling criteria in {self.full_column_path}",
                 expr=expr,
             )
+
+class NoMatchingRows(AbstractColumnTest):
+
+    def __init__(
+        self, *, table_config: ResolvedTableConfig, column: str, expression: Expr | Callable[[], Expr], severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
+    ) -> None:
+        super().__init__(table_config=table_config, column=column, severity=severity)
+        self.expression = expression
+
+    @property
+    def id(self):
+        return self.column
+
+    def _test(self, *, connection: BaseBackend):
+        # Allow callable to be passed in for expressions which cannot be generated at
+        # runtime
+        if callable(self.expression):
+            self.expression = self.expression()
+        else:
+            self.expression = self.expression
+        expr = self.table.filter(self.expression)
+        result = connection.execute(expr.count())
+        if result > 0:
+            raise FailTest(
+                f"{result} rows unexpectedly fulfilled criteria {ibis.to_sql(self.expression)} in {self.full_column_path}",
+                expr=expr,
+            )
+
+class EventOrder(AbstractColumnTest):
+
+    def __init__(
+        self, *, table_config: ResolvedTableConfig, column: str, time_column: str, events: list[str], severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
+    ) -> None:
+        super().__init__(table_config=table_config, column=column, severity=severity)
+        self.time_column = time_column
+        self.column = column
+        self.events = events
+        self.group_by = ["risk_case_id", "party_id"]
+
+    @property
+    def id(self):
+        return self.column
+
+    def _test(self, *, connection: BaseBackend):
+        # Allow callable to be passed in for expressions which cannot be generated at
+        # runtime
+        field = self.table[self.column]
+        time_column = self.table[self.time_column]
+        kwargs = {}
+        for e in self.events:
+            kwargs[f"{e}_min"] = time_column.min(where=field == e)
+            kwargs[f"{e}_max"] = time_column.max(where=field == e)
+
+        expr = self.table.group_by(self.group_by).agg(**kwargs)
+
+        comparisons = []
+        # Look for cases where the maximum of the earlier order is greater than the first
+        # of the minimum events. The combinations are without replacement so will build comparisons
+        # from left to right
+        for first, compare in itertools.combinations(self.events, 2):
+            comparisons.append(expr[f"{first}_max"] >= expr[f"{compare}_min"])
+
+        expr = expr.filter(itertools.accumulate(comparisons, lambda x, y: x | y))
+        result = connection.execute(expr.count())
+        if result > 0:
+            raise FailTest(
+                f"{result} did not fulfil the required event order in {self.full_column_path}",
+                expr=expr,
+            )
+
 
 
 class AcceptedRangeTest(AbstractColumnTest):
@@ -606,9 +931,8 @@ class AcceptedRangeTest(AbstractColumnTest):
         column: str,
         min_value: Optional[int] = None,
         max_value: Optional[int] = None,
-        validate: bool = True,
     ) -> None:
-        super().__init__(table_config=table_config, column=column, validate=validate)
+        super().__init__(table_config=table_config, column=column)
         self.min = min_value
         self.max = max_value
 
@@ -631,25 +955,47 @@ class AcceptedRangeTest(AbstractColumnTest):
 
 
 class ReferentialIntegrityTest(AbstractTableTest):
+    """_summary_
+
+    max_proportion: allows a certain proportion of the number of missing keys.
+    Defaults to 0
+
+    Args:
+        AbstractTableTest: _description_
+    """
 
     def __init__(
         self,
         *,
         table_config: ResolvedTableConfig,
         to_table_config: ResolvedTableConfig,
+        max_proportion: Optional[float] = None,
         keys: list[str],
         severity=AMLAITestSeverity.ERROR,
+        test_id: Optional[str] = None
     ) -> None:
-        super().__init__(table_config=table_config, severity=severity)
+        super().__init__(table_config=table_config, severity=severity, test_id=test_id)
         self.to_table_config = to_table_config
         self.to_table = to_table_config.table
         self.keys = keys
+        self.max_proportion = max_proportion
 
     def _test(self, *, connection: BaseBackend):
         # The superclass does not skip the test if the to_table is optional,
         # which it may be. If it is, skip the test.
-        check_table_exists(connection=connection, table_config=self.to_table_config)
+        self.check_table_exists(connection=connection, table_config=self.to_table_config)
         expr = self.table.select(*[self.keys]).anti_join(self.to_table, self.keys)
+        if self.max_proportion:
+            # Join on the total distinct count of keys
+            total_key_cnt = self.table[self.keys].nunique().name("total_key_cnt")
+            subexpr = expr.agg(missing_key_count=_[self.keys].count()).select(proportion=_.missing_key_count / total_key_cnt)
+            result = connection.execute(subexpr).iloc[0]["proportion"]
+            if result > 0:
+                msg = f"""More than {result:.0%} of keys {self.keys} in table {self.table.get_name()} were not in {self.to_table.get_name()}.
+                           Key column(s) were {" ".join(self.keys)}"""
+                raise FailTest(msg, expr=expr)
+
+
         result = connection.execute(expr.count())
         if result > 0:
             msg = f"""{result} keys found in table {self.table.get_name()} which were not in {self.to_table.get_name()}.
@@ -657,6 +1003,47 @@ class ReferentialIntegrityTest(AbstractTableTest):
             raise FailTest(msg, expr=expr)
         return
 
+class TemporalProfileTest(AbstractColumnTest):
+    """_summary_
+
+    max_proportion: allows a certain proportion of the number of missing keys.
+    Defaults to 0
+
+    Args:
+        AbstractTableTest: _description_
+    """
+
+    def __init__(
+        self,
+        *,
+        table_config: ResolvedTableConfig,
+        column: str,
+        period: Literal["MONTH"],
+        threshold: float,
+        test_id: Optional[str] = None,
+        severity: AMLAITestSeverity = AMLAITestSeverity.ERROR
+    ) -> None:
+        super().__init__(table_config=table_config, severity=severity, test_id=test_id, column=column)
+        if period == "MONTH":
+            self.strf_string = '%Y-%m'
+        else:
+            raise ValueError("Unsupported period provided")
+        self.threshold = threshold
+        self.period = period
+
+    def _test(self, *, connection: BaseBackend):
+        # The superclass does not skip the test if the to_table is optional,
+        # which it may be. If it is, skip the test.
+        table, column = resolve_field(table=self.table, column=self.column)
+        expr = table.group_by(mnth=column.strftime(self.strf_string)).agg(cnt=_.count())
+        expr = expr.mutate(proportion=_.cnt / _.cnt.mean().over())
+
+        expr = expr.filter(_.proportion < self.threshold)
+
+        result = connection.execute(expr.count())
+        if result > 0:
+            msg = f"""{result} {self.period.lower()}s had a volume of less than {self.threshold:.0%} of the average volume for all {self.period.lower()}s"""
+            raise FailTest(msg, expr=expr)
 
 class TemporalReferentialIntegrityTest(AbstractTableTest):
     """_summary_
@@ -690,9 +1077,10 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
             ]
         ] = None,
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
+        test_id: Optional[str] = None
     ) -> None:
 
-        super().__init__(table_config=table_config, severity=severity)
+        super().__init__(table_config=table_config, severity=severity, test_id=test_id)
         self.to_table = to_table_config.table
         self.to_table_config = to_table_config
         self.tolerance = tolerance
@@ -743,7 +1131,7 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
             | (_.is_entity_deleted != _.previous_entity_deleted)  # state flips
         ).group_by(self.key)
 
-        if table_config.is_open_ended_entity:
+        if table_config.table_type == TableType.OPEN_ENDED_ENTITY:
             # For open ended entities, e.g. parties, we need to assume the entity persists until it is deleted.
             # This means that the maximum validity date time
             return (
@@ -881,8 +1269,37 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
         result = connection.execute(expr=expr.count())
         if result > 0:
             msg = f"""{result} keys found in table {self.table.get_name()} which were either not in {self.to_table.get_name()},
-                        or had inconsistent time periods, where validity_start_time and is_entity deleted keys in {self.table.get_name()}
+                        or had inconsistent time periods, where validity_start_time and is_entity_deleted keys in {self.table.get_name()}
                          did not correspond to the time periods for the same entity in {self.to_table.get_name()}
                            """
             raise FailTest(msg, expr=expr)
         return
+
+class ConsistentIDsPerColumn(AbstractColumnTest):
+    """ Verify the number of IDs is consistent for each column """
+
+    def __init__(
+        self, *, table_config: ResolvedTableConfig, column: str, id_to_verify: str, severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
+        test_id: Optional[str] = None
+    ) -> None:
+        super().__init__(table_config=table_config, column=column, severity=severity)
+        self.id_to_verify = id_to_verify
+        self.test_id = test_id
+
+    @property
+    def id(self):
+        return self.column
+
+    def _test(self, *, connection: BaseBackend):
+        # Allow callable to be passed in for expressions which cannot be generated at
+        # runtime
+        table = self.get_latest_rows(self.table)
+
+        expr = table.group_by(by=self.column).agg(ids=_[self.id_to_verify].collect()).group_by(1).agg(ids=_.nunique())
+
+        result = connection.execute(expr.count())
+        if result > 1:
+            raise FailTest(
+                f"Inconsistent {self.id_to_verify} across {self.full_column_path}. Expected all {self.column} to have the same same set of IDs",
+                expr=expr,
+            )

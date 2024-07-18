@@ -10,6 +10,7 @@ from amlaidatatests.schema.base import (
     TableConfig,
 )
 
+from dataclasses import asdict
 
 def get_amlai_schema(version: str) -> BaseSchemaConfiguration:
     try:
@@ -42,10 +43,14 @@ def resolve_table_config(name: str) -> ResolvedTableConfig:
     table_config = get_table_config(name)
     cfg = ConfigSingleton.get()
     name = get_table_name(name)
+    # Concert from TableConfig to ResolvedTableConfig
+    # does not have argument name
+    dct = asdict(table_config)
+    del dct['name']
+    del dct['schema']
     resolved_table_config = ResolvedTableConfig(
         table=ibis.table(schema=table_config.schema, name=name, database=cfg.database),
-        optional=table_config.optional,
-        is_open_ended_entity=table_config.is_open_ended_entity,
+        **dct
     )
     return resolved_table_config
 

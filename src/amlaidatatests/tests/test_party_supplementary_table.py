@@ -2,7 +2,7 @@
 
 import pytest
 
-from amlaidatatests.base import AbstractColumnTest, AbstractTableTest
+from amlaidatatests.base import AMLAITestSeverity, AbstractColumnTest, AbstractTableTest
 from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.test_generators import (
     get_entity_mutation_tests,
@@ -36,7 +36,7 @@ def test_primary_keys(connection):
 
 @pytest.mark.parametrize(
     "test",
-    get_entity_mutation_tests(table_config=TABLE_CONFIG, entity_ids=["party_id"]),
+    get_entity_mutation_tests(table_config=TABLE_CONFIG, entity_ids=TABLE_CONFIG.entity_keys),
 )
 def test_entity_mutation_tests(connection, test: AbstractColumnTest):
     test(connection=connection)
@@ -70,6 +70,37 @@ def test_referential_integrity_party(connection):
     to_table_config = resolve_table_config("party")
     test = common.ReferentialIntegrityTest(
         table_config=TABLE_CONFIG, to_table_config=to_table_config, keys=["party_id"]
+    )
+    test(connection)
+
+@pytest.mark.parametrize(
+    "test",
+    [
+        common.ColumnCardinalityTest(
+            column="source_system",
+            table_config=TABLE_CONFIG,
+            max_number=500,
+            severity=AMLAITestSeverity.WARN,
+            test_id="P037"
+        ),
+        common.ColumnCardinalityTest(
+            column="party_supplementary_data_id",
+            table_config=TABLE_CONFIG,
+            group_by=["party_id"],
+            max_number=100,
+            severity=AMLAITestSeverity.ERROR,
+            test_id="P036"
+        ),
+    ],
+)
+def test_profiling(connection, test):
+    test(connection)
+
+
+def test_psd_id_consistency(connection):
+    test = common.ConsistentIDsPerColumn(
+        table_config=TABLE_CONFIG, column="party_id", id_to_verify="party_supplementary_data_id",
+        test_id="P035"
     )
     test(connection)
 
