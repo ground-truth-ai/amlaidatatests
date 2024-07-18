@@ -12,6 +12,7 @@ from amlaidatatests.schema.base import (
 
 from dataclasses import asdict
 
+
 def get_amlai_schema(version: str) -> BaseSchemaConfiguration:
     try:
         module = importlib.import_module(f"amlaidatatests.schema.{version}.tables")
@@ -46,11 +47,11 @@ def resolve_table_config(name: str) -> ResolvedTableConfig:
     # Concert from TableConfig to ResolvedTableConfig
     # does not have argument name
     dct = asdict(table_config)
-    del dct['name']
-    del dct['schema']
+    del dct["name"]
+    del dct["schema"]
     resolved_table_config = ResolvedTableConfig(
         table=ibis.table(schema=table_config.schema, name=name, database=cfg.database),
-        **dct
+        **dct,
     )
     return resolved_table_config
 

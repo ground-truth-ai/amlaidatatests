@@ -19,6 +19,7 @@ def bigquery_connection_factory():
 
     return connection
 
+
 tables = [
     "party_supplementary_data"
 ]  # ["party", "account_party_link", "risk_case_event", "transaction"]
@@ -57,7 +58,6 @@ def load_from_bigquery_to_empty_table():
         )
 
         connection.insert(get_table_name(t), obj=all_temp_table_2, overwrite=True)
-        # connection.create_table(name=f"{t}_{SUFFIX}", obj=table_out, overwrite=True, schema=party_schema)
 
 
 def load_from_bigquery_to_copy():
@@ -69,10 +69,7 @@ def load_from_bigquery_to_copy():
 
         print("Loading into", table_name)
 
-        # t = connection.table(f"{t}_{SUFFIX}")
-        temp_table = connection.create_table(
-            get_table_name(t), obj=t_bq.to_pandas(), overwrite=True
-        )
+        connection.create_table(get_table_name(t), obj=t_bq.to_pandas(), overwrite=True)
 
 
 def get_valid_region_codes():

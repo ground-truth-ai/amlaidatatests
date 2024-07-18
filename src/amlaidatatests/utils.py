@@ -15,6 +15,7 @@ def create_empty_schema_tables():
     for table in schema.TABLES:
         connection.create_table(name=get_table_name(table.name), schema=table.schema)
 
+
 def get_columns(table_config: ResolvedTableConfig):
     """_summary_
 

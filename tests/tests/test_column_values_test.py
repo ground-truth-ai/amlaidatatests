@@ -41,6 +41,7 @@ def test_column_has_invalid_values(test_connection, create_test_table):
     )
     with pytest.raises(
         expected_exception=FailTest,
-        match=rf"1 rows found with invalid values in {t.full_column_path}. Valid values are",
+        match=rf"1 rows found with invalid values in {t.full_column_path}."
+        "Valid values are",
     ):
         t(test_connection)

@@ -36,7 +36,9 @@ def test_primary_keys(connection):
 
 @pytest.mark.parametrize(
     "test",
-    get_entity_mutation_tests(table_config=TABLE_CONFIG, entity_ids=TABLE_CONFIG.entity_keys),
+    get_entity_mutation_tests(
+        table_config=TABLE_CONFIG, entity_ids=TABLE_CONFIG.entity_keys
+    ),
 )
 def test_entity_mutation_tests(connection, test: AbstractColumnTest):
     test(connection=connection)
@@ -56,8 +58,9 @@ def test_column_type(connection, column):
     test(connection)
 
 
-# Validate all fields marked in the schema as being non-nullable are non-nullable. This is in addition
-# to the schema level tests, since it's not possible to enforce an embedded struct is non-nullable.
+# Validate all fields marked in the schema as being non-nullable are
+# non-nullable. This is in addition to the schema level tests, since it's not
+# possible to enforce an embedded struct is non-nullable.
 
 
 @pytest.mark.parametrize("column", non_nullable_fields(TABLE_CONFIG.table.schema()))
@@ -73,6 +76,7 @@ def test_referential_integrity_party(connection):
     )
     test(connection)
 
+
 @pytest.mark.parametrize(
     "test",
     [
@@ -81,7 +85,7 @@ def test_referential_integrity_party(connection):
             table_config=TABLE_CONFIG,
             max_number=500,
             severity=AMLAITestSeverity.WARN,
-            test_id="P037"
+            test_id="P037",
         ),
         common.ColumnCardinalityTest(
             column="party_supplementary_data_id",
@@ -89,7 +93,7 @@ def test_referential_integrity_party(connection):
             group_by=["party_id"],
             max_number=100,
             severity=AMLAITestSeverity.ERROR,
-            test_id="P036"
+            test_id="P036",
         ),
     ],
 )
@@ -99,8 +103,10 @@ def test_profiling(connection, test):
 
 def test_psd_id_consistency(connection):
     test = common.ConsistentIDsPerColumn(
-        table_config=TABLE_CONFIG, column="party_id", id_to_verify="party_supplementary_data_id",
-        test_id="P035"
+        table_config=TABLE_CONFIG,
+        column="party_id",
+        id_to_verify="party_supplementary_data_id",
+        test_id="P035",
     )
     test(connection)
 
