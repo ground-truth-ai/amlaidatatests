@@ -78,15 +78,12 @@ def resolve_field(table: Table, column: str) -> tuple[Table, Expr]:
     table = table.mutate({splits[0]: splits[0]})
     field = table[splits[0]]
     for p in splits[1:]:
-        # The first field is a table. If the table
-        # has a field called table, this loo
-        if field.type().is_struct():
-            field = field[p]
         if field.type().is_array():
             # Arrays must be unnested and then addressed so
             # we can access all the levels of the array
             table = table.mutate(unest=field.unnest())
             field = table["unest"]
+        field = field[p]
     return table, field
 
 

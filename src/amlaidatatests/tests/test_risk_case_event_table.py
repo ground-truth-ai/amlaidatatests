@@ -97,8 +97,9 @@ w = ibis.window(
         common.NoMatchingRows(
             column="event_time",
             table_config=TABLE_CONFIG,
-            expression=lambda: TABLE.event_time >= cfg().interval_end_date,
+            expression=lambda t: t.event_time >= cfg().interval_end_date,
             severity=AMLAITestSeverity.ERROR,
+            test_id="DT011"
         ),
     ],
 )

@@ -203,7 +203,6 @@ def get_generic_table_tests(
     Returns:
         _description_
     """
-    table = table_config.table
     tests = [
         TableSchemaTest(table_config),
         TableCountTest(
@@ -218,7 +217,8 @@ def get_generic_table_tests(
             NoMatchingRows(
                 table_config=table_config,
                 column="validity_start_time",
-                expression=table.validity_start_time.date() > cfg().interval_end_date,
+                expression=lambda t: t.validity_start_time.date()
+                > cfg().interval_end_date,
             ),
             CountFrequencyValues(
                 table_config=table_config,

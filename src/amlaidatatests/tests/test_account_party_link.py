@@ -12,6 +12,18 @@ from amlaidatatests.tests import common
 TABLE_CONFIG = resolve_table_config("account_party_link")
 
 
+def test_referential_integrity_party(connection):
+    # A warning here means that there are parties without linked accounts
+    to_table_config = resolve_table_config("party")
+    test = common.ReferentialIntegrityTest(
+        table_config=TABLE_CONFIG,
+        to_table_config=to_table_config,
+        keys=["party_id"],
+        test_id="RI001",
+    )
+    test(connection)
+
+
 @pytest.mark.parametrize(
     "test", get_generic_table_tests(table_config=TABLE_CONFIG, max_rows_factor=500e6)
 )
@@ -69,7 +81,10 @@ def test_temporal_referential_integrity_party(connection):
     # A warning here means that there are parties without linked accounts
     to_table_config = resolve_table_config("party")
     test = common.TemporalReferentialIntegrityTest(
-        table_config=TABLE_CONFIG, to_table_config=to_table_config, key="party_id"
+        table_config=TABLE_CONFIG,
+        to_table_config=to_table_config,
+        key="party_id",
+        test_id="RI009",
     )
     test(connection)
 

@@ -726,9 +726,10 @@ class ColumnTypeTest(AbstractColumnTest):
 class ColumnValuesTest(AbstractColumnTest):
 
     def __init__(
-        self, *, values: List[Any], table_config: ResolvedTableConfig, column: str
+        self, *, values: List[Any], table_config: ResolvedTableConfig, column: str,
+        test_id: Optional[str] = None
     ) -> None:
-        super().__init__(table_config=table_config, column=column)
+        super().__init__(table_config=table_config, column=column, test_id=test_id)
         self.values = values
 
     def _test(self, *, connection: BaseBackend):
@@ -855,14 +856,12 @@ class DatetimeFieldNeverJan1970Test(FieldNeverWhitespaceOnlyTest):
 class NullIfTest(AbstractColumnTest):
 
     def __init__(
-        self, *, table_config: ResolvedTableConfig, column: str, expression: Expr
+        self, *, table_config: ResolvedTableConfig, column: str, expression: Expr,
+        severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
+        test_id: Optional[str] = None
     ) -> None:
-        super().__init__(table_config=table_config, column=column)
+        super().__init__(table_config=table_config, column=column, test_id=test_id, severity=severity)
         self.expression = expression
-
-    @property
-    def id(self):
-        return self.expression.get_name()
 
     def _test(self, *, connection: BaseBackend):
         expr = self.table.filter(self.expression).filter(
@@ -883,29 +882,23 @@ class NoMatchingRows(AbstractColumnTest):
         *,
         table_config: ResolvedTableConfig,
         column: str,
-        expression: Expr | Callable[[], Expr],
+        expression: Callable[[Expr], Expr],
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
+        test_id: Optional[str] = None,
     ) -> None:
-        super().__init__(table_config=table_config, column=column, severity=severity)
+        super().__init__(
+            table_config=table_config, column=column, severity=severity, test_id=test_id
+        )
         self.expression = expression
-
-    @property
-    def id(self):
-        return self.column
 
     def _test(self, *, connection: BaseBackend):
         # Allow callable to be passed in for expressions which cannot be generated at
         # runtime
-        if callable(self.expression):
-            self.expression = self.expression()
-        else:
-            self.expression = self.expression
         expr = self.table.filter(self.expression)
         result = connection.execute(expr.count())
         if result > 0:
             raise FailTest(
-                f"{result} rows unexpectedly fulfilled criteria "
-                f"{ibis.to_sql(self.expression)} in {self.full_column_path}",
+                f"{result} rows unexpectedly criteria " f"in {self.full_column_path}",
                 expr=expr,
             )
 

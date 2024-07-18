@@ -48,11 +48,6 @@ def test_column_type(connection, column):
     test(connection)
 
 
-@pytest.mark.parametrize("column", get_columns(TABLE_CONFIG))
-def test_datetime_consistency(connection, column):
-    test = common.ColumnTypeTest(table_config=TABLE_CONFIG, column=column)
-    test(connection)
-
 
 @pytest.mark.parametrize("column", non_nullable_fields(TABLE_CONFIG.table.schema()))
 def test_non_nullable_fields(connection, column):
@@ -91,9 +86,11 @@ def test_entity_mutation_tests(connection, test: AbstractColumnTest):
             column="type",
             values=["WIRE", "CASH", "CHECK", "CARD", "OTHER"],
             table_config=TABLE_CONFIG,
+            test_id="E005"
         ),
         common.ColumnValuesTest(
-            column="direction", values=["DEBIT", "CREDIT"], table_config=TABLE_CONFIG
+            column="direction", values=["DEBIT", "CREDIT"], table_config=TABLE_CONFIG,
+            test_id="E006"
         ),
     ],
 )
@@ -118,15 +115,10 @@ def test_currency_value_entity(connection, column, test: AbstractColumnTest):
         common.NoMatchingRows(
             column="book_time",
             table_config=TABLE_CONFIG,
-            expression=lambda: TABLE.book_time >= cfg().interval_end_date,
+            expression=lambda t: t.book_time >= cfg().interval_end_date,
             severity=AMLAITestSeverity.WARN,
-        ),
-        common.NoMatchingRows(
-            column="book_time",
-            table_config=TABLE_CONFIG,
-            expression=lambda: TABLE.book_time >= cfg().interval_end_date,
-            severity=AMLAITestSeverity.WARN,
-        ),
+            test_id="DT008"
+        )
     ],
 )
 def test_date_consistency(connection, test):
