@@ -22,7 +22,7 @@ def test_table(connection, test: AbstractTableTest):
     test(connection=connection)
 
 
-def test_primary_keys(connection):
+def test_PK005_primary_keys(connection):
     test = common.PrimaryKeyColumnsTest(
         table_config=TABLE_CONFIG,
         unique_combination_of_columns=[
@@ -69,10 +69,22 @@ def test_non_nullable_fields(connection, column):
     test(connection)
 
 
-def test_referential_integrity_party(connection):
+def test_RI006_referential_integrity_party(connection):
     to_table_config = resolve_table_config("party")
     test = common.ReferentialIntegrityTest(
         table_config=TABLE_CONFIG, to_table_config=to_table_config, keys=["party_id"]
+    )
+    test(connection)
+
+
+def test_RI014_temporal_referential_integrity_party_supplementary_table(connection):
+    # A warning here means that there are parties without linked accounts
+    to_table_config = resolve_table_config("party")
+    test = common.TemporalReferentialIntegrityTest(
+        table_config=TABLE_CONFIG,
+        to_table_config=to_table_config,
+        key="party_id",
+        severity=AMLAITestSeverity.WARN,
     )
     test(connection)
 
@@ -101,7 +113,7 @@ def test_profiling(connection, test):
     test(connection)
 
 
-def test_psd_id_consistency(connection):
+def test_P035_psd_id_consistency(connection):
     test = common.ConsistentIDsPerColumn(
         table_config=TABLE_CONFIG,
         column="party_id",

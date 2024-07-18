@@ -15,6 +15,7 @@ class SchemaConfiguration(BaseSchemaConfiguration):
         TableConfig(
             name="transaction",
             schema=transaction_schema,
+            table_type=TableType.OPEN_ENDED_ENTITY,
             entity_keys=["transaction_id"],
         ),
         TableConfig(

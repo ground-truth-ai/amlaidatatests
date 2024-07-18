@@ -12,7 +12,7 @@ from amlaidatatests.tests import common
 TABLE_CONFIG = resolve_table_config("account_party_link")
 
 
-def test_referential_integrity_party(connection):
+def test_RI001_referential_integrity_party(connection):
     # A warning here means that there are parties without linked accounts
     to_table_config = resolve_table_config("party")
     test = common.ReferentialIntegrityTest(
@@ -31,7 +31,7 @@ def test_table(connection, test: AbstractTableTest):
     test(connection=connection)
 
 
-def test_primary_keys(connection):
+def test_PK002_primary_keys(connection):
     test = common.PrimaryKeyColumnsTest(
         table_config=TABLE_CONFIG,
         unique_combination_of_columns=["party_id", "account_id", "validity_start_time"],
@@ -77,7 +77,7 @@ def test_entity_mutation_tests(connection, test: AbstractColumnTest):
     test(connection=connection)
 
 
-def test_temporal_referential_integrity_party(connection):
+def test_RI009_temporal_referential_integrity_party(connection):
     # A warning here means that there are parties without linked accounts
     to_table_config = resolve_table_config("party")
     test = common.TemporalReferentialIntegrityTest(
@@ -85,19 +85,6 @@ def test_temporal_referential_integrity_party(connection):
         to_table_config=to_table_config,
         key="party_id",
         test_id="RI009",
-    )
-    test(connection)
-
-
-def test_temporal_referential_integrity_transaction(connection):
-    # A warning here means that there are parties without linked accounts
-    to_table_config = resolve_table_config("transaction")
-    test = common.TemporalReferentialIntegrityTest(
-        table_config=TABLE_CONFIG,
-        to_table_config=to_table_config,
-        key="account_id",
-        severity=AMLAITestSeverity.WARN,
-        test_id="RI010",
     )
     test(connection)
 

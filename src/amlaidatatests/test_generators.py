@@ -19,7 +19,7 @@ from amlaidatatests.tests.common import (
     CountFrequencyValues,
     CountValidityStartTimeChangesTest,
     FieldNeverNullTest,
-    NoMatchingRows,
+    CountMatchingRows,
     OrphanDeletionsTest,
     TableCountTest,
     TableSchemaTest,
@@ -214,7 +214,7 @@ def get_generic_table_tests(
         TableType.OPEN_ENDED_ENTITY,
     ):
         tests += [
-            NoMatchingRows(
+            CountMatchingRows(
                 table_config=table_config,
                 column="validity_start_time",
                 expression=lambda t: t.validity_start_time.date()

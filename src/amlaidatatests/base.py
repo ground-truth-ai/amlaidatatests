@@ -75,15 +75,15 @@ def resolve_field(table: Table, column: str) -> tuple[Table, Expr]:
     # on the table
     splits = column.split(".")
 
-    table = table.mutate({splits[0]: splits[0]})
-    field = table[splits[0]]
-    for p in splits[1:]:
+    field = table
+    for i, p in enumerate(splits):
+        field_name = ".".join(splits[: i + 1])
+        field = field[p].name(field_name)
         if field.type().is_array():
             # Arrays must be unnested and then addressed so
             # we can access all the levels of the array
-            table = table.mutate(unest=field.unnest())
-            field = table["unest"]
-        field = field[p]
+            table = table.mutate(**{field_name: field.unnest()})
+            field = table[field_name]
     return table, field
 
 
@@ -111,9 +111,9 @@ class AbstractBaseTest(ABC):
         """Override to provide additional information about the
         test to pytest to identify the test"""
         if self.test_id:
-            return f"{self.test_id}-{self.__class__.__name__}-{self.table_config.name}"
+            return f"{self.test_id}-{self.__class__.__name__}"
         else:
-            return f"{self.__class__.__name__}-{self.table_config.name}"
+            return f"{self.__class__.__name__}"
 
     def _test(self, *, connection: BaseBackend) -> None: ...
 
@@ -206,25 +206,24 @@ class AbstractTableTest(AbstractBaseTest):
     def optional_table(self):
         pass
 
-    def get_latest_rows(self, table: Table):
-        if self.table_config.table_type not in (
+    def get_latest_rows(
+        self, table: Table, table_config: Optional[ResolvedTableConfig] = None
+    ):
+        """Get the latest, not deleted version of the row"""
+        table_config = self.table_config if table_config is None else table_config
+        if table_config.table_type not in (
             TableType.CLOSED_ENDED_ENTITY,
             TableType.OPEN_ENDED_ENTITY,
         ):
-            raise ValueError(
-                f"{self.table_config.table_type} is not a valid table type"
-            )
-        return (
-            table.filter(_["is_entity_deleted"] == ibis.literal(False))
-            .select(
-                s.all(),
-                row_num=ibis.row_number().over(
-                    group_by=self.table_config.entity_keys,
-                    order_by=ibis.desc("validity_start_time"),
-                ),
-            )
-            .filter(_.row_num == 0)
-        )
+            raise ValueError(f"{table_config.table_type} is not a valid table type")
+        table = table.filter(_["is_entity_deleted"].isin([ibis.literal(False), None]))
+        return table.select(
+            s.all(),
+            row_num=ibis.row_number().over(
+                group_by=table_config.entity_keys,
+                order_by=ibis.desc("validity_start_time"),
+            ),
+        ).filter(_.row_num == 0)
 
     def __call__(self, connection: BaseBackend):
         # Check if table exists

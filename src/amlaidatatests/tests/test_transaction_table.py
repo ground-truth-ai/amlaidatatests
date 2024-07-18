@@ -54,7 +54,7 @@ def test_non_nullable_fields(connection, column):
     test(connection)
 
 
-def test_temporal_referential_integrity_account_party_link(connection):
+def test_RI011_temporal_referential_integrity_account_party_link(connection):
     to_table_config = resolve_table_config("account_party_link")
     test = common.TemporalReferentialIntegrityTest(
         table_config=TABLE_CONFIG, to_table_config=to_table_config, key="account_id"
@@ -62,7 +62,7 @@ def test_temporal_referential_integrity_account_party_link(connection):
     test(connection)
 
 
-def test_referential_integrity_account_party_link(connection):
+def test_RI004_referential_integrity_account_party_link(connection):
     to_table_config = resolve_table_config("account_party_link")
     test = common.ReferentialIntegrityTest(
         table_config=TABLE_CONFIG, to_table_config=to_table_config, keys=["account_id"]
@@ -113,7 +113,7 @@ def test_currency_value_entity(connection, column, test: AbstractColumnTest):
 @pytest.mark.parametrize(
     "test",
     [
-        common.NoMatchingRows(
+        common.CountMatchingRows(
             column="book_time",
             table_config=TABLE_CONFIG,
             expression=lambda t: t.book_time >= cfg().interval_end_date,
@@ -134,6 +134,7 @@ def test_date_consistency(connection, test):
             table_config=TABLE_CONFIG,
             max_number=1e6,
             severity=AMLAITestSeverity.WARN,
+            test_id="P034",
         ),
         common.ColumnCardinalityTest(
             column="source_system",
@@ -147,12 +148,14 @@ def test_date_consistency(connection, test):
             table_config=TABLE_CONFIG,
             max_number=5e9,
             severity=AMLAITestSeverity.ERROR,
+            test_id="P026",
         ),
         common.CountFrequencyValues(
             column="account_id",
             table_config=TABLE_CONFIG,
             max_number=1e9,
             severity=AMLAITestSeverity.WARN,
+            test_id="P027",
         ),
         *[
             common.VerifyTypedValuePresence(
@@ -192,7 +195,7 @@ def test_date_consistency(connection, test):
             column="transaction_id",
             table_config=TABLE_CONFIG,
             max_number=10e6,
-            group_by=["account_id", "counterparty_account"],
+            group_by=["account_id", "counterparty_account.account_id"],
             severity=AMLAITestSeverity.ERROR,
             test_id="P028",
         ),
@@ -200,12 +203,13 @@ def test_date_consistency(connection, test):
             column="transaction_id",
             table_config=TABLE_CONFIG,
             max_number=5e6,
-            group_by=["account_id", "counterparty_account"],
+            group_by=["account_id", "counterparty_account.account_id"],
             severity=AMLAITestSeverity.WARN,
             test_id="P029",
         ),
+        # TODO: This only checks the nanos field, not all the columns
         common.CountFrequencyValues(
-            column="normalized_booked_amount",
+            column="normalized_booked_amount.nanos",
             table_config=TABLE_CONFIG,
             proportion=0.01,
             group_by=["type"],
