@@ -194,9 +194,11 @@ def test_temporal_referential_integrity_key_in_time(test_connection, create_test
         )
     )
 
-    table_config = ResolvedTableConfig(table=ibis.table(name=lcl_tbl, schema=schema))
+    table_config = ResolvedTableConfig(
+        table=ibis.table(name=lcl_tbl, schema=schema), entity_keys=["id"]
+    )
     otr_table_config = ResolvedTableConfig(
-        table=ibis.table(name=otr_tbl, schema=schema)
+        table=ibis.table(name=otr_tbl, schema=schema), entity_keys=["id"]
     )
 
     t = common.TemporalReferentialIntegrityTest(
@@ -256,9 +258,11 @@ def test_temporal_referential_integrity_key_out_of_time(
         )
     )
 
-    table_config = ResolvedTableConfig(table=ibis.table(name=lcl_tbl, schema=schema))
+    table_config = ResolvedTableConfig(
+        table=ibis.table(name=lcl_tbl, schema=schema), entity_keys=["id"]
+    )
     otr_table_config = ResolvedTableConfig(
-        table=ibis.table(name=otr_tbl, schema=schema)
+        table=ibis.table(name=otr_tbl, schema=schema), entity_keys=["id"]
     )
 
     t = common.TemporalReferentialIntegrityTest(
@@ -319,9 +323,11 @@ def test_temporal_referential_integrity_key_within_time_tolerance(
         )
     )
 
-    table_config = ResolvedTableConfig(table=ibis.table(name=lcl_tbl, schema=schema))
+    table_config = ResolvedTableConfig(
+        table=ibis.table(name=lcl_tbl, schema=schema), entity_keys=["id"]
+    )
     otr_table_config = ResolvedTableConfig(
-        table=ibis.table(name=otr_tbl, schema=schema)
+        table=ibis.table(name=otr_tbl, schema=schema), entity_keys=["id"]
     )
 
     t = common.TemporalReferentialIntegrityTest(
@@ -384,9 +390,11 @@ def test_temporal_referential_integrity_key_out_of_time_tolerance(
         )
     )
 
-    table_config = ResolvedTableConfig(table=ibis.table(name=lcl_tbl, schema=schema))
+    table_config = ResolvedTableConfig(
+        table=ibis.table(name=lcl_tbl, schema=schema), entity_keys=["id"]
+    )
     otr_table_config = ResolvedTableConfig(
-        table=ibis.table(name=otr_tbl, schema=schema)
+        table=ibis.table(name=otr_tbl, schema=schema), entity_keys=["id"]
     )
 
     t = common.TemporalReferentialIntegrityTest(
@@ -450,9 +458,11 @@ def test_temporal_referential_integrity_fails_before_period(
         )
     )
 
-    table_config = ResolvedTableConfig(table=ibis.table(name=lcl_tbl, schema=schema))
+    table_config = ResolvedTableConfig(
+        table=ibis.table(name=lcl_tbl, schema=schema), entity_keys=["id"]
+    )
     otr_table_config = ResolvedTableConfig(
-        table=ibis.table(name=otr_tbl, schema=schema)
+        table=ibis.table(name=otr_tbl, schema=schema), entity_keys=["id"]
     )
 
     t = common.TemporalReferentialIntegrityTest(
@@ -513,9 +523,11 @@ def test_temporal_referential_integrity_fails_after_period(
         )
     )
 
-    table_config = ResolvedTableConfig(table=ibis.table(name=lcl_tbl, schema=schema))
+    table_config = ResolvedTableConfig(
+        table=ibis.table(name=lcl_tbl, schema=schema), entity_keys=["id"]
+    )
     otr_table_config = ResolvedTableConfig(
-        table=ibis.table(name=otr_tbl, schema=schema)
+        table=ibis.table(name=otr_tbl, schema=schema), entity_keys=["id"]
     )
 
     t = common.TemporalReferentialIntegrityTest(
@@ -576,9 +588,11 @@ def test_temporal_referential_integrity_fails_encompassing_period(
         )
     )
 
-    table_config = ResolvedTableConfig(table=ibis.table(name=lcl_tbl, schema=schema))
+    table_config = ResolvedTableConfig(
+        table=ibis.table(name=lcl_tbl, schema=schema), entity_keys=["id"]
+    )
     otr_table_config = ResolvedTableConfig(
-        table=ibis.table(name=otr_tbl, schema=schema)
+        table=ibis.table(name=otr_tbl, schema=schema), entity_keys=["id"]
     )
 
     t = common.TemporalReferentialIntegrityTest(
@@ -634,9 +648,11 @@ def test_temporal_referential_integrity_immediate_delete_in_period(
         )
     )
 
-    table_config = ResolvedTableConfig(table=ibis.table(name=lcl_tbl, schema=schema))
+    table_config = ResolvedTableConfig(
+        table=ibis.table(name=lcl_tbl, schema=schema), entity_keys=["id"]
+    )
     otr_table_config = ResolvedTableConfig(
-        table=ibis.table(name=otr_tbl, schema=schema)
+        table=ibis.table(name=otr_tbl, schema=schema), entity_keys=["id"]
     )
 
     t = common.TemporalReferentialIntegrityTest(
@@ -710,9 +726,11 @@ def test_temporal_referential_integrity_multiple_mutations_in_period(
         )
     )
 
-    table_config = ResolvedTableConfig(table=ibis.table(name=lcl_tbl, schema=schema))
+    table_config = ResolvedTableConfig(
+        table=ibis.table(name=lcl_tbl, schema=schema), entity_keys=["id"]
+    )
     otr_table_config = ResolvedTableConfig(
-        table=ibis.table(name=otr_tbl, schema=schema)
+        table=ibis.table(name=otr_tbl, schema=schema), entity_keys=["id"]
     )
 
     t = common.TemporalReferentialIntegrityTest(
@@ -779,9 +797,11 @@ def test_temporal_referential_integrity_multiple_mutations_out_of_period(
         )
     )
 
-    table_config = ResolvedTableConfig(table=ibis.table(name=lcl_tbl, schema=schema))
+    table_config = ResolvedTableConfig(
+        table=ibis.table(name=lcl_tbl, schema=schema), entity_keys=["id"]
+    )
     otr_table_config = ResolvedTableConfig(
-        table=ibis.table(name=otr_tbl, schema=schema)
+        table=ibis.table(name=otr_tbl, schema=schema), entity_keys=["id"]
     )
 
     t = common.TemporalReferentialIntegrityTest(

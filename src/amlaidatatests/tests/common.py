@@ -1,4 +1,5 @@
 import datetime
+from functools import reduce
 import warnings
 from typing import Any, Callable, List, Literal, Optional, cast
 
@@ -163,9 +164,9 @@ class ColumnCardinalityTest(AbstractColumnTest):
         self.max_number = max_number
         self.min_number = min_number
         self.test_id = test_id
+        if group_by is None:
+            group_by = []
         self.group_by = group_by
-        if self.group_by is None:
-            self.group_by = ibis.literal(1)
         self.where = where
         self.having = having
 
@@ -181,17 +182,21 @@ class ColumnCardinalityTest(AbstractColumnTest):
             table = self.get_latest_rows(table)
 
         table, column = resolve_field(table=table, column=self.column)
+        grp_columns = []
+        for grp in self.group_by:
+            _, col = resolve_field(table=table, column=grp)
+            grp_columns.append(col)
 
         if self.where is not None:
             table = table.filter(self.where)
 
-        expr = table.group_by(self.group_by).agg(value_cnt=column.nunique())
+        expr = table.group_by(grp_columns).agg(value_cnt=column.nunique())
 
         boolean_expr = None
         if self.max_number:  # if self.number: - checked during init
-            boolean_expr |= _.value_cnt > self.max_number
+            boolean_expr |= expr.value_cnt > self.max_number
         if self.min_number:  # if self.number: - checked during init
-            boolean_expr |= _.value_cnt < self.min_number
+            boolean_expr |= expr.value_cnt < self.min_number
 
         expr = expr.filter(boolean_expr)
 
@@ -269,19 +274,23 @@ class CountFrequencyValues(AbstractColumnTest):
         if self.where is not None:
             table = table.filter(self.where)
         table, column = resolve_field(table=table, column=self.column)
+
+        grp_columns = []
+        for grp in self.group_by:
+            _, col = resolve_field(table=table, column=grp)
+            grp_columns.append(col)
+
         expr = (
-            table.group_by([column, *self.group_by])
-            .agg(value_cnt=column.count())
-            .mutate(
-                proportion=_.value_cnt / _.value_cnt.sum().over(group_by=self.group_by)
-            )
-        )
+            table.group_by([column, *grp_columns])
+            .agg(value_cnt=column.count()))
+        expr = expr.mutate(
+                proportion=expr.value_cnt / expr.value_cnt.sum().over(group_by=grp_columns))
 
         boolean_expr = None
         if self.proportion:
-            boolean_expr |= _.proportion >= self.proportion
+            boolean_expr |= expr.proportion >= self.proportion
         if self.max_number:  # if self.number: - checked during init
-            boolean_expr |= _.value_cnt > self.max_number
+            boolean_expr |= expr.value_cnt > self.max_number
 
         expr = expr.filter(boolean_expr)
 
@@ -364,7 +373,9 @@ class VerifyTypedValuePresence(AbstractColumnTest):
         where_group_kwargs = {"where": self.where(_)} if self.where else {}
 
         expr = (
-            table.mutate(concat=ibis.array([_[i] for i in self.group_by]))
+            # Concatenate the group by so we can count unique combinations
+            table.mutate(concat=reduce(lambda x, y: x + y,
+                                       [_[i] for i in self.group_by], ''))
             .agg(
                 value_cnt=_["concat"].nunique(column == self.value),
                 group_count=_["concat"].nunique(**where_group_kwargs),
@@ -713,11 +724,9 @@ class ColumnTypeTest(AbstractColumnTest):
             # so this shouldn't happen, but it could happen in another
             # database
             if a.timezone and a.timezone != "UTC":
-                warnings.warn(
-                    f"""Timezone of column {a.name} is not UTC. This
+                warnings.warn(f"""Timezone of column {a.name} is not UTC. This
                               could cause problems with bigquery, since the timezone
-                              is always UTC"""
-                )
+                              is always UTC""")
             # Scale varies by database
             return a.copy(nullable=nullable, scale=None, timezone=None)
         return a.copy(nullable=nullable)
@@ -726,8 +735,12 @@ class ColumnTypeTest(AbstractColumnTest):
 class ColumnValuesTest(AbstractColumnTest):
 
     def __init__(
-        self, *, values: List[Any], table_config: ResolvedTableConfig, column: str,
-        test_id: Optional[str] = None
+        self,
+        *,
+        values: List[Any],
+        table_config: ResolvedTableConfig,
+        column: str,
+        test_id: Optional[str] = None,
     ) -> None:
         super().__init__(table_config=table_config, column=column, test_id=test_id)
         self.values = values
@@ -856,11 +869,17 @@ class DatetimeFieldNeverJan1970Test(FieldNeverWhitespaceOnlyTest):
 class NullIfTest(AbstractColumnTest):
 
     def __init__(
-        self, *, table_config: ResolvedTableConfig, column: str, expression: Expr,
+        self,
+        *,
+        table_config: ResolvedTableConfig,
+        column: str,
+        expression: Expr,
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
-        test_id: Optional[str] = None
+        test_id: Optional[str] = None,
     ) -> None:
-        super().__init__(table_config=table_config, column=column, test_id=test_id, severity=severity)
+        super().__init__(
+            table_config=table_config, column=column, test_id=test_id, severity=severity
+        )
         self.expression = expression
 
     def _test(self, *, connection: BaseBackend):
@@ -875,7 +894,7 @@ class NullIfTest(AbstractColumnTest):
             )
 
 
-class NoMatchingRows(AbstractColumnTest):
+class CountMatchingRows(AbstractColumnTest):
 
     def __init__(
         self,
@@ -885,23 +904,36 @@ class NoMatchingRows(AbstractColumnTest):
         expression: Callable[[Expr], Expr],
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
         test_id: Optional[str] = None,
+        max_rows: Optional[int] = 0,
+        max_proportion: Optional[float] = None,
     ) -> None:
         super().__init__(
             table_config=table_config, column=column, severity=severity, test_id=test_id
         )
         self.expression = expression
+        self.max_rows = max_rows
+        self.max_proportion = max_proportion
 
     def _test(self, *, connection: BaseBackend):
-        # Allow callable to be passed in for expressions which cannot be generated at
-        # runtime
-        expr = self.table.filter(self.expression)
-        result = connection.execute(expr.count())
-        if result > 0:
+        table = self.get_latest_rows(self.table)
+        expr = table.agg(
+            total_rows=table.count(), matching_rows=table.count(where=self.expression)
+        ).mutate(proportion=_.matching_rows / _.total_rows)
+        result = connection.execute(expr).iloc[0]
+        value = result["matching_rows"]
+        proportion = result["proportion"]
+        if self.max_rows and (value > self.max_rows):
             raise FailTest(
-                f"{result} rows unexpectedly criteria " f"in {self.full_column_path}",
+                f"{value} rows unexpectedly met criteria"
+                f" in {self.full_column_path}",
                 expr=expr,
             )
-
+        if self.max_proportion and (proportion > self.max_proportion):
+            raise FailTest(
+                f"A high proportion ({proportion}) of rows met criteria"
+                f" in {self.full_column_path}",
+                expr=expr,
+            )
 
 class EventOrder(AbstractColumnTest):
 
@@ -1140,7 +1172,14 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
         # |party_id|window_id| window_start_time|window_end_time|is_entity_deleted
         # |   1    |    0    |      00:00:00    |     null      |     False
         table = table_config.table
-        w = ibis.window(group_by=self.key, order_by="validity_start_time")
+
+        keys = set([self.key])  # , *table_config.entity_keys])
+
+        if table_config.table_type == TableType.EVENT:
+            return table.select(first_date=_.event_time, last_date=_.event_time, *keys)
+
+        w = ibis.window(group_by=keys, order_by="validity_start_time")
+
         # is_entity_deleted is a nullable field, so we assume if it is null, we
         # mean False
         cte0 = ibis.coalesce(table.is_entity_deleted, False)
@@ -1149,7 +1188,7 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
         # finding the previous values of "is_entity_deleted" and determining if.
 
         cte1 = table.select(
-            self.key,
+            *keys,
             "validity_start_time",
             is_entity_deleted=cte0,
             previous_entity_deleted=cte0.lag().over(w),
@@ -1174,10 +1213,10 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
             (_.previous_row_validity_start_time == ibis.literal(None))  # first row
             | (_.next_row_validity_start_time == ibis.literal(None))  # last row
             | (_.is_entity_deleted != _.previous_entity_deleted)  # state flips
-        ).group_by(self.key)
+        ).group_by(keys)
 
-        if table_config.table_type == TableType.OPEN_ENDED_ENTITY:
-            # For open ended entities, e.g. parties, we need to assume the
+        if table_config.table_type == TableType.CLOSED_ENDED_ENTITY:
+            # For closed ended entities, e.g. parties, we need to assume the
             # entity persists until it is deleted. This means that the maximum
             # validity date time
             return (
@@ -1270,25 +1309,6 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
             else totbl.last_date
         )
 
-        # Anti-join, only return rows which aren't in both.
-        # This does have the side effect of not being able to differentiate between
-        # missing keys and problems with the date alignment
-        # join_check = tbl.anti_join(
-        #     right=totbl,
-        #     predicates=(
-        #         (tbl[self.key] == totbl[self.key])
-        #         # If this item is before the first date on the base table
-        #         & tbl.first_date.between(
-        #             lower=first_date_with_tolerance, upper=last_date_with_tolerance
-        #         )
-        #         &
-        #         # If this item is after the last date on the base table
-        #         tbl.last_date.between(
-        #             lower=first_date_with_tolerance, upper=last_date_with_tolerance
-        #         )
-        #     ),
-        # )
-
         expr = tbl.join(
             right=totbl,
             predicates=(
@@ -1320,12 +1340,13 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
 
         result = connection.execute(expr=expr.count())
         if result > 0:
-            msg = f"""{result} keys found in table {self.table.get_name()} which were
-                      either not in {self.to_table.get_name()}, or had inconsistent time
-                      periods, where validity_start_time and is_entity_deleted
-                      keys in {self.table.get_name()} did not correspond to the time
-                      periods for the same entity in {self.to_table.get_name()}
-                    """
+            msg = (
+                f"{result} keys found in table {self.table.get_name()} which were"
+                f" either not in {self.to_table.get_name()}, or had inconsistent"
+                "time periods, where validity_start_time and is_entity_deleted"
+                f" keys in {self.table.get_name()} did not correspond to the time"
+                f" periods for the same entity in {self.to_table.get_name()}"
+            )
             raise FailTest(msg, expr=expr)
         return
 

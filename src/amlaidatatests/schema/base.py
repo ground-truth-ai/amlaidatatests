@@ -9,8 +9,13 @@ from ibis import Schema, Table
 
 class TableType(enum.Enum):
     OPEN_ENDED_ENTITY = auto()
+    """ An entity whose existence is generally never closed, e.g. a transaction
+    """
     CLOSED_ENDED_ENTITY = auto()
+    """ An entity whose existence is closed, e.g. a party or link which has a
+    well defined end date """
     EVENT = auto()
+    """ An immutable event whose existence is closed """
 
 
 @dataclass

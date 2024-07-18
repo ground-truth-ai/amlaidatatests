@@ -11,8 +11,8 @@
     "python.testing.pytestArgs": [
         "./src/amlaidatatests/tests",
         "./tests/",
-        // "--connection_string=bigquery://gtai-amlai-sandbox-uat/my_bq_input_dataset?location=us-central1",
-        "--connection_string=duckdb://duckdb.ddb",
-        "--id=1234"
+        "--connection_string=bigquery://utopian-pact-429518-p8/aml_ai_input_dataset?location=US",
+        // "--connection_string=duckdb://duckdb.ddb",
+        // "--id=1234"
     ],
 }
