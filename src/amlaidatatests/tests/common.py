@@ -374,26 +374,30 @@ class VerifyTypedValuePresence(AbstractColumnTest):
         results = connection.execute(expr).iloc[0]
 
         if self.min_number and results["value_cnt"] < self.min_number:
+            value_cnt = results["value_cnt"]
             raise FailTest(
-                message=f"{results["value_cnt"]} rows {self.group_by} found "
+                message=f"{value_cnt} rows {self.group_by} found "
                 "with a {self.value} across the entire dataset",
                 expr=expr,
             )
         if self.max_number and results["value_cnt"] > self.max_number:
+            value_cnt = results["value_cnt"]
             raise FailTest(
-                message=f"{results["value_cnt"]} {self.group_by} found with"
+                message=f"{value_cnt} {self.group_by} found with"
                 "more than {self.max_number} values of {self.value}",
                 expr=expr,
             )
         if self.max_proportion and results["proportion"] >= self.max_proportion:
+            proportion = results["proportion"]
             raise FailTest(
-                message=f"{results["proportion"]:.0%} of {self.group_by} "
+                message=f"{proportion:.0%} of {self.group_by} "
                 "had values of {self.value}",
                 expr=expr,
             )
         if self.min_proportion and results["proportion"] <= self.min_proportion:
+            proportion = results["proportion"]
             raise FailTest(
-                message=f"{results["proportion"]:.0%} of {self.group_by} "
+                message=f"{proportion:.0%} of {self.group_by} "
                 "had values of {self.value}",
                 expr=expr,
             )
