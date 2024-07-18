@@ -164,8 +164,6 @@ class ColumnCardinalityTest(AbstractColumnTest):
         self.max_number = max_number
         self.min_number = min_number
         self.test_id = test_id
-        if group_by is None:
-            group_by = []
         self.group_by = group_by
         self.where = where
         self.having = having
@@ -182,16 +180,19 @@ class ColumnCardinalityTest(AbstractColumnTest):
             table = self.get_latest_rows(table)
 
         table, column = resolve_field(table=table, column=self.column)
-        grp_columns = []
-        for grp in self.group_by:
-            _, col = resolve_field(table=table, column=grp)
-            grp_columns.append(col)
+        grp_columns = None
+        if self.group_by:
+            grp_columns = []
+            for grp in self.group_by:
+                _, col = resolve_field(table=table, column=grp)
+                grp_columns.append(col)
 
         if self.where is not None:
             table = table.filter(self.where)
-
-        expr = table.group_by(grp_columns).agg(value_cnt=column.nunique())
-
+        if grp_columns:
+            expr = table.group_by(grp_columns).agg(value_cnt=column.nunique())
+        else:
+            expr = table.agg(value_cnt=column.nunique())
         boolean_expr = None
         if self.max_number:  # if self.number: - checked during init
             boolean_expr |= expr.value_cnt > self.max_number
