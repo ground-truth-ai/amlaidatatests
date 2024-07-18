@@ -13,6 +13,7 @@ from amlaidatatests.test_generators import (
     non_nullable_field_tests,
 )
 from amlaidatatests.tests import common
+from amlaidatatests.config import cfg
 
 TABLE_CONFIG = resolve_table_config("party")
 TABLE = TABLE_CONFIG.table
@@ -179,6 +180,156 @@ def test_referential_integrity_party_supplementary_table(connection):
     )
     test(connection)
 
+@pytest.mark.parametrize(
+    "test",
+    [
+        common.NoMatchingRows(
+            column="join_date",
+            table_config=TABLE_CONFIG,
+            expression=TABLE.validity_start_time.date() < TABLE.join_date,
+            severity=AMLAITestSeverity.ERROR
+        ),
+        common.NoMatchingRows(
+            column="birth_date",
+            table_config=TABLE_CONFIG,
+            expression=lambda: TABLE.birth_date > cfg().interval_end_date,
+            severity=AMLAITestSeverity.WARN
+        ),
+        common.NoMatchingRows(
+            column="establishment_date",
+            table_config=TABLE_CONFIG,
+            expression=lambda: TABLE.establishment_date > cfg().interval_end_date,
+            severity=AMLAITestSeverity.WARN
+        ),
+        common.NoMatchingRows(
+            column="exit_date",
+            table_config=TABLE_CONFIG,
+            expression=lambda: TABLE.exit_date > cfg().interval_end_date,
+            severity=AMLAITestSeverity.WARN
+        ),
+        common.NoMatchingRows(
+            column="join_date",
+            table_config=TABLE_CONFIG,
+            expression=lambda: TABLE.join_date > cfg().interval_end_date,
+            severity=AMLAITestSeverity.WARN
+        ),
+        common.NoMatchingRows(
+            column="join_date",
+            table_config=TABLE_CONFIG,
+            expression=TABLE.join_date > TABLE.establishment_date,
+            severity=AMLAITestSeverity.WARN
+        ),
+        common.NoMatchingRows(
+            column="join_date",
+            table_config=TABLE_CONFIG,
+            expression=TABLE.join_date > TABLE.birth_date,
+            severity=AMLAITestSeverity.WARN
+        ),
+    ],
+)
+def test_date_consistency(connection, test):
+    test(connection)
+
+@pytest.mark.parametrize(
+    "test",
+    [
+        common.CountFrequencyValues(
+            column="birth_date",
+            table_config=TABLE_CONFIG,
+            where=lambda t: t.type == "CONSUMER",
+            proportion=0.01,
+            severity=AMLAITestSeverity.WARN,
+            test_id="P003"
+        ),
+        common.CountFrequencyValues(
+            column="establishment_date",
+            table_config=TABLE_CONFIG,
+            where=lambda t: t.type == "COMPANY",
+            proportion=0.01,
+            severity=AMLAITestSeverity.WARN,
+            test_id="P004"
+        ),
+        common.CountFrequencyValues(
+            column="occupation",
+            table_config=TABLE_CONFIG,
+            where=lambda t: t.type == "CONSUMER",
+            proportion=0.10,
+            severity=AMLAITestSeverity.WARN,
+            test_id="P005"
+        ),
+            common.CountFrequencyValues(
+            column="exit_date",
+            table_config=TABLE_CONFIG,
+            proportion=0.05,
+            severity=AMLAITestSeverity.WARN,
+            test_id="P010"
+        ),
+        common.CountFrequencyValues(
+            column="join_date",
+            table_config=TABLE_CONFIG,
+            proportion=0.05,
+            severity=AMLAITestSeverity.WARN,
+            test_id="P011"
+        ),
+        common.CountFrequencyValues(
+            column="civil_status_code",
+            table_config=TABLE_CONFIG,
+            proportion=0.75,
+            severity=AMLAITestSeverity.WARN,
+            test_id="P012"
+        ),
+        common.CountFrequencyValues(
+            column="education_level_code",
+            table_config=TABLE_CONFIG,
+            proportion=0.75,
+            severity=AMLAITestSeverity.WARN,
+            test_id="P013"
+        ),
+        common.CountFrequencyValues(
+            column="nationalities",
+            table_config=TABLE_CONFIG,
+            proportion=0.05,
+            severity=AMLAITestSeverity.WARN,
+            test_id="P006",
+            where=lambda t: t.type == "CONSUMER",
+            having=lambda t: t.nationalities == [],
+        ),
+        common.ColumnCardinalityTest(
+            column="nationalities.region_code",
+            table_config=TABLE_CONFIG,
+            max_number=5,
+            group_by=["party_id"],
+            severity=AMLAITestSeverity.WARN,
+            test_id="P007"
+        ),
+        common.CountFrequencyValues(
+            column="residencies",
+            table_config=TABLE_CONFIG,
+            proportion=0.05,
+            severity=AMLAITestSeverity.WARN,
+            test_id="P008",
+            where=lambda t: t.type == "CONSUMER",
+            having=lambda t: t.residencies == [],
+        ),
+        common.ColumnCardinalityTest(
+            column="residencies.region_code",
+            table_config=TABLE_CONFIG,
+            max_number=5,
+            group_by=["party_id"],
+            severity=AMLAITestSeverity.WARN,
+            test_id="P009"
+        ),
+        common.ColumnCardinalityTest(
+            column="source_system",
+            table_config=TABLE_CONFIG,
+            max_number=500,
+            severity=AMLAITestSeverity.WARN,
+            test_id="P002"
+        ),
+    ],
+)
+def test_profiling(connection, test):
+    test(connection)
 
 if __name__ == "__main__":
     retcode = pytest.main()

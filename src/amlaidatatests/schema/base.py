@@ -1,27 +1,35 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
+import enum
+from enum import auto
 
 from ibis import Schema, Table
+
+class TableType(enum.Enum):
+    OPEN_ENDED_ENTITY = auto()
+    CLOSED_ENDED_ENTITY = auto()
+    EVENT = auto()
 
 
 @dataclass
 class TableConfig:
     name: str
     schema: Schema
+    entity_keys: Optional[list[str]] = None
     optional: bool = False
-    is_open_ended_entity = True
+    table_type: TableType = TableType.CLOSED_ENDED_ENTITY
 
 
-@dataclass
-class ResolvedTableConfig:
+@dataclass(kw_only=True)
+class ResolvedTableConfig(TableConfig):
     name: str = field(init=False)
+    schema: str = field(init=False)
     table: Table
-    optional: bool = False
-    is_open_ended_entity: bool = True
 
     def __post_init__(self):
         self.name = self.table.get_name()
+        self.schema = self.table.schema()
 
 
 class BaseSchemaConfiguration(ABC):

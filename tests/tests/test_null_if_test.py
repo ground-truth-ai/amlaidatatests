@@ -21,7 +21,7 @@ def test_null_if_succeeds(test_connection, create_test_table):
     t = common.NullIfTest(
         table_config=table_config,
         column="b",
-        expression=table_config.table.type == "card",
+        expression=lambda t: t.type == "card",
     )
     t(test_connection)
 
@@ -40,7 +40,7 @@ def test_null_if_fails(test_connection, create_test_table):
     t = common.NullIfTest(
         table_config=table_config,
         column="b",
-        expression=table_config.table.type == "card",
+        expression=lambda t: t.type == "card",
     )
     with pytest.raises(FailTest, match=r"1 rows not fulfilling criteria"):
         t(test_connection)
