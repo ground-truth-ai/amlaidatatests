@@ -726,8 +726,12 @@ class ColumnTypeTest(AbstractColumnTest):
 class ColumnValuesTest(AbstractColumnTest):
 
     def __init__(
-        self, *, values: List[Any], table_config: ResolvedTableConfig, column: str,
-        test_id: Optional[str] = None
+        self,
+        *,
+        values: List[Any],
+        table_config: ResolvedTableConfig,
+        column: str,
+        test_id: Optional[str] = None,
     ) -> None:
         super().__init__(table_config=table_config, column=column, test_id=test_id)
         self.values = values
@@ -856,11 +860,17 @@ class DatetimeFieldNeverJan1970Test(FieldNeverWhitespaceOnlyTest):
 class NullIfTest(AbstractColumnTest):
 
     def __init__(
-        self, *, table_config: ResolvedTableConfig, column: str, expression: Expr,
+        self,
+        *,
+        table_config: ResolvedTableConfig,
+        column: str,
+        expression: Expr,
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
-        test_id: Optional[str] = None
+        test_id: Optional[str] = None,
     ) -> None:
-        super().__init__(table_config=table_config, column=column, test_id=test_id, severity=severity)
+        super().__init__(
+            table_config=table_config, column=column, test_id=test_id, severity=severity
+        )
         self.expression = expression
 
     def _test(self, *, connection: BaseBackend):

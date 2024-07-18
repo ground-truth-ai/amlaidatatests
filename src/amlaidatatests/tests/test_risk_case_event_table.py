@@ -99,7 +99,7 @@ w = ibis.window(
             table_config=TABLE_CONFIG,
             expression=lambda t: t.event_time >= cfg().interval_end_date,
             severity=AMLAITestSeverity.ERROR,
-            test_id="DT011"
+            test_id="DT011",
         ),
     ],
 )

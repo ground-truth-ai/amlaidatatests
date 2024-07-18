@@ -46,12 +46,19 @@ def test_column_has_invalid_values(test_connection, create_test_table):
     ):
         t(test_connection)
 
-def test_column_only_has_allowed_values_embedded_struct(test_connection, create_test_table):
+
+def test_column_only_has_allowed_values_embedded_struct(
+    test_connection, create_test_table
+):
     schema = {"column": Array(value_type=Struct(fields={"v": String(nullable=False)}))}
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[{"column": [{"v": "alpha"}]}, {"column": [{"v": "alpha"}]}, {"column": [{"v": "alpha"}]}],
+            data=[
+                {"column": [{"v": "alpha"}]},
+                {"column": [{"v": "alpha"}]},
+                {"column": [{"v": "alpha"}]},
+            ],
             schema=schema,
         )
     )

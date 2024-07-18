@@ -81,8 +81,10 @@ def test_non_nullable_fields(connection, test: AbstractColumnTest):
     "test",
     [
         common.ColumnValuesTest(
-            column="type", values=["COMPANY", "CONSUMER"], table_config=TABLE_CONFIG,
-            test_id="E001"
+            column="type",
+            values=["COMPANY", "CONSUMER"],
+            table_config=TABLE_CONFIG,
+            test_id="E001",
         ),
         common.ColumnValuesTest(
             column="civil_status_code",
@@ -96,7 +98,7 @@ def test_non_nullable_fields(connection, test: AbstractColumnTest):
                 "UNKNOWN",
             ],
             table_config=TABLE_CONFIG,
-            test_id="E002"
+            test_id="E002",
         ),
         common.ColumnValuesTest(
             column="education_level_code",
@@ -114,19 +116,19 @@ def test_non_nullable_fields(connection, test: AbstractColumnTest):
                 "UNKNOWN",
             ],
             table_config=TABLE_CONFIG,
-            test_id="E003"
+            test_id="E003",
         ),
         common.ColumnValuesTest(
             column="nationalities.region_code",
             values=get_valid_region_codes(),
             table_config=TABLE_CONFIG,
-            test_id="V002"
+            test_id="V002",
         ),
         common.ColumnValuesTest(
             column="residencies.region_code",
             values=get_valid_region_codes(),
             table_config=TABLE_CONFIG,
-            test_id="V003"
+            test_id="V003",
         ),
     ],
 )
@@ -141,25 +143,25 @@ def test_column_values(connection, test):
             column="birth_date",
             table_config=TABLE_CONFIG,
             expression=lambda t: t.type == "COMPANY",
-            test_id='V008'
+            test_id="V008",
         ),
         common.NullIfTest(
             column="gender",
             table_config=TABLE_CONFIG,
             expression=lambda t: t.type == "COMPANY",
-            test_id='V011'
+            test_id="V011",
         ),
         common.NullIfTest(
             column="establishment_date",
             table_config=TABLE_CONFIG,
             expression=lambda t: t.type == "CONSUMER",
-            test_id='V009'
+            test_id="V009",
         ),
         common.NullIfTest(
             column="occupation",
             table_config=TABLE_CONFIG,
             expression=lambda t: t.type == "CONSUMER",
-            test_id='V010'
+            test_id="V010",
         ),
     ],
 )
