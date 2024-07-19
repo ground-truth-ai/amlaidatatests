@@ -58,7 +58,7 @@ jobs:
         service_account: '${{ secrets.CI_SERVICE_ACCOUNT }}'
     - name: Test with pytest (BQ)
       run: |
-        pytest --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}/aml_ai_input_dataset?location=US --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset
+        pytest --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}/aml_ai_input_dataset?location=US --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset -x
     - name: Store the distribution packages
       uses: actions/upload-artifact@v4
       with:
