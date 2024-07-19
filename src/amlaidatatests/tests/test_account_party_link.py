@@ -69,9 +69,7 @@ def test_column_values(connection, test):
 
 @pytest.mark.parametrize(
     "test",
-    get_entity_mutation_tests(
-        table_config=TABLE_CONFIG, entity_ids=["party_id", "account_id"]
-    ),
+    get_entity_mutation_tests(table_config=TABLE_CONFIG),
 )
 def test_entity_mutation_tests(connection, test: AbstractColumnTest):
     test(connection=connection)

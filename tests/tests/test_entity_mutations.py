@@ -59,7 +59,7 @@ def test_not_orphaned_deleted_entity(test_connection, create_test_table):
                     "id": "ent1",
                     "is_entity_deleted": True,
                     "validity_start_time": datetime.datetime(
-                        2020, 1, 2, tzinfo=datetime.timezone.utc
+                        2020, 1, 3, tzinfo=datetime.timezone.utc
                     ),
                 },
             ],

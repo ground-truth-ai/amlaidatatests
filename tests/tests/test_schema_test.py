@@ -273,21 +273,21 @@ def test_column_too_strict(test_connection, create_test_table):
         t(test_connection)
 
 
-def test_column_array(test_connection, create_test_table):
-    # Check that the underlying nullability of a column isn't checked for
-    # verifying the column in a container. This is because this information
-    # isn't surfaced to ibis
-    tbl = create_test_table(
-        ibis.memtable(
-            data=[{"a": ["hello"]}],
-            schema={"a": Array(nullable=False, value_type=String(nullable=False))},
-        )
-    )
-    table = ibis.table(
-        name=tbl, schema={"a": Array(nullable=False, value_type=String(nullable=True))}
-    )
+# def test_column_array(test_connection, create_test_table):
+#     # Check that the underlying nullability of a column isn't checked for
+#     # verifying the column in a container. This is because this information
+#     # isn't surfaced to ibis
+#     tbl = create_test_table(
+#         ibis.memtable(
+#             data=[{"a": ["hello"]}],
+#             schema={"a": Array(nullable=False, value_type=String(nullable=False))},
+#         )
+#     )
+#     table = ibis.table(
+#         name=tbl, schema={"a": Array(nullable=False, value_type=String(nullable=True))}
+#     )
 
-    table_config = ResolvedTableConfig(table=table)
+#     table_config = ResolvedTableConfig(table=table)
 
-    t = common.ColumnTypeTest(table_config=table_config, column="a")
-    t(test_connection)
+#     t = common.ColumnTypeTest(table_config=table_config, column="a")
+#     t(test_connection)

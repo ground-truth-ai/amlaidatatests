@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Union
 
 from amlaidatatests.config import cfg
 from ibis import Schema, literal
@@ -14,10 +14,10 @@ from amlaidatatests.schema.base import ResolvedTableConfig, TableType
 from amlaidatatests.schema.v1.common import CurrencyValue, ValueEntity
 from amlaidatatests.tests.common import (
     AcceptedRangeTest,
+    ColumnCardinalityTest,
     ColumnValuesTest,
     ConsecutiveEntityDeletionsTest,
     CountFrequencyValues,
-    CountValidityStartTimeChangesTest,
     FieldNeverNullTest,
     CountMatchingRows,
     OrphanDeletionsTest,
@@ -68,25 +68,40 @@ def get_entity_tests(
 
 
 def get_entity_mutation_tests(
-    table_config: ResolvedTableConfig, entity_ids: List[str]
+    table_config: ResolvedTableConfig,
 ) -> list[AbstractColumnTest]:
-    """_summary_
+    """Retrieve all generic tests for detection of entity mutation.
 
     Args:
-        table: _description_
-        primary_keys: _description_
+        table_config: Configuration for
+        entity_ids: _description_
 
     Returns:
         _description_
     """
     return [
-        CountValidityStartTimeChangesTest(
-            table_config=table_config, warn=500, error=1000, entity_ids=entity_ids
+        ColumnCardinalityTest(
+            column="validity_start_time",
+            table_config=table_config,
+            max_number=500,
+            group_by=table_config.entity_keys,
+            severity=AMLAITestSeverity.WARN,
+            test_id="P057",
+        ),
+        ColumnCardinalityTest(
+            column="validity_start_time",
+            table_config=table_config,
+            max_number=1000,
+            group_by=table_config.entity_keys,
+            severity=AMLAITestSeverity.WARN,
+            test_id="P058",
         ),
         ConsecutiveEntityDeletionsTest(
-            table_config=table_config, entity_ids=entity_ids
+            table_config=table_config, entity_ids=table_config.entity_keys
         ),
-        OrphanDeletionsTest(table_config=table_config, entity_ids=entity_ids),
+        OrphanDeletionsTest(
+            table_config=table_config, entity_ids=table_config.entity_keys
+        ),
     ]
 
 
@@ -219,6 +234,7 @@ def get_generic_table_tests(
                 column="validity_start_time",
                 expression=lambda t: t.validity_start_time.date()
                 > cfg().interval_end_date,
+                test_id="DT001",
             ),
             CountFrequencyValues(
                 table_config=table_config,
@@ -226,12 +242,14 @@ def get_generic_table_tests(
                 having=lambda c: c.is_entity_deleted == literal(True),
                 proportion=0.4,
                 severity=AMLAITestSeverity.WARN,
+                test_id="P050",
             ),
             CountFrequencyValues(
                 table_config=table_config,
                 column="validity_start_time",
                 proportion=0.01,
                 severity=AMLAITestSeverity.WARN,
+                test_id="P001",
             ),
         ]
     return tests
