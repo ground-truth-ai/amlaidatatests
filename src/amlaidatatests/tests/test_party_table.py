@@ -36,7 +36,7 @@ def test_PK001_primary_keys(connection):
 
 @pytest.mark.parametrize(
     "test",
-    get_entity_mutation_tests(table_config=TABLE_CONFIG, entity_ids=["party_id"]),
+    get_entity_mutation_tests(table_config=TABLE_CONFIG),
 )
 def test_entity_mutation_tests(connection, test: AbstractColumnTest):
     test(connection=connection)

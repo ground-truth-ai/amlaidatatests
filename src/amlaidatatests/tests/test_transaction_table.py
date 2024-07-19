@@ -72,7 +72,7 @@ def test_RI004_referential_integrity_account_party_link(connection):
 
 @pytest.mark.parametrize(
     "test",
-    get_entity_mutation_tests(table_config=TABLE_CONFIG, entity_ids=["transaction_id"]),
+    get_entity_mutation_tests(table_config=TABLE_CONFIG),
 )
 def test_entity_mutation_tests(connection, test: AbstractColumnTest):
     test(connection=connection)

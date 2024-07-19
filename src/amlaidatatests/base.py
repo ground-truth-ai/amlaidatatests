@@ -211,6 +211,8 @@ class AbstractTableTest(AbstractBaseTest):
     ):
         """Get the latest, not deleted version of the row"""
         table_config = self.table_config if table_config is None else table_config
+        if table_config.table_type == TableType.EVENT:
+            return table
         if table_config.table_type not in (
             TableType.CLOSED_ENDED_ENTITY,
             TableType.OPEN_ENDED_ENTITY,

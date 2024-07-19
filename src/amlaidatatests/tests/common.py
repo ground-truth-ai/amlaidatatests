@@ -157,7 +157,7 @@ class ColumnCardinalityTest(AbstractColumnTest):
         test_id: Optional[str] = None,
         where: Optional[Callable[[Expr], Expr]] = None,
         having: Optional[Callable[[Expr], Expr]] = None,
-        severity: AMLAITestSeverity = AMLAITestSeverity.WARN,
+        severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
         group_by: Optional[list[str]] = None,
     ) -> None:
         super().__init__(table_config=table_config, column=column, severity=severity)
@@ -193,13 +193,11 @@ class ColumnCardinalityTest(AbstractColumnTest):
             expr = table.group_by(grp_columns).agg(value_cnt=column.nunique())
         else:
             expr = table.agg(value_cnt=column.nunique())
-        boolean_expr = None
-        if self.max_number:  # if self.number: - checked during init
-            boolean_expr |= expr.value_cnt > self.max_number
-        if self.min_number:  # if self.number: - checked during init
-            boolean_expr |= expr.value_cnt < self.min_number
 
-        expr = expr.filter(boolean_expr)
+        expr = expr.filter(
+            (expr.value_cnt > self.max_number if self.max_number else False)
+            | (expr.value_cnt < self.min_number if self.min_number else False)
+        )
 
         if self.having is not None:
             expr = expr.filter(self.having)
@@ -207,9 +205,13 @@ class ColumnCardinalityTest(AbstractColumnTest):
         results = connection.execute(expr.count())
 
         if results > 0:
+            direction = "high" if self.max_number else "low"
             message = (
                 f"column {self.full_column_path} has an "
-                "unusually high number of distinct values"
+                f"unexpectedly {direction} number of distinct values "
+                f"for each {self.group_by} "
+                if self.group_by
+                else ""
             )
             raise FailTest(
                 message=message,
@@ -281,11 +283,10 @@ class CountFrequencyValues(AbstractColumnTest):
             _, col = resolve_field(table=table, column=grp)
             grp_columns.append(col)
 
-        expr = (
-            table.group_by([column, *grp_columns])
-            .agg(value_cnt=column.count()))
+        expr = table.group_by([column, *grp_columns]).agg(value_cnt=column.count())
         expr = expr.mutate(
-                proportion=expr.value_cnt / expr.value_cnt.sum().over(group_by=grp_columns))
+            proportion=expr.value_cnt / expr.value_cnt.sum().over(group_by=grp_columns)
+        )
 
         boolean_expr = None
         if self.proportion:
@@ -375,8 +376,9 @@ class VerifyTypedValuePresence(AbstractColumnTest):
 
         expr = (
             # Concatenate the group by so we can count unique combinations
-            table.mutate(concat=reduce(lambda x, y: x + y,
-                                       [_[i] for i in self.group_by], ''))
+            table.mutate(
+                concat=reduce(lambda x, y: x + y, [_[i] for i in self.group_by], "")
+            )
             .agg(
                 value_cnt=_["concat"].nunique(column == self.value),
                 group_count=_["concat"].nunique(**where_group_kwargs),
@@ -464,6 +466,13 @@ class CountValidityStartTimeChangesTest(AbstractTableTest):
                 warn_number=warn_number.count(), error_number=error_number.count()
             )
         )
+
+        # result = connection.execute(
+        #     counted.select(
+        #         warn_number=_.count(_.count_per_pk >= self.warn),
+        #         error_number=_.count(_.count_per_pk >= self.error),
+        #     )
+        # )
         if len(result.index) == 0:
             raise FailTest("No rows in table")
 
@@ -474,13 +483,13 @@ class CountValidityStartTimeChangesTest(AbstractTableTest):
             raise FailTest(
                 f"{no_errors} entities found with more than"
                 f" {self.error} validity_start_time changes in table {self.table}",
-                expr=error_number,
+                expr=counted,
             )
         if result["warn_number"][0] > 0:
             raise WarnTest(
                 f"{no_warnings} entities found with more than"
                 f" {self.warn} validity_start_time changes in table {self.table}",
-                expr=warn_number,
+                expr=counted,
             )
 
 
@@ -936,6 +945,7 @@ class CountMatchingRows(AbstractColumnTest):
                 expr=expr,
             )
 
+
 class EventOrder(AbstractColumnTest):
 
     def __init__(
@@ -1114,9 +1124,11 @@ class TemporalProfileTest(AbstractColumnTest):
 
         result = connection.execute(expr.count())
         if result > 0:
-            msg = f"""{result} {self.period.lower()}s had a volume of less than
-                      {self.threshold:.0%} of the average volume for all
-                      {self.period.lower()}s"""
+            msg = (
+                f"{result} {self.period.lower()}s had a volume of less than "
+                "{self.threshold:.0%} of the average volume for all "
+                f"{self.period.lower()}s"
+            )
             raise FailTest(msg, expr=expr)
 
 
