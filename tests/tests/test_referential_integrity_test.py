@@ -334,7 +334,7 @@ def test_temporal_referential_integrity_key_within_time_tolerance(
         table_config=table_config,
         to_table_config=otr_table_config,
         key="id",
-        tolerance="year",
+        tolerance="day",
     )
     t(test_connection)
 
@@ -401,7 +401,7 @@ def test_temporal_referential_integrity_key_out_of_time_tolerance(
         table_config=table_config,
         to_table_config=otr_table_config,
         key="id",
-        tolerance="year",
+        tolerance="day",
     )
     with pytest.raises(FailTest, match=r"1 keys found in table"):
         t(test_connection)

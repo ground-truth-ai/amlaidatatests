@@ -127,7 +127,7 @@ class NoTransactionsWithinSuspiciousPeriod(AbstractTableTest):
         table_config: common.ResolvedTableConfig,
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
         test_id: Optional[str] = None,
-        lookback_period: int = 12,
+        lookback_period: int = 365,
     ) -> None:
         super().__init__(table_config=table_config, severity=severity, test_id=test_id)
         self.lookback_period = lookback_period
@@ -189,7 +189,8 @@ class NoTransactionsWithinSuspiciousPeriod(AbstractTableTest):
                         ),
                         false_expr=transaction_table["book_time"].between(
                             expr.aml_process_start_time.sub(
-                                ibis.interval(value=self.lookback_period, unit="MONTH")
+                                # Months aren't supported for BQ
+                                ibis.interval(value=self.lookback_period, unit="DAY")
                             ),
                             expr.aml_process_start_time,
                         ),
@@ -377,7 +378,7 @@ class NoTransactionsWithinSuspiciousPeriod(AbstractTableTest):
             value="AML_SUSPICIOUS_ACTIVITY_START",
         ),
         NoTransactionsWithinSuspiciousPeriod(
-            table_config=TABLE_CONFIG, lookback_period=12, test_id="P059"
+            table_config=TABLE_CONFIG, lookback_period=365, test_id="P059"
         ),
     ],
 )

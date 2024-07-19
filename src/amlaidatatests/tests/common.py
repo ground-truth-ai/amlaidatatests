@@ -390,29 +390,33 @@ class VerifyTypedValuePresence(AbstractColumnTest):
         if self.min_number and results["value_cnt"] < self.min_number:
             value_cnt = results["value_cnt"]
             raise FailTest(
-                message=f"{value_cnt} rows {self.group_by} found "
-                "with a {self.value} across the entire dataset",
+                message=f"Only {value_cnt} rows {self.group_by} found "
+                f"with a {self.value} in {self.full_column_path}."
+                f"Expected at least {self.min_number}",
                 expr=expr,
             )
         if self.max_number and results["value_cnt"] > self.max_number:
             value_cnt = results["value_cnt"]
             raise FailTest(
-                message=f"{value_cnt} {self.group_by} found with"
-                "more than {self.max_number} values of {self.value}",
+                message=f"{value_cnt} rows {self.group_by} found "
+                f"with a {self.value} in {self.full_column_path}."
+                f"Expected at most {self.max_number}",
                 expr=expr,
             )
         if self.max_proportion and results["proportion"] >= self.max_proportion:
             proportion = results["proportion"]
             raise FailTest(
                 message=f"{proportion:.0%} of {self.group_by} "
-                "had values of {self.value}",
+                f"had values of {self.value} in {self.full_column_path}. "
+                f"Expected at most {self.max_proportion:.0%}",
                 expr=expr,
             )
         if self.min_proportion and results["proportion"] <= self.min_proportion:
             proportion = results["proportion"]
             raise FailTest(
-                message=f"{proportion:.0%} of {self.group_by} "
-                "had values of {self.value}",
+                message=f"Only {proportion:.0%} of {self.group_by} "
+                f"had values of {self.value} in {self.full_column_path}. "
+                f"Expected at least {self.min_proportion:.0%}",
                 expr=expr,
             )
 
@@ -1050,8 +1054,8 @@ class TemporalProfileTest(AbstractColumnTest):
         if result > 0:
             msg = (
                 f"{result} {self.period.lower()}s had a volume of less than "
-                "{self.threshold:.0%} of the average volume for all "
-                f"{self.period.lower()}s"
+                + "{self.threshold:.0%} of the average volume for all "
+                + f"{self.period.lower()}s"
             )
             raise FailTest(msg, expr=expr)
 
@@ -1072,12 +1076,9 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
         table_config: ResolvedTableConfig,
         to_table_config: ResolvedTableConfig,
         key: str,
+        # BQ doesn't support values beyond day
         tolerance: Optional[
             Literal[
-                "year",
-                "quarter",
-                "month",
-                "week",
                 "day",
                 "hour",
                 "minute",
@@ -1278,11 +1279,11 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
         result = connection.execute(expr=expr.count())
         if result > 0:
             msg = (
-                f"{result} keys found in table {self.table.get_name()} which were"
-                f" either not in {self.to_table.get_name()}, or had inconsistent"
-                "time periods, where validity_start_time and is_entity_deleted"
-                f" keys in {self.table.get_name()} did not correspond to the time"
-                f" periods for the same entity in {self.to_table.get_name()}"
+                f"{result} keys found in table {self.table.get_name()} which were "
+                f"either not in {self.to_table.get_name()}, or had inconsistent "
+                "time periods, where validity_start_time and is_entity_deleted "
+                f"keys in {self.table.get_name()} did not correspond to the time "
+                f"periods for the same entity in {self.to_table.get_name()}"
             )
             raise FailTest(msg, expr=expr)
         return
