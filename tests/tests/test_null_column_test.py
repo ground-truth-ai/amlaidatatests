@@ -47,7 +47,7 @@ def test_column_optional_parent_always_present(test_connection, create_test_tabl
 
 
 def test_column_optional_parent_field_missing(test_connection, create_test_table):
-    schema = {"parent_id": Struct(nullable=True, fields={"id": String(nullable=False)})}
+    schema = {"parent_id": Struct(nullable=True, fields={"id": String(nullable=True)})}
 
     tbl = create_test_table(
         ibis.memtable(

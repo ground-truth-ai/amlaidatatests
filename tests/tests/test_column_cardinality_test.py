@@ -1,4 +1,3 @@
-
 import ibis
 import pytest
 from ibis.expr.datatypes import String
