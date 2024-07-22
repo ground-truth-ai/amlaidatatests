@@ -6,6 +6,8 @@ from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.test_generators import (
     get_entity_mutation_tests,
     get_generic_table_tests,
+    non_nullable_fields,
+    timestamp_field_tests
 )
 from amlaidatatests.tests import common
 
@@ -110,6 +112,17 @@ def test_RI009_temporal_referential_integrity_party(connection):
 )
 def test_transaction_referential_integrity(connection, test):
     """Tests referential integrity between the"""
+    test(connection)
+
+
+@pytest.mark.parametrize("column", non_nullable_fields(TABLE_CONFIG.table.schema()))
+def test_non_nullable_fields(connection, column):
+    test = common.FieldNeverNullTest(table_config=TABLE_CONFIG, column=column)
+    test(connection)
+
+
+@pytest.mark.parametrize("test", timestamp_field_tests(TABLE_CONFIG))
+def test_timestamp_fields(connection, test: AbstractColumnTest):
     test(connection)
 
 

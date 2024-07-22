@@ -6,9 +6,18 @@ import ibis
 from ibis import _
 import pytest
 
-from amlaidatatests.base import AMLAITestSeverity, AbstractTableTest, FailTest
+from amlaidatatests.base import (
+    AMLAITestSeverity,
+    AbstractColumnTest,
+    AbstractTableTest,
+    FailTest,
+)
 from amlaidatatests.schema.utils import resolve_table_config
-from amlaidatatests.test_generators import get_generic_table_tests, non_nullable_fields
+from amlaidatatests.test_generators import (
+    get_generic_table_tests,
+    non_nullable_fields,
+    timestamp_field_tests,
+)
 from amlaidatatests.tests import common
 
 TABLE_CONFIG = resolve_table_config("risk_case_event")
@@ -51,6 +60,11 @@ def test_column_type(connection, column):
 @pytest.mark.parametrize("column", non_nullable_fields(TABLE_CONFIG.table.schema()))
 def test_non_nullable_fields(connection, column):
     test = common.FieldNeverNullTest(table_config=TABLE_CONFIG, column=column)
+    test(connection)
+
+
+@pytest.mark.parametrize("test", timestamp_field_tests(TABLE_CONFIG))
+def test_timestamp_fields(connection, test: AbstractColumnTest):
     test(connection)
 
 
