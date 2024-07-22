@@ -95,7 +95,7 @@ class PrimaryKeyColumnsTest(AbstractTableTest):
         *,
         table_config: ResolvedTableConfig,
         unique_combination_of_columns: List[str],
-        test_id: Optional[str] = None
+        test_id: Optional[str] = None,
     ) -> None:
         """_summary_
 
@@ -1015,7 +1015,7 @@ class ReferentialIntegrityTest(AbstractTableTest):
                     f"More than {result:.0%} of keys {self.keys} in table "
                     f"{self.table.get_name()} were not in "
                     f"{self.to_table.get_name()}. "
-                    f"Key column(s) were {" ".join(self.keys)}"
+                    f"Key column(s) were {' '.join(self.keys)}"
                     ""
                 )
                 raise FailTest(msg, expr=expr)
@@ -1025,7 +1025,7 @@ class ReferentialIntegrityTest(AbstractTableTest):
             msg = (
                 f"{result} keys found in table {self.table.get_name()} "
                 f"which were not in {self.to_table.get_name()}. "
-                f"Key column(s) were {" ".join(self.keys)}"
+                f"Key column(s) were {' '.join(self.keys)}"
             )
             raise FailTest(msg, expr=expr)
         return
