@@ -2,7 +2,7 @@ import datetime
 import itertools
 import warnings
 from functools import reduce
-from typing import Any, Callable, List, Literal, Optional, cast, override
+from typing import Any, Callable, List, Literal, Optional, cast
 
 import ibis
 from ibis import BaseBackend, Expr, _
@@ -26,7 +26,9 @@ class TableExcessColumnsTest(AbstractTableTest):
         AbstractTableTest: _description_
     """
 
-    def __init__(self, table_config: ResolvedTableConfig, test_id: str) -> None:
+    def __init__(
+        self, table_config: ResolvedTableConfig, test_id: Optional[str] = None
+    ) -> None:
         super().__init__(table_config, test_id=test_id)
 
     def _test(self, *, connection: BaseBackend):
@@ -680,7 +682,6 @@ class ColumnValuesTest(AbstractColumnTest):
         super().__init__(table_config=table_config, column=column, test_id=test_id)
         self.values = values
 
-    @override
     def _test(self, *, connection: BaseBackend):
         table, field = resolve_field(self.table, self.column)
 

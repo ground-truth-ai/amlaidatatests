@@ -46,7 +46,7 @@ class FailTest(Exception):
         self.message = message
         self.expr = expr
 
-        self._test_id = test_id
+        self.test_id = test_id
 
         self.sql = str(ibis.get_backend().compile(expr)) if expr is not None else None
 
