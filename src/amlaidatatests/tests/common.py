@@ -283,7 +283,7 @@ class CountFrequencyValues(AbstractColumnTest):
             _, col = resolve_field(table=table, column=grp)
             grp_columns.append(col)
 
-        expr = table.group_by([column, *grp_columns]).agg(value_cnt=column.count())
+        expr = table.group_by([column, *grp_columns]).agg(value_cnt=table.count())
         expr = expr.mutate(
             proportion=expr.value_cnt / expr.value_cnt.sum().over(group_by=grp_columns)
         )
@@ -862,8 +862,9 @@ class CountMatchingRows(AbstractColumnTest):
         proportion = result["proportion"]
         if self.max_rows and (value > self.max_rows):
             raise FailTest(
-                f"{value} rows unexpectedly met criteria"
-                f" in {self.full_column_path}",
+                f"{value} rows unexpectedly met criteria "
+                f"in {self.full_column_path}. Expected at most "
+                f"{self.max_rows}.",
                 expr=expr,
             )
         if self.max_proportion and (proportion > self.max_proportion):

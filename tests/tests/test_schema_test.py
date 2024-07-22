@@ -284,7 +284,7 @@ def test_column_too_strict(test_connection, create_test_table):
 #         )
 #     )
 #     table = ibis.table(
-#         name=tbl, schema={"a": Array(nullable=False, value_type=String(nullable=True))}
+#        name=tbl, schema={"a": Array(nullable=False, value_type=String(nullable=True))}
 #     )
 
 #     table_config = ResolvedTableConfig(table=table)

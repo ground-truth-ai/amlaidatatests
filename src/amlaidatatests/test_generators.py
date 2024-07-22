@@ -1,8 +1,9 @@
+import functools
 from typing import Union
 
 from amlaidatatests.config import cfg
 from ibis import Schema, literal
-from ibis.expr.datatypes import Array, DataType, Struct
+from ibis.expr.datatypes import Array, DataType, Struct, Timestamp
 
 from amlaidatatests.base import (
     AbstractBaseTest,
@@ -149,7 +150,9 @@ def entity_columns(
 def non_nullable_fields(
     schema: Union[Schema, Array, Struct, DataType], path: list[str] = []
 ):  # -> list | dict:
-    """_summary_
+    """Return a list of all the nullable fields in the schema.
+
+    Includes fields embedded within Structs or Arrays
 
     Args:
         schema: _description_
@@ -178,6 +181,38 @@ def non_nullable_fields(
     return fields
 
 
+def timestamp_fields(
+    schema: Union[Schema, Array, Struct, DataType], path: list[str] = []
+):  # -> list | dict:
+    """_summary_
+
+    Args:
+        schema: _description_
+        path: _description_. Defaults to [].
+
+    Returns:
+        _type_: _description_
+    """
+    if not isinstance(schema, (Schema, Array, Struct)):
+        return True
+
+    fields = []
+    for n, dtype in schema.items():
+        if isinstance(dtype, Struct):
+            subfields = timestamp_fields(dtype, path=path.copy() + [n])
+            fields += subfields
+
+        if isinstance(dtype, Array):
+            subfields = timestamp_fields(dtype.value_type, path=path.copy() + [n])
+            fields += subfields
+        # Also include the object itself, even if it's a struct or array.
+        # This is because the Array or Struct could also be nullable.
+        if isinstance(dtype, Timestamp):
+            fields += [".".join(path + [n])]
+
+    return fields
+
+
 def non_nullable_field_tests(
     table_config: ResolvedTableConfig,
 ) -> list[AbstractBaseTest]:
@@ -192,14 +227,44 @@ def non_nullable_field_tests(
     fields = non_nullable_fields(schema=table_config.table.schema())
     tests = []
     for f in fields:
-        # _, _field = resolve_field(table=table_config.table, column=f)
-        # field_type = _field.type()
-        # if field_type.is_string():
-        #     tests.append(
-        #         FieldNeverWhitespaceOnlyTest(table_config=table_config, column=f)
-        #     )
-
         tests.append(FieldNeverNullTest(table_config=table_config, column=f))
+    return tests
+
+
+def find_consistent_timestamp_offset(field, t):
+    # Look for timestamps which are consistently offset from midnight. This
+    # can be an indicator of values assigned to the wrong day
+
+    return (t[field].strftime("%M:%S").isin(["00:00", "00:30"])) & (
+        t[field].strftime("%H:%M:%S") != "00:00:00"
+    )
+
+
+def timestamp_field_tests(
+    table_config: ResolvedTableConfig,
+) -> list[AbstractBaseTest]:
+    """_summary_
+
+    Args:
+        table_config: _description_
+
+    Returns:
+        _description_
+    """
+    fields = timestamp_fields(schema=table_config.table.schema())
+    tests = []
+
+    for f in fields:
+        expr = functools.partial(find_consistent_timestamp_offset, f)
+
+        test = CountMatchingRows(
+            table_config=table_config,
+            column=f,
+            max_proportion=0.10,
+            expression=expr,
+            test_id="P052",
+        )
+        tests.append(test)
     return tests
 
 

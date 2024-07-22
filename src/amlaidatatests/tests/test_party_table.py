@@ -11,6 +11,7 @@ from amlaidatatests.test_generators import (
     get_entity_tests,
     get_generic_table_tests,
     non_nullable_field_tests,
+    timestamp_field_tests,
 )
 from amlaidatatests.tests import common
 from amlaidatatests.config import cfg
@@ -74,6 +75,11 @@ def test_column_type(connection, column):
 
 @pytest.mark.parametrize("test", non_nullable_field_tests(TABLE_CONFIG))
 def test_non_nullable_fields(connection, test: AbstractColumnTest):
+    test(connection)
+
+
+@pytest.mark.parametrize("test", timestamp_field_tests(TABLE_CONFIG))
+def test_timestamp_fields(connection, test: AbstractColumnTest):
     test(connection)
 
 
