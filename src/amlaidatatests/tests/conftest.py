@@ -13,7 +13,6 @@ from amlaidatatests.config import (
     DatatestConfig,
     init_parser_options_from_config,
 )
-from pathlib import Path
 import pathlib
 
 pytest_plugins = [

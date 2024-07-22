@@ -71,14 +71,16 @@ class TableCountTest(AbstractTableTest):
             raise FailTest(f"Table {self.table.get_name()} is empty")
         if count > self.max_rows:
             raise FailTest(
-                f"Table {self.table.get_name()} has more rows than seems feasible: "
-                f"{count} vs maximum {self.max_rows}. To stop this error triggering, review "
+                f"Table {self.table.get_name()} has more rows "
+                f"than seems feasible: {count} vs maximum {self.max_rows}. "
+                "To stop this error triggering, review "
                 "the data provided or increase the scale setting"
             )
         if count > (self.max_rows) * 0.9:
             raise WarnTest(
-                f"Table {self.table.get_name()} is close to the feasibility ceiling: "
-                f"{count} vs maximum {self.max_rows}. To stop this error triggering, review "
+                f"Table {self.table.get_name()} is close to "
+                f"the feasibility ceiling: {count} vs maximum {self.max_rows}. "
+                "To stop this error triggering, review "
                 "the data provided or increase the scale setting"
             )
 
@@ -381,9 +383,9 @@ class VerifyTypedValuePresence(AbstractColumnTest):
         proportion = results["proportion"]
 
         if self.min_number and results["value_cnt"] < self.min_number:
-            msg = "Only {value_cnt:d} rows"
+            msg = f"Only {value_cnt:d} rows"
             if self.min_number == 1:
-                msg = f"No rows "
+                msg = "No rows "
             raise FailTest(
                 message=f"{msg} found "
                 f"with a value of {self.value} in {self.full_column_path}. "
