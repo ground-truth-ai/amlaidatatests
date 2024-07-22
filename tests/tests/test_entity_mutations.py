@@ -4,7 +4,7 @@ import ibis
 import pytest
 from ibis.expr.datatypes import Boolean, String, Timestamp
 
-from amlaidatatests.base import AMLAITestSeverity, WarnTest
+from amlaidatatests.exceptions import AMLAITestSeverity, WarnTest
 from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests import common
 

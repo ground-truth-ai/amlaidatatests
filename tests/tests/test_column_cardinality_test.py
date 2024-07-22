@@ -2,7 +2,7 @@ import ibis
 import pytest
 from ibis.expr.datatypes import String
 
-from amlaidatatests.base import FailTest
+from amlaidatatests.exceptions import FailTest
 from amlaidatatests.schema.base import ResolvedTableConfig, TableType
 from amlaidatatests.tests import common
 

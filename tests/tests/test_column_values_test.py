@@ -1,8 +1,8 @@
 import ibis
 import pytest
-from ibis.expr.datatypes import String, Array, Struct
+from ibis.expr.datatypes import Array, String, Struct
 
-from amlaidatatests.base import FailTest
+from amlaidatatests.exceptions import FailTest
 from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests import common
 

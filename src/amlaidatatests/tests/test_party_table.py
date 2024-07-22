@@ -1,12 +1,14 @@
-#!/usr/bin/env python
+"""Tests for the party table"""
 
 import pytest
 
-from amlaidatatests.base import AbstractColumnTest, AbstractTableTest, AMLAITestSeverity
+from amlaidatatests.base import AbstractColumnTest, AbstractTableTest
+from amlaidatatests.config import cfg
+from amlaidatatests.exceptions import AMLAITestSeverity
 from amlaidatatests.io import get_valid_region_codes
 from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.test_generators import (
-    entity_columns,
+    get_entities,
     get_entity_mutation_tests,
     get_entity_tests,
     get_generic_table_tests,
@@ -14,14 +16,13 @@ from amlaidatatests.test_generators import (
     timestamp_field_tests,
 )
 from amlaidatatests.tests import common
-from amlaidatatests.config import cfg
 
 TABLE_CONFIG = resolve_table_config("party")
 TABLE = TABLE_CONFIG.table
 
 
 @pytest.mark.parametrize(
-    "test", get_generic_table_tests(table_config=TABLE_CONFIG, max_rows_factor=50e9)
+    "test", get_generic_table_tests(table_config=TABLE_CONFIG, expected_max_rows=50e9)
 )
 def test_table(connection, test: AbstractTableTest):
     test(connection=connection)
@@ -45,7 +46,7 @@ def test_entity_mutation_tests(connection, test: AbstractColumnTest):
 
 @pytest.mark.parametrize(
     "column",
-    entity_columns(schema=TABLE_CONFIG.table.schema(), entity_types=["CurrencyValue"]),
+    get_entities(item=TABLE_CONFIG.table.schema(), entity_types=["CurrencyValue"]),
 )
 @pytest.mark.parametrize(
     "test", get_entity_tests(table_config=TABLE_CONFIG, entity_name="CurrencyValue")
@@ -205,6 +206,7 @@ def test_RI013_temporal_referential_integrity_party_supplementary_table(connecti
         common.CountMatchingRows(
             column="join_date",
             table_config=TABLE_CONFIG,
+            max_rows=0,
             expression=lambda t: t.validity_start_time.date() < t.join_date,
             severity=AMLAITestSeverity.ERROR,
             test_id="DT017",
@@ -212,6 +214,7 @@ def test_RI013_temporal_referential_integrity_party_supplementary_table(connecti
         common.CountMatchingRows(
             column="birth_date",
             table_config=TABLE_CONFIG,
+            max_rows=0,
             expression=lambda t: t.birth_date > cfg().interval_end_date,
             severity=AMLAITestSeverity.WARN,
             test_id="DT002",
@@ -219,6 +222,7 @@ def test_RI013_temporal_referential_integrity_party_supplementary_table(connecti
         common.CountMatchingRows(
             column="establishment_date",
             table_config=TABLE_CONFIG,
+            max_rows=0,
             expression=lambda t: t.establishment_date > cfg().interval_end_date,
             severity=AMLAITestSeverity.WARN,
             test_id="DT003",
@@ -226,6 +230,7 @@ def test_RI013_temporal_referential_integrity_party_supplementary_table(connecti
         common.CountMatchingRows(
             column="exit_date",
             table_config=TABLE_CONFIG,
+            max_rows=0,
             expression=lambda t: t.exit_date > cfg().interval_end_date,
             severity=AMLAITestSeverity.WARN,
             test_id="DT004",
@@ -233,6 +238,7 @@ def test_RI013_temporal_referential_integrity_party_supplementary_table(connecti
         common.CountMatchingRows(
             column="join_date",
             table_config=TABLE_CONFIG,
+            max_rows=0,
             expression=lambda t: t.join_date > cfg().interval_end_date,
             severity=AMLAITestSeverity.WARN,
             test_id="DT005",
@@ -240,6 +246,7 @@ def test_RI013_temporal_referential_integrity_party_supplementary_table(connecti
         common.CountMatchingRows(
             column="join_date",
             table_config=TABLE_CONFIG,
+            max_rows=0,
             expression=lambda t: t.join_date > t.establishment_date,
             severity=AMLAITestSeverity.WARN,
             test_id="DT0012",
@@ -247,6 +254,7 @@ def test_RI013_temporal_referential_integrity_party_supplementary_table(connecti
         common.CountMatchingRows(
             column="join_date",
             table_config=TABLE_CONFIG,
+            max_rows=0,
             expression=lambda t: t.join_date > t.birth_date,
             severity=AMLAITestSeverity.WARN,
             test_id="DT0013",

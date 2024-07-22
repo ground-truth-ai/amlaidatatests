@@ -1,7 +1,6 @@
 from typing import Optional
 from urllib.parse import parse_qsl, urlparse
 
-
 import ibis
 
 from amlaidatatests.config import ConfigSingleton

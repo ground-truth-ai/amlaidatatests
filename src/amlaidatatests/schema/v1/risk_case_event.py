@@ -1,7 +1,9 @@
+"""Configuration file specifying the schema for the risk_case_event table"""
+
 from ibis import schema
 from ibis.expr.datatypes import String, Timestamp
 
-#         """risk_case_event_id        VARCHAR(255),
+#         risk_case_event_id      VARCHAR(255),
 #         event_time              Int,
 #         type                    VARCHAR(255),
 #         party_id                VARCHAR(255),

@@ -1,13 +1,13 @@
 import importlib.resources
 
+import google.auth
+import ibis
 import pandas as pd
 from ibis import literal
 
 from amlaidatatests.schema.utils import get_table_name
 
 from .connection import connection_factory
-import google.auth
-import ibis
 
 
 # TODO: Configure connections properly
@@ -73,7 +73,7 @@ def load_from_bigquery_to_copy():
 
 
 def get_valid_region_codes():
-    template_res = importlib.resources.files("amlaidatatests.seeds").joinpath(
+    template_res = importlib.resources.files("amlaidatatests.resources").joinpath(
         "country_codes.csv"
     )
     with importlib.resources.as_file(template_res) as template_file:
@@ -83,13 +83,10 @@ def get_valid_region_codes():
 
 
 def get_valid_currency_codes():
-    template_res = importlib.resources.files("amlaidatatests.seeds").joinpath(
+    template_res = importlib.resources.files("amlaidatatests.resources").joinpath(
         "currency_codes.csv"
     )
     with importlib.resources.as_file(template_res) as template_file:
         return pd.read_csv(template_file, na_values=[], keep_default_na=False)[
             "code"
         ].to_list()
-
-
-# def copy_prefix() ->

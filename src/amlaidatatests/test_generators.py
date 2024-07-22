@@ -1,15 +1,13 @@
 import functools
-from typing import Union
+from typing import Optional, Union
 
-from amlaidatatests.config import cfg
-from ibis import Schema, literal
+from ibis import Schema, literal, Table
+import ibis
 from ibis.expr.datatypes import Array, DataType, Struct, Timestamp
 
-from amlaidatatests.base import (
-    AbstractBaseTest,
-    AbstractColumnTest,
-    AMLAITestSeverity,
-)
+from amlaidatatests.base import AbstractBaseTest, AbstractColumnTest
+from amlaidatatests.config import cfg
+from amlaidatatests.exceptions import AMLAITestSeverity
 from amlaidatatests.io import get_valid_currency_codes
 from amlaidatatests.schema.base import ResolvedTableConfig, TableType
 from amlaidatatests.schema.v1.common import CurrencyValue, ValueEntity
@@ -19,13 +17,12 @@ from amlaidatatests.tests.common import (
     ColumnValuesTest,
     ConsecutiveEntityDeletionsTest,
     CountFrequencyValues,
-    FieldNeverNullTest,
     CountMatchingRows,
+    FieldNeverNullTest,
     OrphanDeletionsTest,
     TableCountTest,
-    TableSchemaTest,
+    TableExcessColumnsTest,
 )
-
 
 ENTITIES = {"CurrencyValue": CurrencyValue(), "ValueEntity": ValueEntity()}
 
@@ -106,33 +103,40 @@ def get_entity_mutation_tests(
     ]
 
 
-def entity_columns(
-    schema: Union[Schema, Array, Struct, DataType],
+def get_entities(
+    item: Union[Schema, Array, Struct, DataType],
     entity_types=ENTITIES.keys(),
-    path: list[str] = [],
+    path: Optional[list[str]] = None,
 ):
-    """_summary_
+    """Get the entity types in the schema
 
     Args:
-        schema: _description_
-        entity_types: _description_. Defaults to ENTITIES.keys().
-        path: _description_. Defaults to [].
+        item: The [ibis.Schema] or [ibis.common.collections.MapSet] which
+              corresponds to this item.
+        entity_types: The entities to locate. Defaults to ENTITIES.keys().
+        path: The path relative to the parent object of this object. Used to
+              specify any parent item above the one being called. For example,
+              if . Defaults to [].
 
     Returns:
-        _description_
+        A list of the entities paths
     """
+    # top level path
+    if path is None:
+        path = []
+
     fields = {}
-    for n, dtype in schema.items():
+    for n, dtype in item.items():
 
         if isinstance(dtype, Struct):
-            subfields = entity_columns(
-                schema=dtype, entity_types=entity_types, path=path.copy() + [n]
+            subfields = get_entities(
+                item=dtype, entity_types=entity_types, path=path.copy() + [n]
             )
             fields.update(subfields)
 
         if isinstance(dtype, Array):
-            subfields = entity_columns(
-                schema=dtype.value_type,
+            subfields = get_entities(
+                item=dtype.value_type,
                 entity_types=entity_types,
                 path=path.copy() + [n],
             )
@@ -147,31 +151,43 @@ def entity_columns(
     return fields
 
 
-def non_nullable_fields(
-    schema: Union[Schema, Array, Struct, DataType], path: list[str] = []
-):  # -> list | dict:
-    """Return a list of all the nullable fields in the schema.
+def get_non_nullable_fields(
+    item: Union[Schema, Array, Struct, DataType], path: Optional[list[str]] = None
+) -> list[str]:  # -> list | dict:
+    """Return a list of all the nullable fields in the schema, specified
+    as dot delimited paths.
 
-    Includes fields embedded within Structs or Arrays
+    Includes fields embedded within Structs or Arrays whose parents might not be
+    nullable, which are return as "paths" by recursively calling this function.
 
     Args:
-        schema: _description_
-        path: _description_. Defaults to [].
+        item: The [ibis.Schema] or [ibis.common.collections.MapSet] which
+              corresponds to this item.
+        path: The path relative to the parent object of this object. Used to
+              specify any parent item above the one being called. Defaults to [].
 
     Returns:
-        _type_: _description_
+        A list of paths to the non-nullable fields in the container, e.g.
+        for a struct {'a': {'b': {'c': value}}} would return a.b.c
     """
-    if not isinstance(schema, (Schema, Array, Struct)):
-        return True
+    # top level path
+    if path is None:
+        path = []
+
+    # base case
+    if not isinstance(item, (Schema, Array, Struct)):
+        return []
 
     fields = []
-    for n, dtype in schema.items():
+    for n, dtype in item.items():
         if isinstance(dtype, Struct):
-            subfields = non_nullable_fields(dtype, path=path.copy() + [n])
+            subfields = get_non_nullable_fields(dtype, path=path.copy() + [n])
             fields += subfields
 
         if isinstance(dtype, Array):
-            subfields = non_nullable_fields(dtype.value_type, path=path.copy() + [n])
+            subfields = get_non_nullable_fields(
+                dtype.value_type, path=path.copy() + [n]
+            )
             fields += subfields
         # Also include the object itself, even if it's a struct or array.
         # This is because the Array or Struct could also be nullable.
@@ -181,29 +197,40 @@ def non_nullable_fields(
     return fields
 
 
-def timestamp_fields(
-    schema: Union[Schema, Array, Struct, DataType], path: list[str] = []
+def get_timestamp_fields(
+    item: Union[Schema, Array, Struct, DataType], path: Optional[list[str]] = None
 ):  # -> list | dict:
-    """_summary_
+    """Return a list of all the timestamp fields in the schema, specified
+    as dot delimited paths.
+
+    Includes fields embedded within Structs or Arrays.
 
     Args:
-        schema: _description_
-        path: _description_. Defaults to [].
+        item: The [ibis.Schema] or [ibis.common.collections.MapSet] which
+              corresponds to this item.
+        path: The path relative to the parent object of this object. Used to
+              specify any parent item above the one being called. Defaults to [].
 
     Returns:
-        _type_: _description_
+        A list of paths to the timestamp fields in the container, e.g.
+        for a struct {'a': {'b': {'c': timestamp_value}}} would return a.b.c
     """
-    if not isinstance(schema, (Schema, Array, Struct)):
+    # top level path
+    if path is None:
+        path = []
+
+    # base case
+    if not isinstance(item, (Schema, Array, Struct)):
         return True
 
     fields = []
-    for n, dtype in schema.items():
+    for n, dtype in item.items():
         if isinstance(dtype, Struct):
-            subfields = timestamp_fields(dtype, path=path.copy() + [n])
+            subfields = get_timestamp_fields(dtype, path=path.copy() + [n])
             fields += subfields
 
         if isinstance(dtype, Array):
-            subfields = timestamp_fields(dtype.value_type, path=path.copy() + [n])
+            subfields = get_timestamp_fields(dtype.value_type, path=path.copy() + [n])
             fields += subfields
         # Also include the object itself, even if it's a struct or array.
         # This is because the Array or Struct could also be nullable.
@@ -216,42 +243,56 @@ def timestamp_fields(
 def non_nullable_field_tests(
     table_config: ResolvedTableConfig,
 ) -> list[AbstractBaseTest]:
-    """_summary_
+    """For each non_nullable field in the table_config,
+    return all relevant non-nullable field tests
 
     Args:
-        table_config: _description_
+        table_config: The table config to retrieve non-nullable tests
 
     Returns:
-        _description_
+        A list of non-nullable field tests
     """
-    fields = non_nullable_fields(schema=table_config.table.schema())
+    fields = get_non_nullable_fields(item=table_config.table.schema())
     tests = []
     for f in fields:
         tests.append(FieldNeverNullTest(table_config=table_config, column=f))
     return tests
 
 
-def find_consistent_timestamp_offset(field, t):
+def find_consistent_timestamp_offset(field: str, table: Table) -> ibis.Expr:
+    """Find rows in field in table which are offset from midnight by a round amount.
+
+    This can be an indicator that a timezone conversion to timestamp (which is
+    an absolute value) has been applied incorrectly.
+
+    Args:
+        field: The name of the field to check
+        table: The table
+
+    Returns:
+        Ibis expression
+    """
     # Look for timestamps which are consistently offset from midnight. This
     # can be an indicator of values assigned to the wrong day
 
-    return (t[field].strftime("%M:%S").isin(["00:00", "00:30"])) & (
-        t[field].strftime("%H:%M:%S") != "00:00:00"
+    return (table[field].strftime("%M:%S").isin(["00:00", "00:30"])) & (
+        table[field].strftime("%H:%M:%S") != "00:00:00"
     )
 
 
 def timestamp_field_tests(
     table_config: ResolvedTableConfig,
 ) -> list[AbstractBaseTest]:
-    """_summary_
+    """For each non_nullable field in the table_config,
+    return all relevant non-nullable field tests
 
     Args:
-        table_config: _description_
+        table_config: The table config to retrieve non-nullable tests
 
     Returns:
-        _description_
+        A list of non-nullable field tests
     """
-    fields = timestamp_fields(schema=table_config.table.schema())
+    fields = get_timestamp_fields(item=table_config.table.schema())
     tests = []
 
     for f in fields:
@@ -269,24 +310,24 @@ def timestamp_field_tests(
 
 
 def get_generic_table_tests(
-    table_config: ResolvedTableConfig,
-    max_rows_factor: int,
-    severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
+    table_config: ResolvedTableConfig, expected_max_rows: float
 ) -> list[AbstractBaseTest]:
-    """Generate tests which are completely generic and agnostic to the underlying table
+    """Generate tests which are completely generic and agnostic to the
+    underlying table
 
     Args:
-        table_config: _description_
-        max_rows_factor: _description_
-        severity: _description_. Defaults to AMLAITestSeverity.ERROR.
+        table_config: The table config to retrieve generic tests
+        expected_max_rows: The expected maximum number of rows. Can be modified
+                           by changing the scale configuration option
 
     Returns:
-        _description_
+        A list of tests to run on the table
     """
+    config = cfg()
     tests = [
-        TableSchemaTest(table_config),
+        TableExcessColumnsTest(table_config, test_id="F001"),
         TableCountTest(
-            table_config, severity=severity, max_rows_factor=max_rows_factor
+            table_config, max_rows=expected_max_rows * config.scale, test_id="T001"
         ),
     ]
     if table_config.table_type in (

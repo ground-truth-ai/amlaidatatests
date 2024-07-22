@@ -4,7 +4,7 @@ import sys
 
 import pytest
 
-from amlaidatatests.config import ConfigSingleton, init_config
+from amlaidatatests.config import ConfigSingleton, init_parser_options_from_config
 from amlaidatatests.connection import connection_factory
 from amlaidatatests.schema.utils import get_amlai_schema, get_table_name
 
@@ -26,7 +26,7 @@ def run_tests(args):
 
 def entry_point():
     parser = argparse.ArgumentParser()
-    parser = init_config(parser)
+    parser = init_parser_options_from_config(parser)
     subparsers = parser.add_subparsers(required=True)
 
     skeleton = subparsers.add_parser("skeleton")

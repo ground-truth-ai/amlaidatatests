@@ -1,7 +1,8 @@
 import datetime
-from functools import reduce
+import itertools
 import warnings
-from typing import Any, Callable, List, Literal, Optional, cast
+from functools import reduce
+from typing import Any, Callable, List, Literal, Optional, cast, override
 
 import ibis
 from ibis import BaseBackend, Expr, _
@@ -11,31 +12,22 @@ from ibis.expr.datatypes import Array, DataType, Struct, Timestamp
 from amlaidatatests.base import (
     AbstractColumnTest,
     AbstractTableTest,
-    AMLAITestSeverity,
-    FailTest,
-    WarnTest,
     resolve_field,
     resolve_field_to_level,
 )
-from amlaidatatests.config import ConfigSingleton
+from amlaidatatests.exceptions import AMLAITestSeverity, FailTest, WarnTest
 from amlaidatatests.schema.base import ResolvedTableConfig, TableType
-import itertools
 
 
-class TableSchemaTest(AbstractTableTest):
-    """_summary_
+class TableExcessColumnsTest(AbstractTableTest):
+    """Verify there are no excess columns on the table
 
     Args:
         AbstractTableTest: _description_
     """
 
-    def __init__(self, table_config: ResolvedTableConfig) -> None:
-        """_summary_
-
-        Args:
-            table_config: _description_
-        """
-        super().__init__(table_config)
+    def __init__(self, table_config: ResolvedTableConfig, test_id: str) -> None:
+        super().__init__(table_config, test_id=test_id)
 
     def _test(self, *, connection: BaseBackend):
         actual_columns = set(connection.table(name=self.table.get_name()).columns)
@@ -59,8 +51,9 @@ class TableCountTest(AbstractTableTest):
     def __init__(
         self,
         table_config: ResolvedTableConfig,
-        max_rows_factor: int,
+        max_rows: int,
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
+        test_id: Optional[str] = None,
     ) -> None:
         """_summary_
 
@@ -69,28 +62,24 @@ class TableCountTest(AbstractTableTest):
             max_rows_factor: _description_
             severity: _description_. Defaults to AMLAITestSeverity.ERROR.
         """
-        self.max_rows_factor = max_rows_factor
-        self.scale = ConfigSingleton.get().scale
-        super().__init__(table_config, severity)
+        self.max_rows = max_rows
+        super().__init__(table_config, severity, test_id=test_id)
 
     def _test(self, *, connection: BaseBackend):
         count = connection.execute(self.table.count())
-
-        max_rows = self.max_rows_factor * self.scale
-
         if count == 0:
             raise FailTest(f"Table {self.table.get_name()} is empty")
-        if count > max_rows:
+        if count > self.max_rows:
             raise FailTest(
-                f"Table {self.table.get_name()} has more rows than seems feasible:"
-                f" {count} vs maximum {max_rows}. To stop this error triggering, review"
-                " the data provided or increase the scale setting"
+                f"Table {self.table.get_name()} has more rows than seems feasible: "
+                f"{count} vs maximum {self.max_rows}. To stop this error triggering, review "
+                "the data provided or increase the scale setting"
             )
-        if count > (max_rows) * 0.9:
+        if count > (self.max_rows) * 0.9:
             raise WarnTest(
-                f"Table {self.table.get_name()} is close to the feasibility ceiling:"
-                f" {count} vs maximum {max_rows}. To stop this error triggering, review"
-                " the data provided or increase the scale setting"
+                f"Table {self.table.get_name()} is close to the feasibility ceiling: "
+                f"{count} vs maximum {self.max_rows}. To stop this error triggering, review "
+                "the data provided or increase the scale setting"
             )
 
 
@@ -106,6 +95,7 @@ class PrimaryKeyColumnsTest(AbstractTableTest):
         *,
         table_config: ResolvedTableConfig,
         unique_combination_of_columns: List[str],
+        test_id: Optional[str] = None
     ) -> None:
         """_summary_
 
@@ -113,7 +103,7 @@ class PrimaryKeyColumnsTest(AbstractTableTest):
             table_config: _description_
             unique_combination_of_columns: _description_
         """
-        super().__init__(table_config=table_config)
+        super().__init__(table_config=table_config, test_id=test_id)
         # Check columns provided are in table
         for col in unique_combination_of_columns:
             resolve_field(self.table_config.table, col)
@@ -310,20 +300,32 @@ class CountFrequencyValues(AbstractColumnTest):
 
 
 class VerifyTypedValuePresence(AbstractColumnTest):
-    """Check for the proportion or number of rows containing any
-    particular value in column relative to group_by.
+    """Checks for the proportion or number of rows containing any
+    particular value in column relative to group_by. This is mainly used
+    for verifying the presence of a value in a column across a table.
 
-    For example,
-    group_by = transaction_id, min_proportion = 1, column = type, value = CARD,
-    will check if all transaction_id have at least one row containing type = CARD.
-
-    group_by = transaction_id, min_proportion = 1, column = type, value = CARD,
-    where = type = "AML_EXIT" will check the proportion of transaction_id with
-    at least one row containing type = CARD to the count of rows with type =
-    AML_EXIT
+    For example:
+    group_by = account_id, min_number = 1, column = type, value = CARD,
+    max_proportion = 0.1
+    will:
+        * Count the number of account_id which have a type = CARD (value_cnt)
+        * Count the proportion of account_id which have
+        * Error if the value_cnt is not at least 1
+        * Error if max_proportion of account_id having a type = CARD is greater
+            than 10%.
 
     Args:
-        AbstractTableTest: _description_
+        table_config: _description_
+        column: _description_
+        value: _description_
+        group_by: list of column_ids to group by
+        test_id: _description_. Defaults to None.
+        min_number: _description_. Defaults to None.
+        max_number: _description_. Defaults to None.
+        max_proportion: _description_. Defaults to None.
+        min_proportion: _description_. Defaults to None.
+        where: _description_. Defaults to None.
+        severity: _description_. Defaults to AMLAITestSeverity.WARN.
     """
 
     def __init__(
@@ -341,17 +343,6 @@ class VerifyTypedValuePresence(AbstractColumnTest):
         where: Optional[Callable[[Expr], Expr]] = None,
         severity: AMLAITestSeverity = AMLAITestSeverity.WARN,
     ) -> None:
-        """_summary_
-
-        Args:
-            table_config: _description_
-            entity_ids: _description_
-            warn: _description_. Defaults to 500.
-            error: _description_. Defaults to 1000.
-
-        Raises:
-            ValueError: _description_
-        """
         super().__init__(table_config=table_config, column=column, severity=severity)
         self.min_number = min_number
         self.max_number = max_number
@@ -386,25 +377,27 @@ class VerifyTypedValuePresence(AbstractColumnTest):
             .mutate(proportion=_.value_cnt / _.group_count)
         )
         results = connection.execute(expr).iloc[0]
+        value_cnt = int(results["value_cnt"])
+        proportion = results["proportion"]
 
         if self.min_number and results["value_cnt"] < self.min_number:
-            value_cnt = results["value_cnt"]
+            msg = "Only {value_cnt:d} rows"
+            if self.min_number == 1:
+                msg = f"No rows "
             raise FailTest(
-                message=f"Only {value_cnt} rows {self.group_by} found "
-                f"with a {self.value} in {self.full_column_path}."
+                message=f"{msg} found "
+                f"with a value of {self.value} in {self.full_column_path}. "
                 f"Expected at least {self.min_number}",
                 expr=expr,
             )
         if self.max_number and results["value_cnt"] > self.max_number:
-            value_cnt = results["value_cnt"]
             raise FailTest(
-                message=f"{value_cnt} rows {self.group_by} found "
-                f"with a {self.value} in {self.full_column_path}."
+                message=f"Too many ({value_cnt:d}) rows {self.group_by} found "
+                f"with a value of {self.value} in {self.full_column_path}. "
                 f"Expected at most {self.max_number}",
                 expr=expr,
             )
         if self.max_proportion and results["proportion"] >= self.max_proportion:
-            proportion = results["proportion"]
             raise FailTest(
                 message=f"{proportion:.0%} of {self.group_by} "
                 f"had values of {self.value} in {self.full_column_path}. "
@@ -662,9 +655,11 @@ class ColumnTypeTest(AbstractColumnTest):
             # so this shouldn't happen, but it could happen in another
             # database
             if a.timezone and a.timezone != "UTC":
-                warnings.warn(f"""Timezone of column {a.name} is not UTC. This
-                              could cause problems with bigquery, since the timezone
-                              is always UTC""")
+                warnings.warn(
+                    f"Timezone of column {a.name} is not UTC. This "
+                    "could cause problems with bigquery, since the timezone "
+                    "is always UTC"
+                )
             # Scale varies by database
             return a.copy(nullable=nullable, scale=None, timezone=None)
         return a.copy(nullable=nullable)
@@ -683,16 +678,8 @@ class ColumnValuesTest(AbstractColumnTest):
         super().__init__(table_config=table_config, column=column, test_id=test_id)
         self.values = values
 
+    @override
     def _test(self, *, connection: BaseBackend):
-        """_summary_
-
-        Args:
-            table (Table): _description_
-            schema (Schema): _description_
-
-        Raises:
-            FailTest: _description_
-        """
         table, field = resolve_field(self.table, self.column)
 
         expr = table.filter(field.notin(self.values)).select(field=field)
@@ -700,9 +687,10 @@ class ColumnValuesTest(AbstractColumnTest):
         result = connection.execute(expr.count())
 
         if result > 0:
+            valid_values = " ".join(self.values)
             raise FailTest(
                 f"{result} rows found with invalid values in {self.full_column_path}"
-                f" Valid values are: {' '.join(self.values)}.",
+                f" Valid values are: {valid_values}.",
                 expr=expr,
             )
 
@@ -842,15 +830,19 @@ class CountMatchingRows(AbstractColumnTest):
         expression: Callable[[Expr], Expr],
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
         test_id: Optional[str] = None,
-        max_rows: Optional[int] = 0,
+        max_rows: Optional[int] = None,
+        min_number: Optional[int] = None,
         max_proportion: Optional[float] = None,
+        min_proportion: Optional[int] = 0,
     ) -> None:
         super().__init__(
             table_config=table_config, column=column, severity=severity, test_id=test_id
         )
         self.expression = expression
         self.max_rows = max_rows
+        self.min_rows = min_number
         self.max_proportion = max_proportion
+        self.max_proportion = min_proportion
 
     def _test(self, *, connection: BaseBackend):
         table = self.get_latest_rows(self.table)
@@ -858,24 +850,42 @@ class CountMatchingRows(AbstractColumnTest):
             total_rows=table.count(), matching_rows=table.count(where=self.expression)
         ).mutate(proportion=_.matching_rows / _.total_rows)
         result = connection.execute(expr).iloc[0]
-        value = result["matching_rows"]
+        value = int(result["matching_rows"])
         proportion = result["proportion"]
+        if self.min_rows and (value < self.min_rows):
+            raise FailTest(
+                f"{value:d} rows met specified criteria "
+                f"in {self.full_column_path}. Expected at least "
+                f"{self.min_rows:d}.",
+                expr=expr,
+            )
         if self.max_rows and (value > self.max_rows):
             raise FailTest(
-                f"{value} rows unexpectedly met criteria "
+                f"{value:d} rows met specified criteria "
                 f"in {self.full_column_path}. Expected at most "
-                f"{self.max_rows}.",
+                f"{self.max_rows:d}.",
                 expr=expr,
             )
         if self.max_proportion and (proportion > self.max_proportion):
             raise FailTest(
-                f"A high proportion ({proportion}) of rows met criteria"
+                f"A high proportion ({proportion:.0%}) of rows met "
+                "specified criteria "
                 f" in {self.full_column_path}",
                 expr=expr,
             )
 
 
 class EventOrder(AbstractColumnTest):
+    """_summary_
+
+    Args:
+        table_config: _description_
+        column: _description_
+        time_column: _description_
+        events: _description_
+        severity: _description_. Defaults to AMLAITestSeverity.ERROR.
+        test_id: _description_. Defaults to None.
+    """
 
     def __init__(
         self,
@@ -885,8 +895,11 @@ class EventOrder(AbstractColumnTest):
         time_column: str,
         events: list[str],
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
+        test_id: Optional[str] = None,
     ) -> None:
-        super().__init__(table_config=table_config, column=column, severity=severity)
+        super().__init__(
+            table_config=table_config, column=column, severity=severity, test_id=test_id
+        )
         self.time_column = time_column
         self.column = column
         self.events = events
@@ -998,16 +1011,22 @@ class ReferentialIntegrityTest(AbstractTableTest):
             )
             result = connection.execute(subexpr).iloc[0]["proportion"]
             if result > 0:
-                msg = f"""More than {result:.0%} of keys {self.keys} in table
-                {self.table.get_name()} were not in {self.to_table.get_name()}.
-                           Key column(s) were {" ".join(self.keys)}"""
+                msg = (
+                    f"More than {result:.0%} of keys {self.keys} in table "
+                    f"{self.table.get_name()} were not in "
+                    f"{self.to_table.get_name()}. "
+                    f"Key column(s) were {" ".join(self.keys)}"
+                    ""
+                )
                 raise FailTest(msg, expr=expr)
 
         result = connection.execute(expr.count())
         if result > 0:
-            msg = f"""{result} keys found in table {self.table.get_name()}
-                    which were not in {self.to_table.get_name()}.
-                           Key column(s) were {" ".join(self.keys)}"""
+            msg = (
+                f"{result} keys found in table {self.table.get_name()} "
+                f"which were not in {self.to_table.get_name()}. "
+                f"Key column(s) were {" ".join(self.keys)}"
+            )
             raise FailTest(msg, expr=expr)
         return
 
@@ -1055,8 +1074,8 @@ class TemporalProfileTest(AbstractColumnTest):
         if result > 0:
             msg = (
                 f"{result} {self.period.lower()}s had a volume of less than "
-                + "{self.threshold:.0%} of the average volume for all "
-                + f"{self.period.lower()}s"
+                f"{self.threshold:.0%} of the average volume for all "
+                f"{self.period.lower()}s"
             )
             raise FailTest(msg, expr=expr)
 

@@ -1,16 +1,33 @@
-from amlaidatatests.test_generators import (
-    find_consistent_timestamp_offset,
-    timestamp_fields,
-)
-from ibis.expr.datatypes import Timestamp
-import ibis
 import datetime
 
+import ibis
+from ibis.expr.datatypes import Timestamp, Struct, String
 
-def test_timestamp_fields(test_connection, create_test_table):
+from amlaidatatests.test_generators import (
+    find_consistent_timestamp_offset,
+    get_timestamp_fields,
+    get_non_nullable_fields,
+)
+
+
+def test_nonnullable_fields():
+    test_schema = ibis.schema(
+        {
+            "a": Timestamp(nullable=False),
+            "b": Struct(nullable=True, fields={"a": String(nullable=False)}),
+        }
+    )
+    ttt = get_non_nullable_fields(test_schema)
+    assert ttt == ["a", "b.a"]
+
+
+def test_timestamp_fields():
     test_schema = ibis.schema({"a": Timestamp(nullable=False)})
-    ttt = timestamp_fields(test_schema)
+    ttt = get_timestamp_fields(test_schema)
     assert ttt == ["a"]
+
+
+def test_find_consistent_timestamp_offset(test_connection, create_test_table):
 
     schema = ibis.schema({"a": Timestamp(nullable=False)})
     tbl = create_test_table(
@@ -31,6 +48,6 @@ def test_timestamp_fields(test_connection, create_test_table):
         )
     )
     table = ibis.table(schema, tbl)
-    expr = find_consistent_timestamp_offset(field="a", t=table)
+    expr = find_consistent_timestamp_offset(field="a", table=table)
     result = test_connection.execute(table.count(where=expr))
     assert result == 1

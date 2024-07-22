@@ -1,4 +1,5 @@
 import importlib
+from dataclasses import asdict
 from string import Template
 
 import ibis
@@ -10,8 +11,6 @@ from amlaidatatests.schema.base import (
     TableConfig,
 )
 
-from dataclasses import asdict
-
 
 def get_amlai_schema(version: str) -> BaseSchemaConfiguration:
     try:
@@ -19,8 +18,8 @@ def get_amlai_schema(version: str) -> BaseSchemaConfiguration:
         schema_configuration: BaseSchemaConfiguration = module.SchemaConfiguration()
         return schema_configuration
 
-    except ModuleNotFoundError:
-        raise ValueError(f"Schema version {version} not found")
+    except ModuleNotFoundError as e:
+        raise ValueError(f"Schema version {version} not found") from e
 
 
 def get_table_name(name: str):
@@ -40,7 +39,16 @@ def get_table_config(name: str) -> TableConfig:
 
 
 def resolve_table_config(name: str) -> ResolvedTableConfig:
-    """Get the unbound ibis table reference for the unqualified table name specified"""
+    """Gets the unbound [ResolvedTableConfig] config for [name], which should
+    be a table in the schema version
+
+    Args:
+        name: an unqualified reference to a table in the schema. Should not
+              include any suffixes or prefixes.
+
+    Returns:
+        [ResolvedTableConfig] object
+    """
     table_config = get_table_config(name)
     cfg = ConfigSingleton.get()
     name = get_table_name(name)

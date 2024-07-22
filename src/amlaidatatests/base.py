@@ -1,73 +1,20 @@
 import copy
-import enum
 import logging
 import warnings
 from abc import ABC
-from enum import auto
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 import ibis
-from ibis import _, selectors as s
 import pytest
 from google.api_core.exceptions import NotFound as GoogleTableNotFound
-from ibis import BaseBackend, Expr, IbisError, Table
+from ibis import BaseBackend, Expr, IbisError, Table, _
+from ibis import selectors as s
 from ibis.common.exceptions import IbisTypeError
 
+from amlaidatatests.exceptions import AMLAITestSeverity, FailTest, SkipTest, WarnTest
 from amlaidatatests.schema.base import ResolvedTableConfig, TableType
 
 logger = logging.getLogger(__name__)
-
-
-class AMLAITestSeverity(enum.Enum):
-    ERROR = auto()
-    WARN = auto()
-    INFO = auto()
-
-
-class FailTest(Exception):
-    def __init__(
-        self,
-        message: str,
-        expr: Optional[Expr] = None,
-        description: Optional[str] = None,
-    ) -> None:
-        self.message = message
-        self.expr = expr
-        self.description = description
-
-        self.sql = str(ibis.get_backend().compile(expr)) if expr is not None else None
-
-    def friendly_message(self):
-        msg = f"{self.description}\n" if self.description else ""
-        msg += self.message
-        if self.sql:
-            msg += "\nTo reproduce this result, run:\n"
-            msg += self.sql
-        return msg
-
-    def __str__(self):
-        return self.friendly_message()
-
-
-class WarnTest(Warning, FailTest):
-    def __init__(
-        self,
-        message: str,
-        expr: Optional[Expr] = None,
-        description: Optional[str] = None,
-    ) -> None:
-        self.message = message
-        self.description = description
-
-        self.sql = str(ibis.get_backend().compile(expr)) if expr is not None else None
-
-    def __str__(self):
-        return self.friendly_message()
-
-
-class SkipTest(Exception):
-    def __init__(self, message: str) -> None:
-        self.message = message
 
 
 def resolve_field(table: Table, column: str) -> tuple[Table, Expr]:
@@ -94,7 +41,6 @@ def resolve_field_to_level(table: Table, column: str, level: int):
 
 
 class AbstractBaseTest(ABC):
-
     def __init__(
         self,
         table_config: ResolvedTableConfig,
@@ -123,36 +69,69 @@ class AbstractBaseTest(ABC):
         logging.warning(warning)
         warnings.warn(warning)
 
-    def _run_with_severity(self, f: Callable, **kwargs):
+    def _run_with_severity(self, f: Callable, **kwargs) -> Any | None:
+        """Execute an arbitrary function, catching errors attributed to
+        amlaidatatest failures. Failures are then handled according to the
+        configuration of the parent test.
+
+        SkipTest failures are also handled as they allow us to catch
+        skips during unittesting in a way we cannot if pytest.skip is called
+
+        Args:
+            f: The function to run, with **kwargs specified.
+
+        Raises:
+            e: WarnTest. Raising WarnTest from a test will always generate a
+                warning, but Failtests could also be converted from a WarnTest
+                into a FailTest if necessary.
+            e: FailTest.
+
+        Returns:
+            The result of f(**kwargs). Note that a test warning could result in
+            None being returned. This is because we use the exception machinery
+            to handle the conversion of exceptions to testfailures.
+        """
         try:
             return f(**kwargs)
+        except WarnTest as e:
+            e.test_id = self.test_id
+            warnings.warn(e)
+            return None
         except FailTest as e:
+            e.test_id = self.test_id
             if isinstance(e, WarnTest):
                 self._raise_warning(e)
-                return
+                return None
             if self.severity == AMLAITestSeverity.ERROR:
                 raise e
             if self.severity == AMLAITestSeverity.WARN:
                 warning = WarnTest(e.message, expr=e.expr)
                 self._raise_warning(warning)
             if self.severity == AMLAITestSeverity.INFO:
-                # We need to know if we're running in unittest
-                # mode or not
-                pytest.skip(e.message)
+                logging.info(e.message)
         except SkipTest as e:
+            # Used to detect if we're running the unit tests.
+            # This allows us to catch (and test) that test
+            # skipping is being correctly raised
             if hasattr(pytest, "__AML_AI_TESTING_THE_TESTS"):
                 raise e
             else:
                 pytest.skip(e.message)
-        except WarnTest as e:
-            warnings.warn(e)
+        # # This should *never* happen - either the function succeeded and return
+        # # something, or another error and handled. The linter requires this
+        # # because it doesn't know that pytest.skip will skip the test.
+        # raise RuntimeError("A test failed for an unknown reason")
 
 
 class AbstractTableTest(AbstractBaseTest):
-    """_summary_
+    """Base class for test which are across an entire table
+    and do not specify a single column
 
     Args:
-        AbstractBaseTest: _description_
+        table_config: The table config on which we are testing. severity: The
+        error type to emit on test failure. Defaults to AMLAITestSeverity.ERROR.
+        test_id:  A unique identifier for the test. Useful when used via
+                  @pytest.parameter as it allows us to uniquely identify the test
     """
 
     def __init__(
@@ -161,12 +140,6 @@ class AbstractTableTest(AbstractBaseTest):
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
         test_id: Optional[str] = None,
     ) -> None:
-        """_summary_
-
-        Args:
-            table_config: _description_
-            severity: _description_. Defaults to AMLAITestSeverity.ERROR.
-        """
         table_config = copy.deepcopy(table_config)
         # We don't want to get resolved table at test definition time, only at test time
         self.resolved_table: Optional[Table] = None
@@ -201,11 +174,6 @@ class AbstractTableTest(AbstractBaseTest):
                 f"Required table {table_config.table.get_name()} does not exist"
             )
 
-    def _test(self, *, connection: BaseBackend) -> None: ...
-
-    def optional_table(self):
-        pass
-
     def get_latest_rows(
         self, table: Table, table_config: Optional[ResolvedTableConfig] = None
     ):
@@ -238,7 +206,6 @@ class AbstractTableTest(AbstractBaseTest):
 
 
 class AbstractColumnTest(AbstractTableTest):
-
     def __init__(
         self,
         table_config: ResolvedTableConfig,
@@ -263,7 +230,7 @@ class AbstractColumnTest(AbstractTableTest):
     def full_column_path(self):
         return f"{self.table_config.table.get_name()}.{self.column}"
 
-    def _check_column_exists(self, connection):
+    def _check_column_exists(self):
         try:
             resolve_field_to_level(table=self.table, column=self.column, level=1)
         except IbisTypeError as e:
@@ -278,6 +245,17 @@ class AbstractColumnTest(AbstractTableTest):
             pass
 
     def __call__(self, connection: BaseBackend, prefix: Optional[str] = None):
+        """Execute the test.
+
+        1) Checks the table exists. If the table is required, amlaidatatests will
+        fail the test, otherwise it will skip the test.
+        2) Checks if the column exists. If the column is required, amlaidatatests will
+        fail the test, otherwise it will skip the test.
+
+        Args:
+            connection: ibis backend object to execute the tests against
+            prefix: _description_. Defaults to None.
+        """
         # It's fine for the top level column to be missing if it's
         # an optional field. If it is, we can skip the whole test
         self.table = self._run_with_severity(
@@ -289,7 +267,7 @@ class AbstractColumnTest(AbstractTableTest):
         if prefix:
             __prefix_revert = self.column
             self.column = f"{prefix}.{self.column}"
-        self._run_with_severity(connection=connection, f=self._check_column_exists)
+        self._run_with_severity(f=self._check_column_exists)
         self._run_with_severity(connection=connection, f=self._test)
         if __prefix_revert:
             self.column = __prefix_revert

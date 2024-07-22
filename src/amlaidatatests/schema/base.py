@@ -1,8 +1,8 @@
+import enum
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List, Optional
-import enum
 from enum import auto
+from typing import List, Optional
 
 from ibis import Schema, Table
 
@@ -20,6 +20,8 @@ class TableType(enum.Enum):
 
 @dataclass
 class TableConfig:
+    """Configuration object for tables in an aml ai schema"""
+
     name: str
     schema: Schema
     entity_keys: Optional[list[str]] = None
@@ -29,6 +31,14 @@ class TableConfig:
 
 @dataclass(kw_only=True)
 class ResolvedTableConfig(TableConfig):
+    """A TableConfig which also includes an ibis table
+    object.
+
+    This class inherits from TableConfig, but redundant fields
+    which are part of the [ibis.Table] object are derived from
+    table instead.
+    """
+
     name: str = field(init=False)
     schema: str = field(init=False)
     table: Table

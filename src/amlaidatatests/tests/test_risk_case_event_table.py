@@ -1,21 +1,18 @@
-#!/usr/bin/env python
+"""Tests for the risk_case_event table"""
 
 from typing import Optional
-from amlaidatatests.config import cfg
-import ibis
-from ibis import _
-import pytest
 
-from amlaidatatests.base import (
-    AMLAITestSeverity,
-    AbstractColumnTest,
-    AbstractTableTest,
-    FailTest,
-)
+import ibis
+import pytest
+from ibis import _
+
+from amlaidatatests.base import AbstractColumnTest, AbstractTableTest
+from amlaidatatests.config import cfg
+from amlaidatatests.exceptions import AMLAITestSeverity, FailTest
 from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.test_generators import (
     get_generic_table_tests,
-    non_nullable_fields,
+    get_non_nullable_fields,
     timestamp_field_tests,
 )
 from amlaidatatests.tests import common
@@ -25,15 +22,17 @@ TABLE = TABLE_CONFIG.table
 
 
 @pytest.mark.parametrize(
-    "test", get_generic_table_tests(table_config=TABLE_CONFIG, max_rows_factor=10e6)
+    "test", get_generic_table_tests(table_config=TABLE_CONFIG, expected_max_rows=10e6)
 )
 def test_table(connection, test: AbstractTableTest):
     test(connection=connection)
 
 
-def test_primary_keys(connection):
+def test_PK004_primary_keys(connection):
     test = common.PrimaryKeyColumnsTest(
-        table_config=TABLE_CONFIG, unique_combination_of_columns=["risk_case_event_id"]
+        table_config=TABLE_CONFIG,
+        unique_combination_of_columns=["risk_case_event_id"],
+        test_id="PK004",
     )
     test(connection)
 
@@ -57,7 +56,7 @@ def test_column_type(connection, column):
 # possible to enforce an embedded struct is non-nullable.
 
 
-@pytest.mark.parametrize("column", non_nullable_fields(TABLE_CONFIG.table.schema()))
+@pytest.mark.parametrize("column", get_non_nullable_fields(TABLE_CONFIG.table.schema()))
 def test_non_nullable_fields(connection, column):
     test = common.FieldNeverNullTest(table_config=TABLE_CONFIG, column=column)
     test(connection)
@@ -94,10 +93,13 @@ def test_column_values(connection, test):
     test(connection)
 
 
-def test_referential_integrity_party(connection):
+def test_RI005_referential_integrity_party(connection):
     to_table_config = resolve_table_config("party")
     test = common.ReferentialIntegrityTest(
-        table_config=TABLE_CONFIG, to_table_config=to_table_config, keys=["party_id"]
+        table_config=TABLE_CONFIG,
+        to_table_config=to_table_config,
+        keys=["party_id"],
+        test_id="RI005",
     )
     test(connection)
 
@@ -113,6 +115,7 @@ w = ibis.window(
         common.CountMatchingRows(
             column="event_time",
             table_config=TABLE_CONFIG,
+            max_rows=0,
             expression=lambda t: t.event_time >= cfg().interval_end_date,
             severity=AMLAITestSeverity.ERROR,
             test_id="DT011",
@@ -123,13 +126,14 @@ def test_date_consistency(connection, test):
     test(connection)
 
 
-def test_event_order(connection):
+def test_DT014_event_order(connection):
     t = common.EventOrder(
         time_column="event_time",
         column="type",
         table_config=TABLE_CONFIG,
         events=["AML_PROCESS_START", "AML_SAR", "AML_EXIT", "AML_PROCESS_END"],
         severity=AMLAITestSeverity.ERROR,
+        test_id="DT014",
     )
     t(connection)
 
@@ -218,11 +222,12 @@ class NoTransactionsWithinSuspiciousPeriod(AbstractTableTest):
         result = connection.execute(expr.count())
 
         if result > 0:
-            msg = f"""{result} positive examples (AML_EXIT or AML_SAR) with no
-                        transactions within suspicious activity period or for
-                        {self.lookback_period} months prior to AML_PROCESS_START
-                        if suspicious activity period is not defined
-                    """
+            msg = (
+                f"{result} positive examples (AML_EXIT or AML_SAR) with no "
+                "transactions within suspicious activity period or for "
+                f"{self.lookback_period} months prior to AML_PROCESS_START "
+                "if suspicious activity period is not defined"
+            )
             raise FailTest(msg, expr=expr)
 
 
@@ -295,28 +300,25 @@ class NoTransactionsWithinSuspiciousPeriod(AbstractTableTest):
             severity=AMLAITestSeverity.WARN,
             test_id="P038",
         ),
-        common.VerifyTypedValuePresence(
+        common.CountMatchingRows(
             column="type",
             table_config=TABLE_CONFIG,
             min_number=1,
-            group_by=["party_id"],
-            value="AML_PROCESS_START",
+            expression=lambda t: t["type"] == "AML_PROCESS_START",
             test_id="P039",
         ),
-        common.VerifyTypedValuePresence(
+        common.CountMatchingRows(
             column="type",
             table_config=TABLE_CONFIG,
             min_number=1,
-            group_by=["party_id"],
-            value="AML_PROCESS_END",
+            expression=lambda t: t["type"] == "AML_PROCESS_END",
             test_id="P040",
         ),
-        common.VerifyTypedValuePresence(
+        common.CountMatchingRows(
             column="type",
             table_config=TABLE_CONFIG,
             min_number=1,
-            group_by=["party_id"],
-            value="AML_EXIT",
+            expression=lambda t: t["type"] == "AML_EXIT",
             test_id="P041",
         ),
         common.VerifyTypedValuePresence(
@@ -408,6 +410,7 @@ def test_RI012_temporal_referential_integrity_party(connection):
         to_table_config=to_table_config,
         key="party_id",
         severity=AMLAITestSeverity.WARN,
+        test_id="RI012",
     )
     test(connection)
 
