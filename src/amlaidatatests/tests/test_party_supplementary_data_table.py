@@ -8,7 +8,7 @@ from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.test_generators import (
     get_entity_mutation_tests,
     get_generic_table_tests,
-    get_non_nullable_fields,
+    non_nullable_field_tests,
     timestamp_field_tests,
 )
 from amlaidatatests.tests import common
@@ -63,9 +63,8 @@ def test_column_type(connection, column):
 # possible to enforce an embedded struct is non-nullable.
 
 
-@pytest.mark.parametrize("column", get_non_nullable_fields(TABLE_CONFIG.table.schema()))
-def test_non_nullable_fields(connection, column):
-    test = common.FieldNeverNullTest(table_config=TABLE_CONFIG, column=column)
+@pytest.mark.parametrize("test", non_nullable_field_tests(TABLE_CONFIG))
+def test_non_nullable_fields(connection, test: AbstractColumnTest):
     test(connection)
 
 

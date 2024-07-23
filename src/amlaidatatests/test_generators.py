@@ -1,5 +1,7 @@
+""" Collection of functions to automatically generate tests based on schema
+information or other parameterization"""
 import functools
-from typing import Optional, Union
+from typing import Callable, Optional, Union
 
 from ibis import Schema, literal, Table
 import ibis
@@ -19,6 +21,7 @@ from amlaidatatests.tests.common import (
     CountFrequencyValues,
     CountMatchingRows,
     FieldNeverNullTest,
+    FieldNeverWhitespaceOnlyTest,
     OrphanDeletionsTest,
     TableCountTest,
     TableExcessColumnsTest,
@@ -49,17 +52,20 @@ def get_entity_tests(
                 column="nanos",
                 min_value=0,
                 max_value=1e9,
+                test_id="V005",
             ),
             AcceptedRangeTest(
                 table_config=table_config,
                 column="units",
                 min_value=0,
                 max_value=None,
+                test_id="V006",
             ),
             ColumnValuesTest(
                 table_config=table_config,
                 column="currency_code",
-                values=get_valid_currency_codes(),
+                allowed_values=get_valid_currency_codes(),
+                test_id="FMT001",
             ),
         ]
     raise ValueError(f"Unknown Entity {entity_name}")
@@ -103,58 +109,12 @@ def get_entity_mutation_tests(
     ]
 
 
-def get_entities(
+def get_fields(
     item: Union[Schema, Array, Struct, DataType],
-    entity_types=ENTITIES.keys(),
     path: Optional[list[str]] = None,
-):
-    """Get the entity types in the schema
-
-    Args:
-        item: The [ibis.Schema] or [ibis.common.collections.MapSet] which
-              corresponds to this item.
-        entity_types: The entities to locate. Defaults to ENTITIES.keys().
-        path: The path relative to the parent object of this object. Used to
-              specify any parent item above the one being called. For example,
-              if . Defaults to [].
-
-    Returns:
-        A list of the entities paths
-    """
-    # top level path
-    if path is None:
-        path = []
-
-    fields = {}
-    for n, dtype in item.items():
-
-        if isinstance(dtype, Struct):
-            subfields = get_entities(
-                item=dtype, entity_types=entity_types, path=path.copy() + [n]
-            )
-            fields.update(subfields)
-
-        if isinstance(dtype, Array):
-            subfields = get_entities(
-                item=dtype.value_type,
-                entity_types=entity_types,
-                path=path.copy() + [n],
-            )
-            fields.update(subfields)
-
-        for name, entity_obj in ENTITIES.items():
-            if name not in entity_types:
-                continue
-            if dtype == entity_obj:
-                fields[".".join(path + [n])] = name
-
-    return fields
-
-
-def get_non_nullable_fields(
-    item: Union[Schema, Array, Struct, DataType], path: Optional[list[str]] = None
-) -> list[str]:  # -> list | dict:
-    """Return a list of all the nullable fields in the schema, specified
+    filter_field: Optional[Callable[[DataType], bool]] = None,
+) -> list[str]:
+    """Return a list of the fields in the schema, specified
     as dot delimited paths.
 
     Includes fields embedded within Structs or Arrays whose parents might not be
@@ -165,6 +125,8 @@ def get_non_nullable_fields(
               corresponds to this item.
         path: The path relative to the parent object of this object. Used to
               specify any parent item above the one being called. Defaults to [].
+        filter_field:   a filter function which takes an ibis [DataType] and returns
+                        a boolean
 
     Returns:
         A list of paths to the non-nullable fields in the container, e.g.
@@ -181,63 +143,77 @@ def get_non_nullable_fields(
     fields = []
     for n, dtype in item.items():
         if isinstance(dtype, Struct):
-            subfields = get_non_nullable_fields(dtype, path=path.copy() + [n])
+            subfields = get_fields(
+                dtype, path=path.copy() + [n], filter_field=filter_field
+            )
             fields += subfields
 
         if isinstance(dtype, Array):
-            subfields = get_non_nullable_fields(
-                dtype.value_type, path=path.copy() + [n]
+            subfields = get_fields(
+                dtype.value_type, path=path.copy() + [n], filter_field=filter_field
             )
             fields += subfields
         # Also include the object itself, even if it's a struct or array.
         # This is because the Array or Struct could also be nullable.
-        if not dtype.nullable:
+        if filter_field(dtype):
             fields += [".".join(path + [n])]
 
     return fields
 
 
-def get_timestamp_fields(
-    item: Union[Schema, Array, Struct, DataType], path: Optional[list[str]] = None
-):  # -> list | dict:
-    """Return a list of all the timestamp fields in the schema, specified
-    as dot delimited paths.
-
-    Includes fields embedded within Structs or Arrays.
+def get_entities(
+    table_config: ResolvedTableConfig,
+    entity_types=ENTITIES.keys(),
+):
+    """Get the entity types in the schema
 
     Args:
         item: The [ibis.Schema] or [ibis.common.collections.MapSet] which
               corresponds to this item.
-        path: The path relative to the parent object of this object. Used to
-              specify any parent item above the one being called. Defaults to [].
+        entity_types: The entities to locate. Defaults to ENTITIES.keys().
 
     Returns:
-        A list of paths to the timestamp fields in the container, e.g.
-        for a struct {'a': {'b': {'c': timestamp_value}}} would return a.b.c
+        A list of the entities paths
     """
-    # top level path
-    if path is None:
-        path = []
+    return get_fields(
+        table_config.schema, filter_field=lambda dtype: dtype in entity_types
+    )
 
-    # base case
-    if not isinstance(item, (Schema, Array, Struct)):
-        return True
 
-    fields = []
-    for n, dtype in item.items():
-        if isinstance(dtype, Struct):
-            subfields = get_timestamp_fields(dtype, path=path.copy() + [n])
-            fields += subfields
+def get_timestamp_fields(
+    table_config: ResolvedTableConfig,
+):
+    """Get the timestamp fields
 
-        if isinstance(dtype, Array):
-            subfields = get_timestamp_fields(dtype.value_type, path=path.copy() + [n])
-            fields += subfields
-        # Also include the object itself, even if it's a struct or array.
-        # This is because the Array or Struct could also be nullable.
-        if isinstance(dtype, Timestamp):
-            fields += [".".join(path + [n])]
+    Args:
+        item: The [ibis.Schema] or [ibis.common.collections.MapSet] which
+              corresponds to this item.
+        entity_types: The entities to locate. Defaults to ENTITIES.keys().
 
-    return fields
+    Returns:
+        A list of the entities paths
+    """
+    return get_fields(
+        table_config.schema, filter_field=lambda dtype: isinstance(dtype, Timestamp)
+    )
+
+
+def get_non_nullable_fields(
+    table_config: ResolvedTableConfig,
+):
+    """Get the timestamp fields
+
+    Args:
+        item: The [ibis.Schema] or [ibis.common.collections.MapSet] which
+              corresponds to this item.
+        entity_types: The entities to locate. Defaults to ENTITIES.keys().
+
+    Returns:
+        A list of the entities paths
+    """
+    return get_fields(
+        table_config.schema, filter_field=lambda dtype: not dtype.nullable
+    )
 
 
 def non_nullable_field_tests(
@@ -252,10 +228,21 @@ def non_nullable_field_tests(
     Returns:
         A list of non-nullable field tests
     """
-    fields = get_non_nullable_fields(item=table_config.table.schema())
+    all_non_nullable_fields = get_non_nullable_fields(table_config)
     tests = []
-    for f in fields:
-        tests.append(FieldNeverNullTest(table_config=table_config, column=f))
+    for f in all_non_nullable_fields:
+        tests.append(
+            FieldNeverNullTest(table_config=table_config, column=f, test_id="C001"),
+        )
+    for f in get_fields(
+        item=table_config.schema,
+        filter_field=lambda dtype: (not dtype.nullable) and dtype.is_string(),
+    ):
+        tests.append(
+            FieldNeverWhitespaceOnlyTest(
+                table_config=table_config, column=f, test_id="C002"
+            )
+        )
     return tests
 
 
@@ -292,7 +279,7 @@ def timestamp_field_tests(
     Returns:
         A list of non-nullable field tests
     """
-    fields = get_timestamp_fields(item=table_config.table.schema())
+    fields = get_timestamp_fields(table_config)
     tests = []
 
     for f in fields:
@@ -346,14 +333,14 @@ def get_generic_table_tests(
                 table_config=table_config,
                 column="is_entity_deleted",
                 having=lambda c: c.is_entity_deleted == literal(True),
-                proportion=0.4,
+                max_proportion=0.4,
                 severity=AMLAITestSeverity.WARN,
                 test_id="P050",
             ),
             CountFrequencyValues(
                 table_config=table_config,
                 column="validity_start_time",
-                proportion=0.01,
+                max_proportion=0.01,
                 severity=AMLAITestSeverity.WARN,
                 test_id="P001",
             ),

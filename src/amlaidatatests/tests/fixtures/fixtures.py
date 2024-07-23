@@ -1,9 +1,20 @@
+""" Fixtures for amlaidatatests """
+
+from ibis import BaseBackend
 import pytest
 
 from amlaidatatests.connection import connection_factory
 
 
 @pytest.fixture(scope="session")
-def connection():
+def connection() -> BaseBackend:
+    """Pytest fixture returning the configured backend
+
+    Session scoped to avoid repeatedly creating connections objects, which is
+    slow
+
+    Returns:
+        ibis connection object
+    """
     con = connection_factory()
     return con

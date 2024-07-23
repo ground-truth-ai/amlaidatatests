@@ -14,7 +14,6 @@ from .utils import temporary_table_name
 
 def pytest_configure(config):
     pass
-    # passthrough_pytest_configure(config)
 
 
 def pytest_addoption(parser):

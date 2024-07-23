@@ -11,7 +11,7 @@ from amlaidatatests.test_generators import (
     get_entity_mutation_tests,
     get_entity_tests,
     get_generic_table_tests,
-    get_non_nullable_fields,
+    non_nullable_field_tests,
     timestamp_field_tests,
 )
 from amlaidatatests.tests import common
@@ -52,9 +52,8 @@ def test_column_type(connection, column):
     test(connection)
 
 
-@pytest.mark.parametrize("column", get_non_nullable_fields(TABLE_CONFIG.table.schema()))
-def test_non_nullable_fields(connection, column):
-    test = common.FieldNeverNullTest(table_config=TABLE_CONFIG, column=column)
+@pytest.mark.parametrize("test", non_nullable_field_tests(TABLE_CONFIG))
+def test_non_nullable_fields(connection, test: AbstractColumnTest):
     test(connection)
 
 
@@ -92,13 +91,13 @@ def test_entity_mutation_tests(connection, test: AbstractColumnTest):
     [
         common.ColumnValuesTest(
             column="type",
-            values=["WIRE", "CASH", "CHECK", "CARD", "OTHER"],
+            allowed_values=["WIRE", "CASH", "CHECK", "CARD", "OTHER"],
             table_config=TABLE_CONFIG,
             test_id="E005",
         ),
         common.ColumnValuesTest(
             column="direction",
-            values=["DEBIT", "CREDIT"],
+            allowed_values=["DEBIT", "CREDIT"],
             table_config=TABLE_CONFIG,
             test_id="E006",
         ),
@@ -110,7 +109,7 @@ def test_column_values(connection, test):
 
 @pytest.mark.parametrize(
     "column",
-    get_entities(item=TABLE_CONFIG.table.schema(), entity_types=["CurrencyValue"]),
+    get_entities(table_config=TABLE_CONFIG, entity_types=["CurrencyValue"]),
 )
 @pytest.mark.parametrize(
     "test", get_entity_tests(table_config=TABLE_CONFIG, entity_name="CurrencyValue")
@@ -125,7 +124,7 @@ def test_currency_value_entity(connection, column, test: AbstractColumnTest):
         common.CountMatchingRows(
             column="book_time",
             table_config=TABLE_CONFIG,
-            max_rows=0,
+            max_number=0,
             expression=lambda t: t.book_time >= cfg().interval_end_date,
             severity=AMLAITestSeverity.WARN,
             test_id="DT008",
@@ -168,13 +167,12 @@ def test_date_consistency(connection, test):
             test_id="P027",
         ),
         *[
-            common.VerifyTypedValuePresence(
+            common.CountMatchingRows(
                 column="type",
                 table_config=TABLE_CONFIG,
                 min_number=1,
-                group_by=["transaction_id"],
+                expression=lambda t: t["type"] == typ,
                 test_id="P022",
-                value=typ,
             )
             for typ in TXN_TYPES
         ],
@@ -221,7 +219,7 @@ def test_date_consistency(connection, test):
         common.CountFrequencyValues(
             column="normalized_booked_amount.nanos",
             table_config=TABLE_CONFIG,
-            proportion=0.01,
+            max_proportion=0.01,
             group_by=["type"],
             test_id="P051",
         ),
@@ -239,6 +237,13 @@ def test_date_consistency(connection, test):
             threshold=0.75,
             test_id="P033",
             severity=AMLAITestSeverity.WARN,
+        ),
+        common.ColumnCardinalityTest(
+            column="normalized_booked_amount.currency_code",
+            table_config=TABLE_CONFIG,
+            max_number=1,
+            severity=AMLAITestSeverity.ERROR,
+            test_id="V017",
         ),
     ],
 )

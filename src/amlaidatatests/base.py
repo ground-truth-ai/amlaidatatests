@@ -11,7 +11,12 @@ from ibis import BaseBackend, Expr, IbisError, Table, _
 from ibis import selectors as s
 from ibis.common.exceptions import IbisTypeError
 
-from amlaidatatests.exceptions import AMLAITestSeverity, FailTest, SkipTest, WarnTest
+from amlaidatatests.exceptions import (
+    AMLAITestSeverity,
+    DataTestFailure,
+    SkipTest,
+    DataTestWarning,
+)
 from amlaidatatests.schema.base import ResolvedTableConfig, TableType
 
 logger = logging.getLogger(__name__)
@@ -63,7 +68,7 @@ class AbstractBaseTest(ABC):
 
     def _test(self, *, connection: BaseBackend) -> None: ...
 
-    def _raise_warning(self, warning: WarnTest):
+    def _raise_warning(self, warning: DataTestWarning):
         # We double log here to try and capture the logs
         # both to pytest and to pytest-html
         logging.warning(warning)
@@ -81,10 +86,10 @@ class AbstractBaseTest(ABC):
             f: The function to run, with **kwargs specified.
 
         Raises:
-            e: WarnTest. Raising WarnTest from a test will always generate a
-                warning, but Failtests could also be converted from a WarnTest
-                into a FailTest if necessary.
-            e: FailTest.
+            e: TestWarning. Raising WarnTest from a test will always generate a
+                warning, but TestWarning could also be converted from a WarnTest
+                into a TestWarning if necessary.
+            e: TestFailure.
 
         Returns:
             The result of f(**kwargs). Note that a test warning could result in
@@ -93,19 +98,19 @@ class AbstractBaseTest(ABC):
         """
         try:
             return f(**kwargs)
-        except WarnTest as e:
+        except DataTestWarning as e:
             e.test_id = self.test_id
             warnings.warn(e)
             return None
-        except FailTest as e:
+        except DataTestFailure as e:
             e.test_id = self.test_id
-            if isinstance(e, WarnTest):
+            if isinstance(e, DataTestWarning):
                 self._raise_warning(e)
                 return None
             if self.severity == AMLAITestSeverity.ERROR:
                 raise e
             if self.severity == AMLAITestSeverity.WARN:
-                warning = WarnTest(e.message, expr=e.expr)
+                warning = DataTestWarning(e.message, expr=e.expr)
                 self._raise_warning(warning)
             if self.severity == AMLAITestSeverity.INFO:
                 logging.info(e.message)
@@ -128,8 +133,9 @@ class AbstractTableTest(AbstractBaseTest):
     and do not specify a single column
 
     Args:
-        table_config: The table config on which we are testing. severity: The
-        error type to emit on test failure. Defaults to AMLAITestSeverity.ERROR.
+        table_config: The resolved table config to test
+        severity: The error type to emit on test failure
+                  Defaults to AMLAITestSeverity.ERROR
         test_id:  A unique identifier for the test. Useful when used via
                   @pytest.parameter as it allows us to uniquely identify the test
     """
@@ -170,7 +176,8 @@ class AbstractTableTest(AbstractBaseTest):
                 "does not exist"
             )
         else:
-            raise FailTest(
+            # Deliberately not a test failure - the test cannot continue
+            raise ValueError(
                 f"Required table {table_config.table.get_name()} does not exist"
             )
 
@@ -271,3 +278,20 @@ class AbstractColumnTest(AbstractTableTest):
         self._run_with_severity(connection=connection, f=self._test)
         if __prefix_revert:
             self.column = __prefix_revert
+
+    def filter_null_parent_fields(self):
+        """Get
+
+        Returns:
+            _description_
+        """
+        # If subfields exist (struct or array), we need to compare the nullness
+        # of the parent as well - it doesn't make any sense to check the parent
+        # if the child is also null
+        predicates = []
+        if self.column.count(".") >= 1:
+            _, parent_field = resolve_field_to_level(self.table, self.column, -1)
+            # We want to check for cases only where field is null but its parent
+            # isn't
+            predicates += [parent_field.notnull()]
+        return predicates

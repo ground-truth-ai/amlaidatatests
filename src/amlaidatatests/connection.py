@@ -22,8 +22,8 @@ def connection_factory(default: Optional[str] = None):
         kwargs["credentials"] = credentials
 
     connection = ibis.connect(connection_string, **kwargs)
-    # We also need to set the backend to avoid always passing around the connection
-    # object.
+    # We also need to set the ibis backend to avoid always passing around the connection
+    # object. This allows ibis.to_sql to successfully generate sql in the right language
     ibis.set_backend(connection)
 
     return connection

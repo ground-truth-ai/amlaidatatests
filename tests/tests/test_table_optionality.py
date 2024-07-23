@@ -2,7 +2,7 @@ import ibis
 import pytest
 from ibis.expr.datatypes import String
 
-from amlaidatatests.exceptions import FailTest, SkipTest
+from amlaidatatests.exceptions import SkipTest
 from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests import common
 
@@ -29,5 +29,5 @@ def test_no_skip_mandatory_table(test_connection, test_raise_on_skip):
     table_config = ResolvedTableConfig(table=table)
 
     t = common.AbstractTableTest(table_config=table_config)
-    with pytest.raises(FailTest, match=r"Required table"):
+    with pytest.raises(ValueError, match=r"Required table"):
         t(test_connection)

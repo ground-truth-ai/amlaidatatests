@@ -2,7 +2,7 @@ import ibis
 import pytest
 from ibis.expr.datatypes import Array, String, Struct
 
-from amlaidatatests.exceptions import FailTest
+from amlaidatatests.exceptions import DataTestFailure
 from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests import common
 
@@ -19,7 +19,7 @@ def test_column_only_has_allowed_values(test_connection, create_test_table):
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
     t = common.ColumnValuesTest(
-        table_config=table_config, column="column", values=["alpha", "beta"]
+        table_config=table_config, column="column", allowed_values=["alpha", "beta"]
     )
 
     t(test_connection)
@@ -37,11 +37,11 @@ def test_column_has_invalid_values(test_connection, create_test_table):
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
     t = common.ColumnValuesTest(
-        table_config=table_config, column="column", values=["alpha", "beta"]
+        table_config=table_config, column="column", allowed_values=["alpha", "beta"]
     )
     with pytest.raises(
-        expected_exception=FailTest,
-        match=rf"1 rows found with invalid values in {t.full_column_path}."
+        expected_exception=DataTestFailure,
+        match=rf"1 rows found with invalid values in {t.full_column_path}. "
         "Valid values are",
     ):
         t(test_connection)
@@ -65,7 +65,7 @@ def test_column_only_has_allowed_values_embedded_struct(
     table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
 
     t = common.ColumnValuesTest(
-        table_config=table_config, column="column.v", values=["alpha", "beta"]
+        table_config=table_config, column="column.v", allowed_values=["alpha", "beta"]
     )
 
     t(test_connection)

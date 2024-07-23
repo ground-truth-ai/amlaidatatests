@@ -1,3 +1,5 @@
+""" Base classes and enumerations for schema specification """
+
 import enum
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -49,6 +51,8 @@ class ResolvedTableConfig(TableConfig):
 
 
 class BaseSchemaConfiguration(ABC):
+    """Root schema configuration. Schema versions should override this base
+    class to implement new schema configurations"""
 
     @property
     @abstractmethod
@@ -57,8 +61,16 @@ class BaseSchemaConfiguration(ABC):
     def __table_dict(self) -> dict[str, TableConfig]:
         return {t.name: t for t in self.TABLES}
 
-    def get_table_config(self, n: str) -> TableConfig:
-        return self.__table_dict()[n]
+    def get_table_config(self, name: str) -> TableConfig:
+        """Get the table config for a specified table name
+
+        Args:
+            name: Unqualified table name to retrieve
+
+        Returns:
+            TableConfig for the named table
+        """
+        return self.__table_dict()[name]
 
     def __getitem__(self, name: str):
         return self.get_table_config(name)

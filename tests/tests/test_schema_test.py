@@ -4,7 +4,7 @@ from ibis.expr.datatypes import Array, Int64, String, Struct
 
 import amlaidatatests.base
 import amlaidatatests.exceptions
-from amlaidatatests.exceptions import FailTest, SkipTest
+from amlaidatatests.exceptions import DataTestFailure, SkipTest
 from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests import common
 
@@ -20,7 +20,7 @@ def test_missing_required_column(test_connection, create_test_table):
     t = common.ColumnPresenceTest(table_config=table_config, column="b")
 
     with pytest.raises(
-        FailTest, match=rf"Missing Required Column: {t.full_column_path}"
+        DataTestFailure, match=rf"Missing Required Column: {t.full_column_path}"
     ):
         t(test_connection)
 
@@ -91,7 +91,7 @@ def test_excess_field_in_struct_warns(test_connection, create_test_table) -> Non
 
     t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.warns(
-        amlaidatatests.base.WarnTest,
+        amlaidatatests.base.DataTestWarning,
         match=f"Additional fields found in struct in {t.full_column_path}",
     ):
         t(test_connection)
@@ -113,7 +113,7 @@ def test_missing_field_in_struct(test_connection, create_test_table) -> None:
 
     t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.raises(
-        amlaidatatests.exceptions.FailTest,
+        amlaidatatests.exceptions.DataTestFailure,
         match=(
             f"Expected column {t.full_column_path} to be struct<1: string, 3: string>, "
             "found struct<2: string, 1: string>"
@@ -140,7 +140,7 @@ def test_excess_field_in_embedded_struct(test_connection, create_test_table) -> 
 
     t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.warns(
-        amlaidatatests.base.WarnTest,
+        amlaidatatests.base.DataTestWarning,
         match=f"Additional fields found in struct in {t.full_column_path}",
     ):
         t(test_connection)
@@ -193,7 +193,7 @@ def test_one_excess_column(test_connection, create_test_table):
 
     t = common.TableExcessColumnsTest(table_config=table_config)
     with pytest.warns(
-        amlaidatatests.base.WarnTest, match="1 unexpected columns found in table"
+        amlaidatatests.base.DataTestWarning, match="1 unexpected columns found in table"
     ):
         t(test_connection)
 
@@ -222,7 +222,7 @@ def test_two_excess_columns(test_connection, create_test_table):
 
     t = common.TableExcessColumnsTest(table_config=table_config)
     with pytest.warns(
-        amlaidatatests.base.WarnTest, match="2 unexpected columns found in table"
+        amlaidatatests.base.DataTestWarning, match="2 unexpected columns found in table"
     ):
         t(test_connection)
 
@@ -237,7 +237,7 @@ def test_column_wrong_type(test_connection, create_test_table):
 
     t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.raises(
-        amlaidatatests.exceptions.FailTest,
+        amlaidatatests.exceptions.DataTestFailure,
         match=f"Expected column {t.full_column_path} to be int64, found string",
     ):
         t(test_connection)
@@ -253,7 +253,7 @@ def test_column_non_nullable_type(test_connection, create_test_table):
 
     t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.raises(
-        amlaidatatests.exceptions.FailTest,
+        amlaidatatests.exceptions.DataTestFailure,
         match=f"Expected column {t.full_column_path} to be !string, found string",
     ):
         t(test_connection)
@@ -269,7 +269,7 @@ def test_column_too_strict(test_connection, create_test_table):
 
     t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.warns(
-        amlaidatatests.base.WarnTest,
+        amlaidatatests.base.DataTestWarning,
         match=(
             "Schema is stricter than required: expected column"
             f" {t.full_column_path} to be string, found !string"

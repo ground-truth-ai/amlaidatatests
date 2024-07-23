@@ -1,3 +1,5 @@
+""" """
+
 import argparse
 import datetime
 from dataclasses import dataclass, field, fields
@@ -6,6 +8,8 @@ from urllib.parse import urlparse
 
 from omegaconf import OmegaConf
 import pytest
+from simple_parsing.docstring import get_attribute_docstring
+
 
 from .singleton import Singleton
 
@@ -50,6 +54,8 @@ OmegaConf.register_new_resolver("infer_database", infer_database)
 
 @dataclass(kw_only=True)
 class DatatestConfig:
+    """Container for all amlaidatatest configurations"""
+
     id: Optional[str] = None
     """ Unique identifier for a set of associated tables"""
 
@@ -76,6 +82,8 @@ class DatatestConfig:
 
 
 class ConfigSingleton(metaclass=Singleton):
+    """Singleton for all amlaidatatest configuration"""
+
     def __init__(self) -> None:
         self.cfg: Optional[DatatestConfig] = None
 
@@ -169,13 +177,20 @@ def init_parser_options_from_config(
     ConfigSingleton().set_config(STRUCTURED_CONFIG)
     if isinstance(parser, argparse.ArgumentParser):
         parser.addoption = parser.add_argument
-    parser.addoption("--conf", action=IngestConfigAction)
+    parser.addoption(
+        "--conf",
+        action=IngestConfigAction,
+        help="[OPTIONAL] A YAML file from which to load options",
+        required=False,
+    )
     for f in fields(DatatestConfig):
+        docstring = get_attribute_docstring(DatatestConfig, f.name)
         parser.addoption(
             f"--{f.name}",
             action=IngestConfigAction,
             default=defaults.get(f.name) or f.default,
-            help=f,
+            help=docstring.docstring_below,
+            required=f.default is False,
         )
     return parser
 

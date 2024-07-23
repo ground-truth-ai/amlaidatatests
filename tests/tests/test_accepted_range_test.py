@@ -2,7 +2,7 @@ import ibis
 import pytest
 from ibis.expr.datatypes import Float64, Int64
 
-from amlaidatatests.exceptions import FailTest
+from amlaidatatests.exceptions import DataTestFailure
 from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests import common
 
@@ -75,7 +75,7 @@ def test_int_out_of_range_max(test_connection, create_test_table):
         table_config=table_config, min_value=0, max_value=20, column="column"
     )
 
-    with pytest.raises(expected_exception=FailTest, match=r"1 rows in column"):
+    with pytest.raises(expected_exception=DataTestFailure, match=r"1 rows in column"):
         t(test_connection)
 
 
@@ -91,5 +91,5 @@ def test_int_out_of_range_min(test_connection, create_test_table):
         table_config=table_config, min_value=0, column="column"
     )
 
-    with pytest.raises(expected_exception=FailTest, match=r"1 rows in column"):
+    with pytest.raises(expected_exception=DataTestFailure, match=r"1 rows in column"):
         t(test_connection)

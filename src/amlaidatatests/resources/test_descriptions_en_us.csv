@@ -80,7 +80,7 @@ V013,Party,assets_value_range.end_amount,"If non-empty check currency code, unit
 V014,Transaction,normalized_booked_amount,"If non-empty check currency code, units and nanos all not null"
 V015,Transaction,normalized_booked_amount.units,Check all are positive or zero
 V016,Transaction,normalized_booked_amount.nanos,"All values between 0 and +999,999,999 inclusive"
-V017,Transaction,normalized_booked_amount.currency_code,All currency codes idenitical
+V017,Transaction,normalized_booked_amount.currency_code,All currency codes must be a single normalized currency across the entire dataset
 DT001,All,validity_start_time,All values are before the interval end date (if provided) and before today's date
 DT017,Party,validity_start_time,Earliest validity_start_time for party is after the join_date
 DT002,Party,birth_date,All values are before the interval end date (if provided) and before today's date
@@ -109,38 +109,8 @@ DT011,RiskCaseEvent,event_time,All values are before the interval end date (if p
 DT012,Party,join_date,Join date after birth / establishment date for each party
 DT013,Party,exit_date,Exit date after the first join date for each party
 DT014,RiskCaseEvent,event_time,"Order of case events: AML_START, AML_END and AML_EXIT in correct order for each risk_case_id, party_id"
-C001,Party,party_id,No nulls or empty strings
-C002,Party,validity_start_time,No nulls
-C003,Party,type,No nulls or empty strings
-C004,Party,nationalities.region_code,No nulls or empty strings
-C005,Party,residencies.region_code,No nulls or empty strings
-C006,Party,assets_value_range.start_amount.currency_code,No nulls or empty strings
-C007,Party,assets_value_range.start_amount.units,No nulls
-C008,Party,assets_value_range.start_amount.nanos,No nulls
-C009,Party,assets_value_range.end_amount.currency_code,No nulls or empty strings
-C010,Party,assets_value_range.end_amount.units,No nulls
-C011,Party,assets_value_range.end_amount.nanos,No nulls
-C016,AccountPartyLink,account_id,No nulls or empty strings
-C017,AccountPartyLink,party_id,No nulls or empty strings
-C018,AccountPartyLink,validity_start_time,No nulls
-C019,Transaction,transaction_id,No nulls or empty strings
-C020,Transaction,validity_start_time,No nulls
-C021,Transaction,type,No nulls or empty strings
-C022,Transaction,direction,No nulls or empty strings
-C023,Transaction,account_id,No nulls or empty strings
-C024,Transaction,normalized_booked_amount.currency_code,No nulls or empty strings
-C025,Transaction,normalized_booked_amount.units,No nulls
-C026,Transaction,normalized_booked_amount.nanos,No nulls
-C027,RiskCaseEvent,risk_case_event_id,No nulls or empty strings
-C028,RiskCaseEvent,event_time,No nulls
-C029,RiskCaseEvent,type,No nulls or empty strings
-C030,RiskCaseEvent,party_id,No nulls or empty strings
-C031,RiskCaseEvent,risk_case_id,No nulls or empty strings
-C032,PartySupplementaryData,party_supplementary_data_id,No nulls or empty strings
-C033,PartySupplementaryData,validity_start_time,No nulls
-C034,PartySupplementaryData,party_id,No nulls or empty strings
-C035,PartySupplementaryData,supplementary_data_payload,No nulls
-C036,PartySupplementaryData,supplementary_data_payload.value,No nulls
+C001,All,All non-nullable,No nulls for non-nullable
+C002,All,All non-nullable strings,No empty strings
 RI001,AccountPartyLink,party_id,All party_id in AccountPartyLink exist in Party
 RI002,Party,party_id,All party_id in Party exist in AccountPartyLink
 RI003,AccountPartyLink,account_id,All account_id in AccountPartyLink exist in Transaction
@@ -155,15 +125,14 @@ RI011,Transaction,account_id,All account_id in Transaction exist in AccountParty
 RI012,RiskCaseEvent,party_id,All party_id in RiskCaseEvent exist in Party with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
 RI013,Party,party_id,All party_id in Party exist in PartySupplementaryData with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
 RI014,PartySupplementaryData,party_id,All party_id in PartySupplementaryData exist in Party with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
-E001,Party,type,
-E002,Party,civil_status_code,
-E003,Party,education_level_code,
-E004,AccountPartyLink,role,
-E005,Transaction,type,
-E006,Transaction,direction,
-E007,RiskCaseEvent,type,
-FMT001,Party,assets_value_range.start_amount.currency_code,All entries are valid three-letter currency code defined in ISO 4217
-FMT002,Party,assets_value_range.end_amount.currency_code,All entries are valid three-letter currency code defined in ISO 4217
+E001,Party,type,Field is constrained to permitted enumerations
+E002,Party,civil_status_code,Field is constrained to permitted enumerations
+E003,Party,education_level_code,Field is constrained to permitted enumerations
+E004,AccountPartyLink,role,Field is constrained to permitted enumerations
+E005,Transaction,type,Field is constrained to permitted enumerations
+E006,Transaction,direction,Field is constrained to permitted enumerations
+E007,RiskCaseEvent,type,Field is constrained to permitted enumerations
+FMT001,All,*.currency_code,All entries are valid three-letter currency code defined in ISO 4217
 FMT003,Party,residencies.region_code,Valid two-letter unicode format
 FMT004,Party,nationalities.region_code,Valid two-letter unicode format
 FMT005,Transaction,normalized_booked_amount.currency_code,All entries are valid three-letter currency code defined in ISO 4217

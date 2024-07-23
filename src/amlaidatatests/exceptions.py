@@ -33,7 +33,7 @@ class AMLAITestSeverity(enum.Enum):
     """ Test should issue print info if the test fails """
 
 
-class FailTest(Exception):
+class DataTestFailure(Exception):
     """amlaidatatests specific exception denoting a test failure. Could result
     in a failure if the test which raises it is configured to warn only"""
 
@@ -45,9 +45,7 @@ class FailTest(Exception):
     ) -> None:
         self.message = message
         self.expr = expr
-
         self.test_id = test_id
-
         self.sql = str(ibis.get_backend().compile(expr)) if expr is not None else None
 
     @property
@@ -68,11 +66,7 @@ class FailTest(Exception):
         Returns:
             Message for presentation to the user
         """
-        msg = f"""
-{self.test_id or ""}
-{self.description or ""}
-{self.message or ""}
-"""
+        msg = f"""{self.test_id or ""} {self.description or ""} {self.message or ""}"""
         if self.sql:
             msg += "\nTo reproduce this result, run:\n"
             msg += self.sql
@@ -82,18 +76,27 @@ class FailTest(Exception):
         return self.friendly_message()
 
 
-class WarnTest(Warning, FailTest):
+class DataTestWarning(Warning, DataTestFailure):
     """amlaidatatests specific exception denoting a test warning. Will never
     result in an test outright failing unless pytest is configured to fail on
     warnings"""
 
     def __init__(self, message: str, expr: Optional[ibis.Expr] = None) -> None:
-        FailTest.__init__(self, message=message, expr=expr)
+        DataTestFailure.__init__(self, message=message, expr=expr)
 
     def __str__(self):
         return self.friendly_message()
 
 
 class SkipTest(Exception):
+    """An AML AI exception representing a decision to skip the test.
+
+    We use a custom exception so we are able to capture testskips in
+    unit tests
+
+    Args:
+        message: A message for the user as to why the test was skipped
+    """
+
     def __init__(self, message: str) -> None:
         self.message = message

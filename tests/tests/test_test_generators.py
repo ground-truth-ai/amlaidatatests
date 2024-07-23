@@ -1,5 +1,6 @@
 import datetime
 
+from amlaidatatests.schema.base import ResolvedTableConfig
 import ibis
 from ibis.expr.datatypes import Timestamp, Struct, String
 
@@ -11,19 +12,31 @@ from amlaidatatests.test_generators import (
 
 
 def test_nonnullable_fields():
-    test_schema = ibis.schema(
-        {
-            "a": Timestamp(nullable=False),
-            "b": Struct(nullable=True, fields={"a": String(nullable=False)}),
-        }
+
+    test_table_config = ResolvedTableConfig(
+        table=ibis.table(
+            name="tbl",
+            schema=ibis.schema(
+                {
+                    "a": Timestamp(nullable=False),
+                    "b": Struct(nullable=True, fields={"a": String(nullable=False)}),
+                }
+            ),
+        )
     )
-    ttt = get_non_nullable_fields(test_schema)
+
+    ttt = get_non_nullable_fields(test_table_config)
     assert ttt == ["a", "b.a"]
 
 
 def test_timestamp_fields():
-    test_schema = ibis.schema({"a": Timestamp(nullable=False)})
-    ttt = get_timestamp_fields(test_schema)
+    test_table_config = ResolvedTableConfig(
+        table=ibis.table(
+            name="tbl", schema=ibis.schema({"a": Timestamp(nullable=False)})
+        )
+    )
+
+    ttt = get_timestamp_fields(test_table_config)
     assert ttt == ["a"]
 
 

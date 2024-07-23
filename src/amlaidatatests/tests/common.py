@@ -1,3 +1,5 @@
+""" Common tests used by amlaidatatests """
+
 import datetime
 import itertools
 import warnings
@@ -13,30 +15,42 @@ from amlaidatatests.base import (
     AbstractColumnTest,
     AbstractTableTest,
     resolve_field,
-    resolve_field_to_level,
 )
-from amlaidatatests.exceptions import AMLAITestSeverity, FailTest, WarnTest
+from amlaidatatests.exceptions import (
+    AMLAITestSeverity,
+    DataTestFailure,
+    DataTestWarning,
+)
 from amlaidatatests.schema.base import ResolvedTableConfig, TableType
 
 
 class TableExcessColumnsTest(AbstractTableTest):
-    """Verify there are no excess columns on the table
+    """Verify there are no excess columns on the table. If there are, raise an
+    error.
+
+    By default, this test raises a Warning.
 
     Args:
-        AbstractTableTest: _description_
+        table_config:   The resolved table config to test
+        severity:       The error type to emit on test failure
+                        Defaults to AMLAITestSeverity.WARN
+        test_id:        A unique identifier for the test
     """
 
     def __init__(
-        self, table_config: ResolvedTableConfig, test_id: Optional[str] = None
+        self,
+        table_config: ResolvedTableConfig,
+        test_id: Optional[str] = None,
+        severity: AMLAITestSeverity = AMLAITestSeverity.WARN,
     ) -> None:
-        super().__init__(table_config, test_id=test_id)
+        super().__init__(table_config, test_id=test_id, severity=severity)
 
     def _test(self, *, connection: BaseBackend):
         actual_columns = set(connection.table(name=self.table.get_name()).columns)
         schema_columns = set(self.table_config.table.columns)
         excess_columns = actual_columns.difference(schema_columns)
         if len(excess_columns) > 0:
-            raise WarnTest(
+            raise DataTestWarning(
                 f"{len(excess_columns)} unexpected columns found in table"
                 f" {self.table.get_name()}"
             )
@@ -44,10 +58,18 @@ class TableExcessColumnsTest(AbstractTableTest):
 
 
 class TableCountTest(AbstractTableTest):
-    """_summary_
+    """Test the number of rows in the table.
+
+    This test does not consider entity deletions or creation and simply counts
+    the number of rows in the table.
 
     Args:
-        AbstractTableTest: _description_
+        table_config:   The resolved table config to test
+        severity:       The error type to emit on test failure
+                        Defaults to AMLAITestSeverity.ERROR
+        test_id:        A unique identifier for the test
+        max_rows:       The maximum number of rows. The test will error if there
+                        are more rows than this in the overall table
     """
 
     def __init__(
@@ -57,29 +79,22 @@ class TableCountTest(AbstractTableTest):
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
         test_id: Optional[str] = None,
     ) -> None:
-        """_summary_
-
-        Args:
-            table_config: _description_
-            max_rows_factor: _description_
-            severity: _description_. Defaults to AMLAITestSeverity.ERROR.
-        """
         self.max_rows = max_rows
         super().__init__(table_config, severity, test_id=test_id)
 
     def _test(self, *, connection: BaseBackend):
         count = connection.execute(self.table.count())
         if count == 0:
-            raise FailTest(f"Table {self.table.get_name()} is empty")
+            raise DataTestFailure(f"Table {self.table.get_name()} is empty")
         if count > self.max_rows:
-            raise FailTest(
+            raise DataTestFailure(
                 f"Table {self.table.get_name()} has more rows "
                 f"than seems feasible: {count} vs maximum {self.max_rows}. "
                 "To stop this error triggering, review "
                 "the data provided or increase the scale setting"
             )
         if count > (self.max_rows) * 0.9:
-            raise WarnTest(
+            raise DataTestWarning(
                 f"Table {self.table.get_name()} is close to "
                 f"the feasibility ceiling: {count} vs maximum {self.max_rows}. "
                 "To stop this error triggering, review "
@@ -88,10 +103,15 @@ class TableCountTest(AbstractTableTest):
 
 
 class PrimaryKeyColumnsTest(AbstractTableTest):
-    """_summary_
+    """Validate the primary key of the table. If the table has more than one
+    primary key field, the test will fail.
 
     Args:
-        AbstractTableTest: _description_
+        table_config:   The resolved table config to test
+        severity:       The error type to emit on test failure
+                        Defaults to AMLAITestSeverity.ERROR
+        test_id:        A unique identifier for the test
+        column:         The column being tested
     """
 
     def __init__(
@@ -122,12 +142,14 @@ class PrimaryKeyColumnsTest(AbstractTableTest):
         n_pairs = result["unique_rows"]
         n_total = result["count"]
         if n_pairs != n_total:
-            raise FailTest(f"Found {n_total - n_pairs} duplicate values")
+            raise DataTestFailure(f"Found {n_total - n_pairs} duplicate values")
 
 
 class ColumnCardinalityTest(AbstractColumnTest):
     """Check for the number of values of column, optionally
     grouped by group_by.
+
+    If a group_by field is
 
     For example:
         if column = party_id, group_by = None
@@ -136,9 +158,25 @@ class ColumnCardinalityTest(AbstractColumnTest):
             - Check for the number of distinct party_ids
                 for each account
 
-
     Args:
-        AbstractTableTest: _description_
+        table_config:   The resolved table config to test
+        severity:       The error type to emit on test failure
+                        Defaults to AMLAITestSeverity.ERROR
+        test_id:        A unique identifier for the test
+        column:         The column being tested
+        max_number:     The maximum number of distinct column values this test
+                        accepts, inclusive. If more are found the test will fail.
+                        If none, this value will not be enforced. Defaults to None.
+        min_number:     The minimum number of distinct column values this test
+                        accepts, inclusive. If fewer are found the test will fail.
+                        If none, this value will not be enforced. Defaults to None.
+        where:          A predicate filter applied to the table. Column values
+                        will be filtered by this where clause prior to the test.
+                        Use to select specific combinations of values to test.
+                        Defaults to None.
+        having:         _description_. Defaults to None.
+        severity:       _description_. Defaults to AMLAITestSeverity.ERROR.
+        group_by:       _description_. Defaults to None.
     """
 
     def __init__(
@@ -207,18 +245,36 @@ class ColumnCardinalityTest(AbstractColumnTest):
                 if self.group_by
                 else ""
             )
-            raise FailTest(
+            raise DataTestFailure(
                 message=message,
                 expr=expr,
             )
 
 
 class CountFrequencyValues(AbstractColumnTest):
-    """Check for the proportion or number of rows containing any
-    particular value in column
+    """Count the number of occurences of each value in a column. Identify cases
+    which exceed the expected maximum number of values, or represent a larger
+    than expected proportion of values
+
 
     Args:
-        AbstractTableTest: _description_
+        table_config:   The resolved table config to test
+        severity:       The error type to emit on test failure
+                        Defaults to AMLAITestSeverity.ERROR
+        test_id:        A unique identifier for the test
+        column:         The column being tested
+        max_proportion: The maximum proportion of the overall number of values.
+                        If group_by is set, the result is relative to the
+                        columns specified in the group_by parameter. Defaults to
+                        None.
+        max_number:     The maximum number of occurrences of a single value
+                        before an error is raised. Defaults to None.
+        where:          Filter the input table by this predicate, Defaults to None.
+        having:         Filter the results by this predicate. Use to remove
+                        values or results which should not have their max_number or
+                        max_proportion tested. Defaults to None.
+        group_by:       If set, proportions and number counts are for the column
+                        rows in this list. Defaults to None.
     """
 
     def __init__(
@@ -227,34 +283,23 @@ class CountFrequencyValues(AbstractColumnTest):
         table_config: ResolvedTableConfig,
         column: str,
         test_id: Optional[str] = None,
-        proportion: Optional[float] = None,
+        max_proportion: Optional[float] = None,
         max_number: Optional[int] = None,
         where: Optional[Callable[[Expr], Expr]] = None,
         having: Optional[Callable[[Expr], Expr]] = None,
-        severity: AMLAITestSeverity = AMLAITestSeverity.WARN,
+        severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
         group_by: Optional[list[str]] = None,
     ) -> None:
-        """_summary_
-
-        Args:
-            table_config: _description_
-            entity_ids: _description_
-            warn: _description_. Defaults to 500.
-            error: _description_. Defaults to 1000.
-
-        Raises:
-            ValueError: _description_
-        """
         super().__init__(
             table_config=table_config, column=column, severity=severity, test_id=test_id
         )
-        if (proportion) and any([max_number]):
+        if (max_proportion) and any([max_number]):
             raise ValueError("Only proportion or number must be set, not both")
-        if not any([proportion, max_number]):
+        if not any([max_proportion, max_number]):
             raise ValueError("One of proportion and number must be set")
-        if (proportion) and (proportion < 0 or proportion > 1):
+        if (max_proportion) and (max_proportion < 0 or max_proportion > 1):
             raise ValueError("Proportion must be between 0 and 1")
-        self.proportion = proportion
+        self.max_proportion = max_proportion
         self.max_number = max_number
         self.where = where
         self.having = having
@@ -283,8 +328,8 @@ class CountFrequencyValues(AbstractColumnTest):
         )
 
         boolean_expr = None
-        if self.proportion:
-            boolean_expr |= expr.proportion >= self.proportion
+        if self.max_proportion:
+            boolean_expr |= expr.proportion >= self.max_proportion
         if self.max_number:  # if self.number: - checked during init
             boolean_expr |= expr.value_cnt > self.max_number
 
@@ -296,7 +341,7 @@ class CountFrequencyValues(AbstractColumnTest):
         results = connection.execute(expr.count())
 
         if results > 0:
-            raise FailTest(
+            raise DataTestFailure(
                 message=f"{results} values of {self.full_column_path} "
                 "appeared unusually frequently",
                 expr=expr,
@@ -309,27 +354,31 @@ class VerifyTypedValuePresence(AbstractColumnTest):
     for verifying the presence of a value in a column across a table.
 
     For example:
-    group_by = account_id, min_number = 1, column = type, value = CARD,
+    group_by = account_id, column = type, value = CARD,
     max_proportion = 0.1
     will:
         * Count the number of account_id which have a type = CARD (value_cnt)
-        * Count the proportion of account_id which have
-        * Error if the value_cnt is not at least 1
+        * Count the number of account_id which have type = CARD
         * Error if max_proportion of account_id having a type = CARD is greater
             than 10%.
 
+    This is akin to the pseudo sql:
+        select count(where type = 'CARD') / count(*) over (group by account_id)
+        from table
+
     Args:
-        table_config: _description_
-        column: _description_
-        value: _description_
-        group_by: list of column_ids to group by
-        test_id: _description_. Defaults to None.
-        min_number: _description_. Defaults to None.
-        max_number: _description_. Defaults to None.
-        max_proportion: _description_. Defaults to None.
-        min_proportion: _description_. Defaults to None.
-        where: _description_. Defaults to None.
-        severity: _description_. Defaults to AMLAITestSeverity.WARN.
+        table_config:   The resolved table config to test
+        severity:       The error type to emit on test failure
+                        Defaults to AMLAITestSeverity.ERROR
+        test_id:        A unique identifier for the test
+        column:         The column being tested
+        group_by:       list of column_ids to group by
+        max_proportion: The maximum proportion, inclusive. Defaults to None.
+        min_proportion: The minimum proportion, inclusive. Defaults to None.
+        where:          Applies a filter to the proportion denominator. If None,
+                        the denominator = count(*)
+        value:          The value in the numerator to count for, equivalent to
+                        `where column = value`
     """
 
     def __init__(
@@ -340,22 +389,18 @@ class VerifyTypedValuePresence(AbstractColumnTest):
         value: str,
         group_by: list[str],
         test_id: Optional[str] = None,
-        min_number: Optional[int] = None,
-        max_number: Optional[int] = None,
         max_proportion: Optional[float] = None,
         min_proportion: Optional[float] = None,
-        where: Optional[Callable[[Expr], Expr]] = None,
+        compare_group_by_where: Optional[Callable[[Expr], Expr]] = None,
         severity: AMLAITestSeverity = AMLAITestSeverity.WARN,
     ) -> None:
         super().__init__(table_config=table_config, column=column, severity=severity)
-        self.min_number = min_number
-        self.max_number = max_number
         self.max_proportion = max_proportion
         self.min_proportion = min_proportion
         self.test_id = test_id
         self.value = value
         self.group_by = group_by
-        self.where = where
+        self.where = compare_group_by_where
 
     def _test(self, *, connection: BaseBackend) -> None:
         table = self.table
@@ -381,37 +426,24 @@ class VerifyTypedValuePresence(AbstractColumnTest):
             .mutate(proportion=_.value_cnt / _.group_count)
         )
         results = connection.execute(expr).iloc[0]
-        value_cnt = int(results["value_cnt"])
         proportion = results["proportion"]
 
-        if self.min_number and results["value_cnt"] < self.min_number:
-            msg = f"Only {value_cnt:d} rows"
-            if self.min_number == 1:
-                msg = "No rows "
-            raise FailTest(
-                message=f"{msg} found "
-                f"with a value of {self.value} in {self.full_column_path}. "
-                f"Expected at least {self.min_number}",
-                expr=expr,
-            )
-        if self.max_number and results["value_cnt"] > self.max_number:
-            raise FailTest(
-                message=f"Too many ({value_cnt:d}) rows {self.group_by} found "
-                f"with a value of {self.value} in {self.full_column_path}. "
-                f"Expected at most {self.max_number}",
-                expr=expr,
-            )
+        group_by_narrative = "all rows"
+        if len(self.group_by) == 1:
+            group_by_narrative = f"unique {self.group_by[0]}"
+        else:
+            group_by_narrative = f"unique combinations of {self.group_by}"
         if self.max_proportion and results["proportion"] >= self.max_proportion:
-            raise FailTest(
-                message=f"{proportion:.0%} of {self.group_by} "
+            raise DataTestFailure(
+                message=f"{proportion:.0%} of {group_by_narrative} "
                 f"had values of {self.value} in {self.full_column_path}. "
                 f"Expected at most {self.max_proportion:.0%}",
                 expr=expr,
             )
         if self.min_proportion and results["proportion"] <= self.min_proportion:
             proportion = results["proportion"]
-            raise FailTest(
-                message=f"Only {proportion:.0%} of {self.group_by} "
+            raise DataTestFailure(
+                message=f"Only {proportion:.0%} of {group_by_narrative} "
                 f"had values of {self.value} in {self.full_column_path}. "
                 f"Expected at least {self.min_proportion:.0%}",
                 expr=expr,
@@ -419,21 +451,19 @@ class VerifyTypedValuePresence(AbstractColumnTest):
 
 
 class ConsecutiveEntityDeletionsTest(AbstractTableTest):
-    """_summary_
+    """Check for the proportion or number of rows containing any
+    particular value in column
 
     Args:
-        AbstractTableTest: _description_
+        table_config:   The resolved table config to test
+        severity:       The error type to emit on test failure
+                        Defaults to AMLAITestSeverity.ERROR
+        test_id:        A unique identifier for the test
     """
 
     def __init__(
         self, *, table_config: ResolvedTableConfig, entity_ids: List[str]
     ) -> None:
-        """_summary_
-
-        Args:
-            table_config: _description_
-            entity_ids: _description_
-        """
         super().__init__(table_config=table_config, severity=AMLAITestSeverity.WARN)
         self.entity_ids = entity_ids
 
@@ -446,7 +476,7 @@ class ConsecutiveEntityDeletionsTest(AbstractTableTest):
         expr = counted.count(where=_.count_per_pk > 0)
         results = connection.execute(expr)
         if results > 0:
-            raise FailTest(
+            raise DataTestFailure(
                 f"{results} rows found with consecutive entity deletions. Entities"
                 " should generally only be deleted once.",
                 expr=expr,
@@ -454,10 +484,15 @@ class ConsecutiveEntityDeletionsTest(AbstractTableTest):
 
 
 class OrphanDeletionsTest(AbstractTableTest):
-    """_summary_
+    """Find instances where an entity (normally the table primary_key without
+    validity_start_date) is deleted without having a before it was deleted.
 
     Args:
-        AbstractTableTest: _description_
+        table_config:   The resolved table config to test
+        severity:       The error type to emit on test failure
+                        Defaults to AMLAITestSeverity.ERROR
+        test_id:        A unique identifier for the test
+        column:         The column being tested
     """
 
     def __init__(
@@ -467,13 +502,6 @@ class OrphanDeletionsTest(AbstractTableTest):
         entity_ids: List[str],
         severity: AMLAITestSeverity = AMLAITestSeverity.WARN,
     ) -> None:
-        """_summary_
-
-        Args:
-            table_config: _description_
-            entity_ids: _description_
-            severity: _description_. Defaults to AMLAITestSeverity.WARN.
-        """
         super().__init__(table_config=table_config, severity=severity)
         self.entity_ids = entity_ids
 
@@ -497,7 +525,7 @@ class OrphanDeletionsTest(AbstractTableTest):
         )
         results = connection.execute(expr.count())
         if results > 0:
-            raise FailTest(
+            raise DataTestFailure(
                 f"{results} rows found with orphaned entity deletions. These rows had"
                 " no previously values where is_entity_deleted = True",
                 expr=expr.select(*self.entity_ids),
@@ -505,41 +533,55 @@ class OrphanDeletionsTest(AbstractTableTest):
 
 
 class ColumnPresenceTest(AbstractColumnTest):
+    """Test if the column is present.
+
+    Optional columns are already ignored by the test wrapper, so only the
+    primary exception is passed forward.
+
+    Args:
+        table_config:   The resolved table config to test
+        severity:       The error type to emit on test failure
+                        Defaults to AMLAITestSeverity.ERROR
+        test_id:        A unique identifier for the test
+        column:         The column being tested
+    """
 
     def _test(self, *, connection: BaseBackend):
         try:
             self.table[self.column]
         except IbisTypeError as e:
-            raise FailTest(f"Missing Required Column: {self.full_column_path}") from e
-
-
-class FieldComparisonInterrupt(Exception):
-    """_summary_
-
-    Args:
-        Exception: _description_
-    """
-
-    pass
+            raise DataTestFailure(
+                f"Missing Required Column: {self.full_column_path}"
+            ) from e
 
 
 class ColumnTypeTest(AbstractColumnTest):
-    """_summary_
+    """Test if the column type matches the expected column type.
+
+    Verification is a straight comparison The verification has a few notable caveats:
+        * It is not possible to specify non-nullable embedded values
+          in bigquery. Comparisons do not take the underlying nullability of
+          embedded values
+        * A timestamp in bigquery is always associated with a UTC timezone. In
+          other databases, this is not the case. The offset is ignored. TODO:
+          Review this if supporting other databases for production purposes
 
     Args:
-        AbstractColumnTest: _description_
+        table_config:   The resolved table config to test
+        severity:       The error type to emit on test failure
+                        Defaults to AMLAITestSeverity.ERROR
+        test_id:        A unique identifier for the test
+        column:         The column being tested
     """
 
+    class _FieldComparisonInterrupt(Exception):
+        """Utility class used during recursive field comparison"""
+
+        pass
+
     def _test(self, *, connection: BaseBackend):
-        """_summary_
-
-        Args:
-            table (Table): _description_
-            schema (Schema): _description_
-
-        Raises:
-            FailTest: _description_
-        """
+        # connection is not used because [self.column] is a direct table
+        # reference
         actual_table = self.table
         actual_type = actual_table.schema()[self.column]
         schema_data_type = self.table_config.schema[self.column]
@@ -554,26 +596,25 @@ class ColumnTypeTest(AbstractColumnTest):
                 extra_fields = self._find_extra_struct_fields(
                     schema_data_type, actual_type, self.column
                 )
-                # If no expcetion
                 warnings.warn(
-                    message=WarnTest(
+                    message=DataTestWarning(
                         f"Additional fields found in struct in {self.full_column_path}."
                         f" Full path to the extra fields were: {extra_fields}"
                     )
                 )
                 return
-            except FieldComparisonInterrupt:
+            except ColumnTypeTest._FieldComparisonInterrupt:
                 pass
             if schema_data_type.nullable and not actual_type.nullable:
                 warnings.warn(
-                    message=WarnTest(
+                    message=DataTestWarning(
                         "Schema is stricter than required: expected column"
                         f" {self.full_column_path} to be {schema_data_type}, "
                         f"found {actual_type}"
                     )
                 )
                 return
-            raise FailTest(
+            raise DataTestFailure(
                 f"Expected column {self.full_column_path} to be {schema_data_type},"
                 f" found {actual_type}",
             )
@@ -591,9 +632,9 @@ class ColumnTypeTest(AbstractColumnTest):
         if level == 1 and (expected_type.nullable != actual_type.nullable):
             # Don't get in the way of nullability checks for the top level fields
             # so assume not nullable
-            raise FieldComparisonInterrupt()
+            raise ColumnTypeTest._FieldComparisonInterrupt()
         if expected_type.name != actual_type.name:
-            raise FieldComparisonInterrupt()
+            raise ColumnTypeTest._FieldComparisonInterrupt()
         extra_fields = []
         if expected_type.is_struct():
             expected_type = cast(Struct, expected_type)
@@ -618,9 +659,9 @@ class ColumnTypeTest(AbstractColumnTest):
                 if (
                     actual_dtype is None
                 ):  # actual struct field does not exist on the expected field
-                    raise FieldComparisonInterrupt()
+                    raise ColumnTypeTest._FieldComparisonInterrupt()
                 if expected_dtype.name != actual_dtype.name:
-                    raise FieldComparisonInterrupt()
+                    raise ColumnTypeTest._FieldComparisonInterrupt()
 
         if expected_type.is_array():
             expected_type = cast(Array, expected_type)
@@ -670,58 +711,56 @@ class ColumnTypeTest(AbstractColumnTest):
 
 
 class ColumnValuesTest(AbstractColumnTest):
+    """Verify the column is only ever set to one of the allowed values
+
+    Args:
+        table_config:   The resolved table config to test
+        severity:       The error type to emit on test failure
+                        Defaults to AMLAITestSeverity.ERROR
+        test_id:        A unique identifier for the test
+        column:         The column being tested
+        allowed_values: List of permitted column values
+    """
 
     def __init__(
         self,
         *,
-        values: List[Any],
+        allowed_values: List[Any],
         table_config: ResolvedTableConfig,
         column: str,
         test_id: Optional[str] = None,
     ) -> None:
         super().__init__(table_config=table_config, column=column, test_id=test_id)
-        self.values = values
+        self.allowed_values = allowed_values
 
     def _test(self, *, connection: BaseBackend):
         table, field = resolve_field(self.table, self.column)
 
-        expr = table.filter(field.notin(self.values)).select(field=field)
+        expr = table.filter(field.notin(self.allowed_values)).select(field=field)
 
         result = connection.execute(expr.count())
 
         if result > 0:
-            valid_values = " ".join(self.values)
-            raise FailTest(
-                f"{result} rows found with invalid values in {self.full_column_path}"
-                f" Valid values are: {valid_values}.",
+            valid_values = " ".join(self.allowed_values)
+            raise DataTestFailure(
+                f"{result} rows found with invalid values in {self.full_column_path}. "
+                f"Valid values are: {valid_values}.",
                 expr=expr,
             )
 
 
 class FieldNeverWhitespaceOnlyTest(AbstractColumnTest):
+    """Verify the column is never only whitespace.
 
-    def filter_null_parent_fields(self):
-        # If subfields exist (struct or array), we need to compare the nullness of
-        # the parent
-        # as well - it doesn't make any sense to check the parent if the child
-        # is also null
-        predicates = []
-        if self.column.count(".") >= 1:
-            _, parent_field = resolve_field_to_level(self.table, self.column, -1)
-            # We want to check for cases only where field is null but its parent isn't
-            predicates += [parent_field.notnull()]
-        return predicates
+    Args:
+        table_config:   The resolved table config to test
+        severity:       The error type to emit on test failure
+                        Defaults to AMLAITestSeverity.ERROR
+        test_id:        A unique identifier for the test
+        column:         The column under test which contains event ids
+    """
 
     def _test(self, *, connection: BaseBackend):
-        """_summary_
-
-        Args:
-            table (Table): _description_
-            schema (Schema): _description_
-
-        Raises:
-            FailTest: _description_
-        """
         table, field = resolve_field(self.table, self.column)
 
         predicates = [field.strip() == "", *self.filter_null_parent_fields()]
@@ -730,27 +769,26 @@ class FieldNeverWhitespaceOnlyTest(AbstractColumnTest):
 
         count_blank = connection.execute(expr.count())
 
-        if count_blank == 0:
-            return
-        raise FailTest(
-            f"{count_blank} rows found with whitespace-only "
-            f"values of {self.full_column_path} in table {self.table.get_name()}",
-            expr=expr,
-        )
+        if count_blank > 0:
+            raise DataTestFailure(
+                f"{count_blank} rows found with whitespace-only "
+                f"values of {self.full_column_path} in table {self.table.get_name()}",
+                expr=expr,
+            )
 
 
-class FieldNeverNullTest(FieldNeverWhitespaceOnlyTest):
+class FieldNeverNullTest(AbstractColumnTest):
+    """Verify the field is never only null
+
+    Args:
+        table_config:   The resolved table config to test
+        severity:       The error type to emit on test failure
+                        Defaults to AMLAITestSeverity.ERROR
+        test_id:        A unique identifier for the test
+        column:         The column under test which contains event ids
+    """
 
     def _test(self, *, connection: BaseBackend):
-        """_summary_
-
-        Args:
-            table (Table): _description_
-            schema (Schema): _description_
-
-        Raises:
-            FailTest: _description_
-        """
         table, field = resolve_field(self.table, self.column)
 
         predicates = [field.isnull(), *self.filter_null_parent_fields()]
@@ -758,44 +796,26 @@ class FieldNeverNullTest(FieldNeverWhitespaceOnlyTest):
 
         count_null = connection.execute(expr.count())
 
-        if count_null == 0:
-            return
-        raise FailTest(
-            f"{count_null} rows found with null values of "
-            f"{self.full_column_path} in table {self.table.get_name()}",
-            expr=expr,
-        )
-
-
-class DatetimeFieldNeverJan1970Test(FieldNeverWhitespaceOnlyTest):
-
-    def _test(self, *, connection: BaseBackend):
-        """_summary_
-
-        Args:
-            table (Table): _description_
-            schema (Schema): _description_
-
-        Raises:
-            FailTest: _description_
-        """
-        table, field = resolve_field(self.table, self.column)
-
-        predicates = [field.epoch_seconds() == 0, *self.filter_null_parent_fields()]
-        expr = table.filter(predicates)
-
-        count_null = connection.execute(expr.count())
-
-        if count_null == 0:
-            return
-        raise FailTest(
-            f"{count_null} rows found with date on 1970-01-01 in "
-            f"{self.full_column_path}. This value is often nullable",
-            expr=expr,
-        )
+        if count_null > 0:
+            raise DataTestFailure(
+                f"{count_null} rows found with null values of "
+                f"{self.full_column_path} in table {self.table.get_name()}",
+                expr=expr,
+            )
 
 
 class NullIfTest(AbstractColumnTest):
+    """Verify that a column is always null if a provided expression
+    is true
+
+    Args:
+        table_config:   The resolved table config to test
+        severity:       The error type to emit on test failure
+                        Defaults to AMLAITestSeverity.ERROR
+        test_id:        A unique identifier for the test
+        expression:     The functor returning an expression to test
+        column:         The column under test which contains event ids
+    """
 
     def __init__(
         self,
@@ -817,13 +837,31 @@ class NullIfTest(AbstractColumnTest):
         )
         result = connection.execute(expr.count())
         if result > 0:
-            raise FailTest(
+            raise DataTestFailure(
                 f"{result} rows not fulfilling criteria in {self.full_column_path}",
                 expr=expr,
             )
 
 
 class CountMatchingRows(AbstractColumnTest):
+    """Count the number of rows which match the provided expression
+    in the provided column.
+
+    At least one of max_number, min_number, max_proportion must always be set.
+    If multiple tests fail, only one will be raised
+
+    Args:
+        table_config:   The resolved table config to test
+        severity:       The error type to emit on test failure
+                        Defaults to AMLAITestSeverity.ERROR
+        test_id:        A unique identifier for the test
+        expression:     The functor returning an expression to test
+        column:         The column under test which contains event ids
+        max_number:     The maximum absolute number of matching rows. Inclusive.
+        min_number:     The minimum absolute number of matching rows. Inclusive.
+        max_proportion: The maximum proportion of matching rows over all rows
+        min_proportion: The minimum proportion of matching rows over all rows
+    """
 
     def __init__(
         self,
@@ -833,19 +871,19 @@ class CountMatchingRows(AbstractColumnTest):
         expression: Callable[[Expr], Expr],
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
         test_id: Optional[str] = None,
-        max_rows: Optional[int] = None,
+        max_number: Optional[int] = None,
         min_number: Optional[int] = None,
         max_proportion: Optional[float] = None,
-        min_proportion: Optional[int] = 0,
+        min_proportion: Optional[int] = None,
     ) -> None:
         super().__init__(
             table_config=table_config, column=column, severity=severity, test_id=test_id
         )
         self.expression = expression
-        self.max_rows = max_rows
-        self.min_rows = min_number
+        self.max_number = max_number
+        self.min_number = min_number
         self.max_proportion = max_proportion
-        self.max_proportion = min_proportion
+        self.min_proportion = min_proportion
 
     def _test(self, *, connection: BaseBackend):
         table = self.get_latest_rows(self.table)
@@ -855,23 +893,30 @@ class CountMatchingRows(AbstractColumnTest):
         result = connection.execute(expr).iloc[0]
         value = int(result["matching_rows"])
         proportion = result["proportion"]
-        if self.min_rows and (value < self.min_rows):
-            raise FailTest(
+        if self.min_number and (value < self.min_number):
+            raise DataTestFailure(
                 f"{value:d} rows met specified criteria "
                 f"in {self.full_column_path}. Expected at least "
-                f"{self.min_rows:d}.",
+                f"{self.min_number:d}.",
                 expr=expr,
             )
-        if self.max_rows and (value > self.max_rows):
-            raise FailTest(
+        if self.max_number and (value > self.max_number):
+            raise DataTestFailure(
                 f"{value:d} rows met specified criteria "
                 f"in {self.full_column_path}. Expected at most "
-                f"{self.max_rows:d}.",
+                f"{self.max_number:d}.",
                 expr=expr,
             )
         if self.max_proportion and (proportion > self.max_proportion):
-            raise FailTest(
+            raise DataTestFailure(
                 f"A high proportion ({proportion:.0%}) of rows met "
+                "specified criteria "
+                f" in {self.full_column_path}",
+                expr=expr,
+            )
+        if self.min_proportion and (proportion < self.min_proportion):
+            raise DataTestFailure(
+                f"A low proportion ({proportion:.0%}) of rows met "
                 "specified criteria "
                 f" in {self.full_column_path}",
                 expr=expr,
@@ -879,15 +924,18 @@ class CountMatchingRows(AbstractColumnTest):
 
 
 class EventOrder(AbstractColumnTest):
-    """_summary_
+    """Verify all events with an id are in a particular order
+
+    Duplicates are ignored, provided they are also in the correct order
 
     Args:
-        table_config: _description_
-        column: _description_
-        time_column: _description_
-        events: _description_
-        severity: _description_. Defaults to AMLAITestSeverity.ERROR.
-        test_id: _description_. Defaults to None.
+        table_config:   The resolved table config to test
+        severity:       The error type to emit on test failure
+                        Defaults to AMLAITestSeverity.ERROR
+        test_id:        A unique identifier for the test
+        column:         The column under test which contains event ids
+        time_column:    The timestamp column describing when event occurred
+        events:         An ordered list of events. The order is tested.
     """
 
     def __init__(
@@ -934,7 +982,7 @@ class EventOrder(AbstractColumnTest):
         expr = expr.filter(itertools.accumulate(comparisons, lambda x, y: x | y))
         result = connection.execute(expr.count())
         if result > 0:
-            raise FailTest(
+            raise DataTestFailure(
                 f"{result} did not fulfil the required event order "
                 "in {self.full_column_path}",
                 expr=expr,
@@ -942,6 +990,19 @@ class EventOrder(AbstractColumnTest):
 
 
 class AcceptedRangeTest(AbstractColumnTest):
+    """Test a column value lies inside a particular range
+
+    Args:
+        table_config: The resolved table config to test
+        severity:   The error type to emit on test failure
+                    Defaults to AMLAITestSeverity.ERROR
+        test_id:    A unique identifier for the test. Useful when used via
+                    @pytest.parameter as it allows us to uniquely identify the
+                    test
+        column:     The column under test which contains event ids
+        min_value:  The minimum allowance value of the column (inclusive)
+        max_value:  The maximum allowable value of the column (inclusive)
+    """
 
     def __init__(
         self,
@@ -950,25 +1011,29 @@ class AcceptedRangeTest(AbstractColumnTest):
         column: str,
         min_value: Optional[int] = None,
         max_value: Optional[int] = None,
+        severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
+        test_id: Optional[str] = None,
     ) -> None:
-        super().__init__(table_config=table_config, column=column)
-        self.min = min_value
-        self.max = max_value
+        super().__init__(
+            table_config=table_config, column=column, severity=severity, test_id=test_id
+        )
+        self.min_value = min_value
+        self.max_value = max_value
 
     def _test(self, *, connection: BaseBackend):
         table, field = resolve_field(self.table, self.column)
 
-        min_pred = field < self.min if self.min is not None else False
-        max_pred = field > self.max if self.max is not None else False
+        min_pred = field < self.min_value if self.min_value is not None else False
+        max_pred = field > self.max_value if self.max_value is not None else False
 
         predicates = [min_pred | max_pred]
         expr = table.filter(predicates)
 
         result = connection.execute(expr.count())
         if result > 0:
-            raise FailTest(
+            raise DataTestFailure(
                 f"{result} rows in column {self.full_column_path} in table {self.table}"
-                f" were outside of inclusive range {self.min} - {self.max}",
+                f" were outside of inclusive range {self.min_value} - {self.max_value}",
                 expr=expr,
             )
 
@@ -1006,6 +1071,9 @@ class ReferentialIntegrityTest(AbstractTableTest):
             connection=connection, table_config=self.to_table_config
         )
         expr = self.table.select(*[self.keys]).anti_join(self.to_table, self.keys)
+
+        key_columns = {" ".join(self.keys)}
+
         if self.max_proportion:
             # Join on the total distinct count of keys
             total_key_cnt = self.table[self.keys].nunique().name("total_key_cnt")
@@ -1018,19 +1086,19 @@ class ReferentialIntegrityTest(AbstractTableTest):
                     f"More than {result:.0%} of keys {self.keys} in table "
                     f"{self.table.get_name()} were not in "
                     f"{self.to_table.get_name()}. "
-                    f"Key column(s) were {' '.join(self.keys)}"
+                    f"Key column(s) were {key_columns}"
                     ""
                 )
-                raise FailTest(msg, expr=expr)
+                raise DataTestFailure(msg, expr=expr)
 
         result = connection.execute(expr.count())
         if result > 0:
             msg = (
                 f"{result} keys found in table {self.table.get_name()} "
                 f"which were not in {self.to_table.get_name()}. "
-                f"Key column(s) were {' '.join(self.keys)}"
+                f"Key column(s) were {key_columns}"
             )
-            raise FailTest(msg, expr=expr)
+            raise DataTestFailure(msg, expr=expr)
         return
 
 
@@ -1080,7 +1148,7 @@ class TemporalProfileTest(AbstractColumnTest):
                 f"{self.threshold:.0%} of the average volume for all "
                 f"{self.period.lower()}s"
             )
-            raise FailTest(msg, expr=expr)
+            raise DataTestFailure(msg, expr=expr)
 
 
 class TemporalReferentialIntegrityTest(AbstractTableTest):
@@ -1308,7 +1376,7 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
                 f"keys in {self.table.get_name()} did not correspond to the time "
                 f"periods for the same entity in {self.to_table.get_name()}"
             )
-            raise FailTest(msg, expr=expr)
+            raise DataTestFailure(msg, expr=expr)
         return
 
 
@@ -1324,9 +1392,19 @@ class ConsistentIDsPerColumn(AbstractColumnTest):
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
         test_id: Optional[str] = None,
     ) -> None:
-        super().__init__(table_config=table_config, column=column, severity=severity)
+        """_summary_
+
+        Args:
+            table_config: _description_
+            column: _description_
+            id_to_verify: _description_
+            severity: _description_. Defaults to AMLAITestSeverity.ERROR.
+            test_id: _description_. Defaults to None.
+        """
+        super().__init__(
+            table_config=table_config, column=column, severity=severity, test_id=test_id
+        )
         self.id_to_verify = id_to_verify
-        self.test_id = test_id
 
     @property
     def id(self):
@@ -1339,15 +1417,18 @@ class ConsistentIDsPerColumn(AbstractColumnTest):
 
         expr = (
             table.group_by(by=self.column)
-            .agg(ids=_[self.id_to_verify].collect())
-            .group_by(1)
-            .agg(ids=_.nunique())
+            .order_by(self.id_to_verify)
+            .agg(
+                # We cannot group by or count distinct by columns in bq
+                ids=_[self.id_to_verify].collect()
+            )
+            .mutate(ids=_.ids.sort().join("|"))
         )
 
-        result = connection.execute(expr.count())
+        result = connection.execute(expr["ids"].nunique())
         if result > 1:
-            raise FailTest(
+            raise DataTestFailure(
                 f"Inconsistent {self.id_to_verify} across {self.full_column_path}. "
-                "Expected all {self.column} to have the same same set of IDs",
+                f"Expected all {self.column} to have the same same set of IDs",
                 expr=expr,
             )

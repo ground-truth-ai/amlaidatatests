@@ -1,3 +1,5 @@
+""" Utility CLI for amlaidatatests """
+
 import argparse
 import os
 import sys
@@ -20,25 +22,26 @@ def create_skeleton(args):
         connection.create_table(name=get_table_name(table.name), schema=table.schema)
 
 
-def run_tests(args):
-    pytest.main(args=[f"{dir_path}/tests", *sys.argv[1:]])
+def run_tests(extras):
+    # Pass the entire set of arguments through to pytest
+    args = [f"{dir_path}/tests", *sys.argv[1:]]
+    print(args)
+    pytest.main(args=args)
 
 
 def entry_point():
+    """Configure an argparse based entry point for amlaidatatests
+
+    This is configured somewhat differently from the pytest dataset, which is
+    somewhat clunky to configure"""
     parser = argparse.ArgumentParser()
     parser = init_parser_options_from_config(parser)
-    subparsers = parser.add_subparsers(required=True)
 
-    skeleton = subparsers.add_parser("skeleton")
-    tests = subparsers.add_parser("tests")
+    parser.set_defaults(func=run_tests)
 
-    tests.add_argument("args", nargs="+")
+    args, extra = parser.parse_known_args()
 
-    tests.set_defaults(func=run_tests)
-    skeleton.set_defaults(func=create_skeleton)
-
-    args = parser.parse_args()
-    args.func(args)
+    args.func(extra)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import ibis
 import pytest
 from ibis.expr.datatypes import Boolean, String, Timestamp
 
-from amlaidatatests.exceptions import AMLAITestSeverity, WarnTest
+from amlaidatatests.exceptions import AMLAITestSeverity, DataTestWarning
 from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests import common
 
@@ -34,7 +34,9 @@ def test_orphaned_deleted_entity(test_connection, create_test_table):
 
     t = common.OrphanDeletionsTest(table_config=table_config, entity_ids=["id"])
 
-    with pytest.warns(WarnTest, match="1 rows found with orphaned entity deletions"):
+    with pytest.warns(
+        DataTestWarning, match="1 rows found with orphaned entity deletions"
+    ):
         t(test_connection)
 
 

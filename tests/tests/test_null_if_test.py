@@ -2,7 +2,7 @@ import ibis
 import pytest
 from ibis.expr.datatypes import String
 
-from amlaidatatests.exceptions import FailTest
+from amlaidatatests.exceptions import DataTestFailure
 from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests import common
 
@@ -42,5 +42,5 @@ def test_null_if_fails(test_connection, create_test_table):
         column="b",
         expression=lambda t: t.type == "card",
     )
-    with pytest.raises(FailTest, match=r"1 rows not fulfilling criteria"):
+    with pytest.raises(DataTestFailure, match=r"1 rows not fulfilling criteria"):
         t(test_connection)

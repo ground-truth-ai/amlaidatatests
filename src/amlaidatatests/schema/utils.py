@@ -22,7 +22,15 @@ def get_amlai_schema(version: str) -> BaseSchemaConfiguration:
         raise ValueError(f"Schema version {version} not found") from e
 
 
-def get_table_name(name: str):
+def get_table_name(name: str) -> str:
+    """Get the fully resolved table name for the provided string
+
+    Args:
+        name: A table name corresponding to a table in the configured schema
+
+    Returns:
+        A fully qualified table name
+    """
     config_singleton = ConfigSingleton.get()
     name_template = Template(config_singleton.table_name_template)
     if config_singleton.id is None:
@@ -62,7 +70,3 @@ def resolve_table_config(name: str) -> ResolvedTableConfig:
         **dct,
     )
     return resolved_table_config
-
-
-if __name__ == "__main__":
-    get_amlai_schema()

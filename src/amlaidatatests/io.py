@@ -1,78 +1,17 @@
 import importlib.resources
 
-import google.auth
-import ibis
 import pandas as pd
-from ibis import literal
-
-from amlaidatatests.schema.utils import get_table_name
-
-from .connection import connection_factory
 
 
-# TODO: Configure connections properly
-def bigquery_connection_factory():
-    credentials, project_id = google.auth.default()
-    connection = ibis.bigquery.connect(
-        project_id=project_id, dataset_id="my_bq_input_dataset", credentials=credentials
-    )
+def get_valid_region_codes() -> list:
+    """Get a list of valid ISO 3166-2 currency codes
 
-    return connection
+    The current list of currency codes was obtained from ...
 
+    Returns:
+        A list of valid currency codes
+    """
 
-tables = [
-    "party_supplementary_data"
-]  # ["party", "account_party_link", "risk_case_event", "transaction"]
-
-
-def load_from_bigquery_to_empty_table():
-    for t in tables:
-        table_name = get_table_name(t)
-        bigquery_connection = bigquery_connection_factory()
-        t_bq = bigquery_connection.table(t)
-
-        print("Loading into", table_name)
-
-        # t = connection.table(f"{t}_{SUFFIX}")
-        connection = connection_factory()
-        temp_table = connection.create_table(
-            f"{t}_temp", obj=t_bq.to_pandas(), temp=True
-        )
-        target_table = connection.table(get_table_name(t))
-
-        target_schema = target_table.schema()
-        temp_schema = temp_table.schema()
-
-        missing_columns = []
-
-        for n, dtype in target_schema.items():
-            if n not in temp_schema:
-                missing_columns.append((n, dtype))
-
-        all_temp_table = temp_table.mutate(
-            **{n: literal(None).cast(dtype) for n, dtype in missing_columns}
-        )
-
-        all_temp_table_2 = all_temp_table.select(
-            **{n: getattr(all_temp_table, n) for n in target_schema.keys()}
-        )
-
-        connection.insert(get_table_name(t), obj=all_temp_table_2, overwrite=True)
-
-
-def load_from_bigquery_to_copy():
-    for t in tables:
-        connection = connection_factory()
-        table_name = get_table_name(t)
-        bigquery_connection = bigquery_connection_factory()
-        t_bq = bigquery_connection.table(t)
-
-        print("Loading into", table_name)
-
-        connection.create_table(get_table_name(t), obj=t_bq.to_pandas(), overwrite=True)
-
-
-def get_valid_region_codes():
     template_res = importlib.resources.files("amlaidatatests.resources").joinpath(
         "country_codes.csv"
     )
@@ -82,7 +21,14 @@ def get_valid_region_codes():
         ].to_list()
 
 
-def get_valid_currency_codes():
+def get_valid_currency_codes() -> list:
+    """Get a list of valid 3-character ISO 4217 currency codes
+
+    The current list of currency codes was obtained from ...
+
+    Returns:
+        A list of valid currency codes
+    """
     template_res = importlib.resources.files("amlaidatatests.resources").joinpath(
         "currency_codes.csv"
     )

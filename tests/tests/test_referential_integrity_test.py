@@ -4,7 +4,7 @@ import ibis
 import pytest
 from ibis.expr.datatypes import Boolean, String, Timestamp
 
-from amlaidatatests.exceptions import FailTest, SkipTest
+from amlaidatatests.exceptions import DataTestFailure, SkipTest
 from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests import common
 
@@ -65,7 +65,7 @@ def test_missing_key_other_table(test_connection, create_test_table):
     )
 
     # Should fail - key doesn't exist
-    with pytest.raises(FailTest, match=r"1 keys found in table"):
+    with pytest.raises(DataTestFailure, match=r"1 keys found in table"):
         t = common.ReferentialIntegrityTest(
             table_config=table_config, to_table_config=otr_table_config, keys=["id"]
         )
@@ -136,7 +136,7 @@ def test_missing_multiple_keys_other_table(test_connection, create_test_table):
         table=ibis.table(name=otr_tbl, schema=schema)
     )
     # Should fail - key doesn't exist
-    with pytest.raises(FailTest, match=r"1 keys found in table"):
+    with pytest.raises(DataTestFailure, match=r"1 keys found in table"):
         t = common.ReferentialIntegrityTest(
             table_config=table_config,
             to_table_config=otr_table_config,
@@ -268,7 +268,7 @@ def test_temporal_referential_integrity_key_out_of_time(
     t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
-    with pytest.raises(FailTest, match=r"1 keys found in table"):
+    with pytest.raises(DataTestFailure, match=r"1 keys found in table"):
         t(test_connection)
 
 
@@ -403,7 +403,7 @@ def test_temporal_referential_integrity_key_out_of_time_tolerance(
         key="id",
         tolerance="day",
     )
-    with pytest.raises(FailTest, match=r"1 keys found in table"):
+    with pytest.raises(DataTestFailure, match=r"1 keys found in table"):
         t(test_connection)
 
 
@@ -468,7 +468,7 @@ def test_temporal_referential_integrity_fails_before_period(
     t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
-    with pytest.raises(FailTest, match=r"1 keys found in table"):
+    with pytest.raises(DataTestFailure, match=r"1 keys found in table"):
         t(test_connection)
 
 
@@ -533,7 +533,7 @@ def test_temporal_referential_integrity_fails_after_period(
     t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
-    with pytest.raises(FailTest, match=r"1 keys found in table"):
+    with pytest.raises(DataTestFailure, match=r"1 keys found in table"):
         t(test_connection)
 
 
@@ -598,7 +598,7 @@ def test_temporal_referential_integrity_fails_encompassing_period(
     t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
-    with pytest.raises(FailTest, match=r"1 keys found in table"):
+    with pytest.raises(DataTestFailure, match=r"1 keys found in table"):
         t(test_connection)
 
 
@@ -807,5 +807,5 @@ def test_temporal_referential_integrity_multiple_mutations_out_of_period(
     t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
-    with pytest.raises(FailTest, match=r"1 keys found in table"):
+    with pytest.raises(DataTestFailure, match=r"1 keys found in table"):
         t(test_connection)
