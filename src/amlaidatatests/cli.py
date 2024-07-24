@@ -3,6 +3,7 @@
 import argparse
 import os
 import sys
+import typing
 
 from amlaidatatests.config import ConfigSingleton, init_parser_options_from_config
 from amlaidatatests.connection import connection_factory
@@ -19,22 +20,41 @@ def create_skeleton(args):
         connection.create_table(name=get_table_name(table.name), schema=table.schema)
 
 
+def build_parser():
+    parser = argparse.ArgumentParser()
+    parser = init_parser_options_from_config(parser)
+    parser = typing.cast(argparse.ArgumentParser, parser)
+    parser.add_argument(
+        "--pytest-help",
+        help="Print extra additional flags from pytest and exit",
+        dest="pytesthelp",
+        action="store_true",
+    )
+    return parser
+
+
 def entry_point():
     """Configure an argparse based entry point for amlaidatatests
 
     This is configured somewhat differently from the pytest dataset, which is
     somewhat clunky to configure"""
-    parser = argparse.ArgumentParser()
-    parser = init_parser_options_from_config(parser)
-    parser.add_argument("--pytest-h")
+    parser = build_parser()
+
+    sysargs = sys.argv[1:]
+    if "--pytest-help" in sysargs:
+        run_tests(["-h"])
+        # will exit
 
     args, extra = parser.parse_known_args()
+
+    if args.pytesthelp:
+        sysargs = sysargs.remove("--pytest-help")
 
     # For now, just pass all command line arguments through. This allows us to
     # verify the arguments but then pass them through directly -c NONE prevents
     # pytest from discovering setup.cfg elsewhere in the filesytem. this
     # prevents it printing a relative path to the root directory
-    run_tests(["-W ignore::DeprecationWarning", "-c NONE", *sys.argv[1:]])
+    run_tests(["-W ignore::DeprecationWarning", "-c NONE", *sysargs])
 
 
 if __name__ == "__main__":
