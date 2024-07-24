@@ -26,12 +26,15 @@ def entry_point():
     somewhat clunky to configure"""
     parser = argparse.ArgumentParser()
     parser = init_parser_options_from_config(parser)
+    parser.add_argument("--pytest-h")
 
     args, extra = parser.parse_known_args()
 
-    # For now, just pass all command line arguments through.
-    # This allows us to verify the
-    run_tests(sys.argv[1:])
+    # For now, just pass all command line arguments through. This allows us to
+    # verify the arguments but then pass them through directly -c NONE prevents
+    # pytest from discovering setup.cfg elsewhere in the filesytem. this
+    # prevents it printing a relative path to the root directory
+    run_tests(["-W ignore::DeprecationWarning", "-c NONE", *sys.argv[1:]])
 
 
 if __name__ == "__main__":

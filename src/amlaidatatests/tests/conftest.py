@@ -161,3 +161,32 @@ def pytest_html_results_table_row(report, cells) -> None:
         report: warning output cells: list of cells from pytest-html
     """
     cells.insert(1, f'<td class="col-int">{report.warning}</td>')
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_itemcollected(item):
+    """Pytest hook running after each item is collected
+
+    Strips out the full path for reporting compactness.
+
+    Conventional format:
+    ```tests/test_account_party_link.py::test_column_type[source_system]```
+
+    Normal format:
+    ```test_account_party_link.py::test_column_type[source_system]```
+
+    Args:
+        item: The collected node_id
+
+    Returns:
+        The modified node
+    """
+    old_nodeid = item._nodeid
+    # e.g. normal format is
+    #
+    path, function = old_nodeid.rsplit("::", maxsplit=1)
+    pth = pathlib.Path(path)
+    new_nodeid = f"{pth.name}::{function}"
+    print(new_nodeid)
+    item._nodeid = new_nodeid
+    return item
