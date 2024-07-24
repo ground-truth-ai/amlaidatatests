@@ -16,8 +16,11 @@ def pytest_configure(config):
     pass
 
 
+@pytest.hookimpl(tryfirst=True)
 def pytest_addoption(parser):
-    passthrough_pytest_addoption(parser=parser)
+    passthrough_pytest_addoption(
+        parser=parser, defaults={"connection_string": "duckdb://"}
+    )
 
 
 @pytest.fixture(scope="session")

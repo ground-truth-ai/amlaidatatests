@@ -36,13 +36,15 @@ Steps
 
     .. important:: Location
         The Google sample dataset is located in the ``US`` location. The ``connection_string`` option must set this option to the US.
-        
-        In the command below, replace MY-PROJECT with your GCP Project name.
+
+        In the command below, replace MY-PROJECT with your GCP Project name. Read more about the ``connection_string`` for bigquery
+        `here <../databases/bigquery>`_.
 
     .. code-block:: console
         :emphasize-text: MY-PROJECT
 
-        $ python -m amlaidatatests.tests --connection_string=bigquery://MY-PROJECT?location=US --database=bigquery-public-data.aml_ai_input_dataset
+        $ amlaidatatests --connection_string=bigquery://MY-PROJECT?location=US --database=bigquery-public-data.aml_ai_input_dataset
+
 
 #. Review the results
 
@@ -54,14 +56,10 @@ Steps
         src/amlaidatatests/tests/test_risk_case_event_table.py ....................                                                                                            [ 73%]
         src/amlaidatatests/tests/test_transaction_table.py .....F............................................                                                                  [100%]
 
-    A green '.' represents a passed test. 
+    A green '.' represents a passed test.
 
     A red 'F' represents a failed test.
 
     A yellow 's' represents a skipped test. If optional columns are not present on the tables provided, tests on those columns are automatically skipped.
 
-    SQL to replicate skipped and failed tests is output once all tests are complete. 
-    
-
-
-    
+    SQL to replicate skipped and failed tests is output once all tests are complete.

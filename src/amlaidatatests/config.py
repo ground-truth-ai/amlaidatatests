@@ -3,7 +3,8 @@
 import argparse
 import datetime
 from dataclasses import dataclass, field, fields
-from typing import Any, Optional
+from typing import Any, Optional, Union
+import typing
 from urllib.parse import urlparse
 
 from omegaconf import OmegaConf
@@ -54,6 +55,16 @@ def infer_database(connection_str: str) -> str | None:
 OmegaConf.register_new_resolver("infer_database", infer_database)
 
 
+def today_isoformat():
+    """Return today's date in isoformat.
+
+    This could be a lambda function but specifying it
+    causes a line break which breaks the ability of
+    simple_parsing to extract the docstring
+    """
+    return datetime.date.today().isoformat()
+
+
 @dataclass(kw_only=True)
 class DatatestConfig:
     """Container for all amlaidatatest configurations"""
@@ -77,9 +88,7 @@ class DatatestConfig:
     scale: float = 1.0
     """ Scale changes to modify profiling tests based on absolute values """
 
-    interval_end_date: str = field(
-        default_factory=lambda: datetime.date.today().isoformat()
-    )
+    interval_end_date: str = field(default_factory=today_isoformat)
     """ The last date of the interval. Defaults to today. """
 
 
@@ -158,6 +167,12 @@ class IngestConfigAction(argparse.Action):
         return " | ".join(self.option_strings)
 
 
+def is_required(field):
+    return not (
+        typing.get_origin(field) is Union and type(None) in typing.get_args(field)
+    )
+
+
 def init_parser_options_from_config(
     parser: argparse.ArgumentParser | pytest.Parser, defaults: Optional[dict] = None
 ) -> argparse.ArgumentParser | pytest.Parser:
@@ -187,12 +202,14 @@ def init_parser_options_from_config(
     )
     for f in fields(DatatestConfig):
         docstring = get_attribute_docstring(DatatestConfig, f.name)
+        required = OmegaConf.is_missing(STRUCTURED_CONFIG, f.name)
+        default = defaults.get(f.name)
         parser.addoption(
             f"--{f.name}",
             action=IngestConfigAction,
             default=defaults.get(f.name) or f.default,
             help=docstring.docstring_below,
-            required=f.default is False,
+            required=False if default else required,
         )
     return parser
 

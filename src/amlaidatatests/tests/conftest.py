@@ -25,6 +25,7 @@ STRUCTURED_CONF = OmegaConf.structured(DatatestConfig)
 logging.captureWarnings(True)
 
 
+@pytest.hookimpl(trylast=True)
 def pytest_addoption(parser: pytest.Parser, defaults: Optional[dict] = None) -> None:
     """Pytest hook to add configuration options to the pytest cli
 
@@ -36,7 +37,7 @@ def pytest_addoption(parser: pytest.Parser, defaults: Optional[dict] = None) -> 
         defaults       : Default override for underlying field
     """
     if defaults is None:
-        defaults = {}
+        defaults = {"connection_string": "duckdb://"}
 
     # Use this attribute to mark the attributes as already added.
     # We use multiple levels of conftest to allow both the tests
