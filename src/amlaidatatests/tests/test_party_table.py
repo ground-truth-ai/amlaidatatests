@@ -1,12 +1,14 @@
-#!/usr/bin/env python
+"""Tests for the party table"""
 
 import pytest
 
-from amlaidatatests.base import AbstractColumnTest, AbstractTableTest, AMLAITestSeverity
+from amlaidatatests.base import AbstractColumnTest, AbstractTableTest
+from amlaidatatests.config import cfg
+from amlaidatatests.exceptions import AMLAITestSeverity
 from amlaidatatests.io import get_valid_region_codes
 from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.test_generators import (
-    entity_columns,
+    get_entities,
     get_entity_mutation_tests,
     get_entity_tests,
     get_generic_table_tests,
@@ -14,14 +16,13 @@ from amlaidatatests.test_generators import (
     timestamp_field_tests,
 )
 from amlaidatatests.tests import common
-from amlaidatatests.config import cfg
 
 TABLE_CONFIG = resolve_table_config("party")
 TABLE = TABLE_CONFIG.table
 
 
 @pytest.mark.parametrize(
-    "test", get_generic_table_tests(table_config=TABLE_CONFIG, max_rows_factor=50e9)
+    "test", get_generic_table_tests(table_config=TABLE_CONFIG, expected_max_rows=50e9)
 )
 def test_table(connection, test: AbstractTableTest):
     test(connection=connection)
@@ -45,7 +46,7 @@ def test_entity_mutation_tests(connection, test: AbstractColumnTest):
 
 @pytest.mark.parametrize(
     "column",
-    entity_columns(schema=TABLE_CONFIG.table.schema(), entity_types=["CurrencyValue"]),
+    get_entities(table_config=TABLE_CONFIG, entity_types=["CurrencyValue"]),
 )
 @pytest.mark.parametrize(
     "test", get_entity_tests(table_config=TABLE_CONFIG, entity_name="CurrencyValue")
@@ -88,13 +89,13 @@ def test_timestamp_fields(connection, test: AbstractColumnTest):
     [
         common.ColumnValuesTest(
             column="type",
-            values=["COMPANY", "CONSUMER"],
+            allowed_values=["COMPANY", "CONSUMER"],
             table_config=TABLE_CONFIG,
             test_id="E001",
         ),
         common.ColumnValuesTest(
             column="civil_status_code",
-            values=[
+            allowed_values=[
                 "SINGLE",
                 "LEGALLY_DIVORCED",
                 "DIVORCED",
@@ -108,7 +109,7 @@ def test_timestamp_fields(connection, test: AbstractColumnTest):
         ),
         common.ColumnValuesTest(
             column="education_level_code",
-            values=[
+            allowed_values=[
                 "LESS_THAN_PRIMARY_EDUCATION",
                 "PRIMARY_EDUCATION",
                 "LOWER_SECONDARY_EDUCATION",
@@ -126,15 +127,15 @@ def test_timestamp_fields(connection, test: AbstractColumnTest):
         ),
         common.ColumnValuesTest(
             column="nationalities.region_code",
-            values=get_valid_region_codes(),
+            allowed_values=get_valid_region_codes(),
             table_config=TABLE_CONFIG,
-            test_id="V002",
+            test_id="FMT004",
         ),
         common.ColumnValuesTest(
             column="residencies.region_code",
-            values=get_valid_region_codes(),
+            allowed_values=get_valid_region_codes(),
             table_config=TABLE_CONFIG,
-            test_id="V003",
+            test_id="FMT003",
         ),
     ],
 )
@@ -205,6 +206,7 @@ def test_RI013_temporal_referential_integrity_party_supplementary_table(connecti
         common.CountMatchingRows(
             column="join_date",
             table_config=TABLE_CONFIG,
+            max_number=0,
             expression=lambda t: t.validity_start_time.date() < t.join_date,
             severity=AMLAITestSeverity.ERROR,
             test_id="DT017",
@@ -212,6 +214,7 @@ def test_RI013_temporal_referential_integrity_party_supplementary_table(connecti
         common.CountMatchingRows(
             column="birth_date",
             table_config=TABLE_CONFIG,
+            max_number=0,
             expression=lambda t: t.birth_date > cfg().interval_end_date,
             severity=AMLAITestSeverity.WARN,
             test_id="DT002",
@@ -219,6 +222,7 @@ def test_RI013_temporal_referential_integrity_party_supplementary_table(connecti
         common.CountMatchingRows(
             column="establishment_date",
             table_config=TABLE_CONFIG,
+            max_number=0,
             expression=lambda t: t.establishment_date > cfg().interval_end_date,
             severity=AMLAITestSeverity.WARN,
             test_id="DT003",
@@ -226,6 +230,7 @@ def test_RI013_temporal_referential_integrity_party_supplementary_table(connecti
         common.CountMatchingRows(
             column="exit_date",
             table_config=TABLE_CONFIG,
+            max_number=0,
             expression=lambda t: t.exit_date > cfg().interval_end_date,
             severity=AMLAITestSeverity.WARN,
             test_id="DT004",
@@ -233,6 +238,7 @@ def test_RI013_temporal_referential_integrity_party_supplementary_table(connecti
         common.CountMatchingRows(
             column="join_date",
             table_config=TABLE_CONFIG,
+            max_number=0,
             expression=lambda t: t.join_date > cfg().interval_end_date,
             severity=AMLAITestSeverity.WARN,
             test_id="DT005",
@@ -240,6 +246,7 @@ def test_RI013_temporal_referential_integrity_party_supplementary_table(connecti
         common.CountMatchingRows(
             column="join_date",
             table_config=TABLE_CONFIG,
+            max_number=0,
             expression=lambda t: t.join_date > t.establishment_date,
             severity=AMLAITestSeverity.WARN,
             test_id="DT0012",
@@ -247,6 +254,7 @@ def test_RI013_temporal_referential_integrity_party_supplementary_table(connecti
         common.CountMatchingRows(
             column="join_date",
             table_config=TABLE_CONFIG,
+            max_number=0,
             expression=lambda t: t.join_date > t.birth_date,
             severity=AMLAITestSeverity.WARN,
             test_id="DT0013",
@@ -264,7 +272,7 @@ def test_date_consistency(connection, test):
             column="birth_date",
             table_config=TABLE_CONFIG,
             where=lambda t: t.type == "CONSUMER",
-            proportion=0.01,
+            max_proportion=0.01,
             severity=AMLAITestSeverity.WARN,
             test_id="P003",
         ),
@@ -272,7 +280,7 @@ def test_date_consistency(connection, test):
             column="establishment_date",
             table_config=TABLE_CONFIG,
             where=lambda t: t.type == "COMPANY",
-            proportion=0.01,
+            max_proportion=0.01,
             severity=AMLAITestSeverity.WARN,
             test_id="P004",
         ),
@@ -280,35 +288,35 @@ def test_date_consistency(connection, test):
             column="occupation",
             table_config=TABLE_CONFIG,
             where=lambda t: t.type == "CONSUMER",
-            proportion=0.10,
+            max_proportion=0.10,
             severity=AMLAITestSeverity.WARN,
             test_id="P005",
         ),
         common.CountFrequencyValues(
             column="exit_date",
             table_config=TABLE_CONFIG,
-            proportion=0.05,
+            max_proportion=0.05,
             severity=AMLAITestSeverity.WARN,
             test_id="P010",
         ),
         common.CountFrequencyValues(
             column="join_date",
             table_config=TABLE_CONFIG,
-            proportion=0.05,
+            max_proportion=0.05,
             severity=AMLAITestSeverity.WARN,
             test_id="P011",
         ),
         common.CountFrequencyValues(
             column="civil_status_code",
             table_config=TABLE_CONFIG,
-            proportion=0.75,
+            max_proportion=0.75,
             severity=AMLAITestSeverity.WARN,
             test_id="P012",
         ),
         common.CountFrequencyValues(
             column="education_level_code",
             table_config=TABLE_CONFIG,
-            proportion=0.75,
+            max_proportion=0.75,
             severity=AMLAITestSeverity.WARN,
             test_id="P013",
         ),

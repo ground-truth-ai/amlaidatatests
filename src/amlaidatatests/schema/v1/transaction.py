@@ -1,3 +1,5 @@
+"""Configuration file specifying the schema for the transaction table"""
+
 import ibis
 from ibis.expr.datatypes import Boolean, String, Struct, Timestamp
 

@@ -1,3 +1,5 @@
+""" Singleton function, derived from the hydra project """
+
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 #
 # MIT License
@@ -24,7 +26,9 @@
 
 # The contents of this file were substantially derived from
 # https://github.com/facebookresearch/hydra/blob/main/hydra/core/singleton.py
-# licensed under the MIT license
+# licensed under the MIT license. This constructs an omegaconf singleton which
+# is common across the entire datatest. It is used to avoid passing the
+# configuration across the entire codebase.
 
 from copy import deepcopy
 from typing import Any, Dict
@@ -33,6 +37,10 @@ from omegaconf.basecontainer import BaseContainer
 
 
 class Singleton(type):
+    """The singleton persists omegaconf configuration into a single,
+    instancewide configuration
+    """
+
     _instances: Dict[type, "Singleton"] = {}
 
     def __call__(cls, *args: Any, **kwargs: Any) -> Any:
@@ -49,6 +57,7 @@ class Singleton(type):
 
         return {
             "instances": instances,
+            # Resolvers have to be handled seperately.
             "omegaconf_resolvers": deepcopy(BaseContainer._resolvers),
         }
 

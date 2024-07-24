@@ -1,14 +1,13 @@
+""" Utility CLI for amlaidatatests """
+
 import argparse
 import os
 import sys
 
-import pytest
-
-from amlaidatatests.config import ConfigSingleton, init_config
+from amlaidatatests.config import ConfigSingleton, init_parser_options_from_config
 from amlaidatatests.connection import connection_factory
 from amlaidatatests.schema.utils import get_amlai_schema, get_table_name
-
-dir_path = os.path.dirname(os.path.realpath(__file__))
+from amlaidatatests.tests import run_tests
 
 
 def create_skeleton(args):
@@ -20,25 +19,22 @@ def create_skeleton(args):
         connection.create_table(name=get_table_name(table.name), schema=table.schema)
 
 
-def run_tests(args):
-    pytest.main(args=[f"{dir_path}/tests", *sys.argv[1:]])
-
-
 def entry_point():
+    """Configure an argparse based entry point for amlaidatatests
+
+    This is configured somewhat differently from the pytest dataset, which is
+    somewhat clunky to configure"""
     parser = argparse.ArgumentParser()
-    parser = init_config(parser)
-    subparsers = parser.add_subparsers(required=True)
+    parser = init_parser_options_from_config(parser)
+    parser.add_argument("--pytest-h")
 
-    skeleton = subparsers.add_parser("skeleton")
-    tests = subparsers.add_parser("tests")
+    args, extra = parser.parse_known_args()
 
-    tests.add_argument("args", nargs="+")
-
-    tests.set_defaults(func=run_tests)
-    skeleton.set_defaults(func=create_skeleton)
-
-    args = parser.parse_args()
-    args.func(args)
+    # For now, just pass all command line arguments through. This allows us to
+    # verify the arguments but then pass them through directly -c NONE prevents
+    # pytest from discovering setup.cfg elsewhere in the filesytem. this
+    # prevents it printing a relative path to the root directory
+    run_tests(["-W ignore::DeprecationWarning", "-c NONE", *sys.argv[1:]])
 
 
 if __name__ == "__main__":

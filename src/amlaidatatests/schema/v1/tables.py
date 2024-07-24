@@ -1,3 +1,6 @@
+"""Configuration file specifying the tables and configuration for this schema
+version"""
+
 from amlaidatatests.schema.base import BaseSchemaConfiguration, TableConfig, TableType
 
 from . import (

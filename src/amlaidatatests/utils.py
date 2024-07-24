@@ -1,3 +1,5 @@
+""" Misc utils for amlaidatatests """
+
 from amlaidatatests.config import ConfigSingleton
 from amlaidatatests.connection import connection_factory
 from amlaidatatests.schema.base import ResolvedTableConfig
@@ -17,13 +19,13 @@ def create_empty_schema_tables():
 
 
 def get_columns(table_config: ResolvedTableConfig):
-    """_summary_
+    """Retrieve all columns for the provided table_config
 
     Args:
-        table_config: _description_
+        table_config: Table config to retrieve columns for
 
     Returns:
-        _description_
+        An iterable of column fields
     """
     return table_config.table.schema().fields.keys()
 

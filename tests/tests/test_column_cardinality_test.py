@@ -2,7 +2,7 @@ import ibis
 import pytest
 from ibis.expr.datatypes import String
 
-from amlaidatatests.base import FailTest
+from amlaidatatests.exceptions import DataTestFailure
 from amlaidatatests.schema.base import ResolvedTableConfig, TableType
 from amlaidatatests.tests import common
 
@@ -74,7 +74,7 @@ def test_column_cardinality_test_grouped_max_fails(test_connection, create_test_
     t = common.ColumnCardinalityTest(
         column="value", table_config=table_config, group_by=["id"], max_number=1
     )
-    with pytest.raises(expected_exception=FailTest):
+    with pytest.raises(expected_exception=DataTestFailure):
         t(test_connection)
 
 
@@ -151,7 +151,7 @@ def test_column_cardinality_test_grouped_min_fails(test_connection, create_test_
     t = common.ColumnCardinalityTest(
         column="value", table_config=table_config, group_by=["id"], min_number=2
     )
-    with pytest.raises(expected_exception=FailTest):
+    with pytest.raises(expected_exception=DataTestFailure):
         t(test_connection)
 
 
@@ -217,7 +217,7 @@ def test_column_cardinality_test_global_min_fails(test_connection, create_test_t
     t = common.ColumnCardinalityTest(
         column="value", table_config=table_config, min_number=2
     )
-    with pytest.raises(expected_exception=FailTest):
+    with pytest.raises(expected_exception=DataTestFailure):
         t(test_connection)
 
 
@@ -268,5 +268,5 @@ def test_column_cardinality_test_global_min_max_fails(
     t = common.ColumnCardinalityTest(
         column="value", table_config=table_config, min_number=2, max_number=4
     )
-    with pytest.raises(expected_exception=FailTest):
+    with pytest.raises(expected_exception=DataTestFailure):
         t(test_connection)

@@ -1,11 +1,13 @@
+"""Configuration file specifying the schema for the party table"""
+
 import ibis
 from ibis.expr.datatypes import Array, Boolean, Date, String, Struct, Timestamp
 
 from amlaidatatests.schema.v1.common import CurrencyValue
 
-#            party_id                  VARCHAR(255),
-#            validity_start_time     Int,
-#            is_entity_deleted       Bool,
+#    party_id                VARCHAR(255),
+#    validity_start_time     Int,
+#    is_entity_deleted       Bool,
 #    source_system           VARCHAR(255),
 #    type                    VARCHAR(255),
 #    birth_date              DATE,
@@ -21,7 +23,7 @@ from amlaidatatests.schema.v1.common import CurrencyValue
 #    education_level_code    VARCHAR(255)
 
 party_schema = ibis.Schema(
-    {
+    fields={
         "party_id": String(nullable=False),
         "validity_start_time": Timestamp(nullable=False),
         "is_entity_deleted": Boolean(),

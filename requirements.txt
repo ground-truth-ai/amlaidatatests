@@ -5,3 +5,4 @@ ibis-framework[duckdb]
 pytest
 omegaconf
 pytz
+simple_parsing

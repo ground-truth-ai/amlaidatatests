@@ -1,13 +1,14 @@
-#!/usr/bin/env python
+"""Tests for the party_supplementary_data table"""
 
 import pytest
 
-from amlaidatatests.base import AMLAITestSeverity, AbstractColumnTest, AbstractTableTest
+from amlaidatatests.base import AbstractColumnTest, AbstractTableTest
+from amlaidatatests.exceptions import AMLAITestSeverity
 from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.test_generators import (
     get_entity_mutation_tests,
     get_generic_table_tests,
-    non_nullable_fields,
+    non_nullable_field_tests,
     timestamp_field_tests,
 )
 from amlaidatatests.tests import common
@@ -17,7 +18,7 @@ TABLE_CONFIG = resolve_table_config("party_supplementary_data")
 
 # Don't error or warn on an empty party_supplementary_data table
 @pytest.mark.parametrize(
-    "test", get_generic_table_tests(table_config=TABLE_CONFIG, max_rows_factor=1e12)
+    "test", get_generic_table_tests(table_config=TABLE_CONFIG, expected_max_rows=1e12)
 )
 def test_table(connection, test: AbstractTableTest):
     test(connection=connection)
@@ -62,9 +63,8 @@ def test_column_type(connection, column):
 # possible to enforce an embedded struct is non-nullable.
 
 
-@pytest.mark.parametrize("column", non_nullable_fields(TABLE_CONFIG.table.schema()))
-def test_non_nullable_fields(connection, column):
-    test = common.FieldNeverNullTest(table_config=TABLE_CONFIG, column=column)
+@pytest.mark.parametrize("test", non_nullable_field_tests(TABLE_CONFIG))
+def test_non_nullable_fields(connection, test: AbstractColumnTest):
     test(connection)
 
 

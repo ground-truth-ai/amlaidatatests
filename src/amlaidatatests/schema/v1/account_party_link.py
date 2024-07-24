@@ -1,3 +1,6 @@
+"""Configuration file specifying the schema for the account_party_link
+table"""
+
 import ibis
 from ibis import schema
 from ibis.expr.datatypes import Boolean, String, Timestamp
@@ -21,7 +24,7 @@ ACCOUNT_PARTY_LINK = schema(
 )
 
 account_party_link_schema = ibis.Schema(
-    {
+    fields={
         "account_id": String(nullable=False),
         "party_id": String(nullable=False),
         "validity_start_time": Timestamp(nullable=False),

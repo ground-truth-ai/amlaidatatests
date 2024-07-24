@@ -1,3 +1,6 @@
+"""Configuration file specifying the schema for the party_supplementary_data
+table"""
+
 import ibis
 from ibis.expr.datatypes import Boolean, Float64, String, Struct, Timestamp
 

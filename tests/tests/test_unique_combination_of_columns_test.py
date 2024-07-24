@@ -4,7 +4,7 @@ import ibis
 import pytest
 from ibis.expr.datatypes import String, Timestamp
 
-from amlaidatatests.base import FailTest
+from amlaidatatests.exceptions import DataTestFailure
 from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests.common import PrimaryKeyColumnsTest
 
@@ -45,7 +45,7 @@ def test_one_duplicate_rows(test_connection, test_base_table, create_test_table)
     tbl = create_test_table(data)
     t = test_base_table(tbl)
 
-    with pytest.raises(FailTest, match=r"Found 1 duplicate values$"):
+    with pytest.raises(DataTestFailure, match=r"Found 1 duplicate values$"):
         t(test_connection)
 
 
@@ -61,7 +61,7 @@ def test_two_duplicate_rows(test_connection, test_base_table, create_test_table)
     tbl = create_test_table(data)
     t = test_base_table(tbl)
 
-    with pytest.raises(FailTest, match=r"Found 2 duplicate values$"):
+    with pytest.raises(DataTestFailure, match=r"Found 2 duplicate values$"):
         t(test_connection)
 
 
