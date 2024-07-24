@@ -4,13 +4,10 @@ import argparse
 import os
 import sys
 
-import pytest
-
 from amlaidatatests.config import ConfigSingleton, init_parser_options_from_config
 from amlaidatatests.connection import connection_factory
 from amlaidatatests.schema.utils import get_amlai_schema, get_table_name
-
-dir_path = os.path.dirname(os.path.realpath(__file__))
+from amlaidatatests.tests import run_tests
 
 
 def create_skeleton(args):
@@ -22,13 +19,6 @@ def create_skeleton(args):
         connection.create_table(name=get_table_name(table.name), schema=table.schema)
 
 
-def run_tests(extras):
-    # Pass the entire set of arguments through to pytest
-    args = [f"{dir_path}/tests", *sys.argv[1:]]
-    print(args)
-    pytest.main(args=args)
-
-
 def entry_point():
     """Configure an argparse based entry point for amlaidatatests
 
@@ -37,11 +27,11 @@ def entry_point():
     parser = argparse.ArgumentParser()
     parser = init_parser_options_from_config(parser)
 
-    parser.set_defaults(func=run_tests)
-
     args, extra = parser.parse_known_args()
 
-    args.func(extra)
+    # For now, just pass all command line arguments through.
+    # This allows us to verify the
+    run_tests(sys.argv[1:])
 
 
 if __name__ == "__main__":

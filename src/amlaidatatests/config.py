@@ -46,7 +46,9 @@ def infer_database(connection_str: str) -> str | None:
         return parsed_url.path[1:]
     if parsed_url.scheme == "duckdb":
         return None
-    raise ValueError(f"Unsupported database: {parsed_url.scheme}")
+    raise ValueError(
+        f"Unsupported database or invalid connection string: {connection_str}"
+    )
 
 
 OmegaConf.register_new_resolver("infer_database", infer_database)

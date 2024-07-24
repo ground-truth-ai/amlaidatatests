@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.9", 3.10", "3.11", "3.12"]
 
     permissions:
       contents: 'read'
@@ -102,4 +102,4 @@ jobs:
 
       - name: Test against bigquery
         run: |
-          python -m amlaidatatests.tests --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}?location=US --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset -x -k test_primary_keys
+          python -m amlaidatatests.tests --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}?location=US --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset -x -k primary_keys
