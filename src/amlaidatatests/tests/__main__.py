@@ -20,4 +20,4 @@ if __name__ == "__main__":
     # An adaptor is used because the pytest cli can't handle directly
     # passing the fully-qualified module AND the addition of command line
     # options
-    run_tests(["-W ignore::DeprecationWarning", *sys.argv[1:]])
+    run_tests(["-W ignore::DeprecationWarning", "-c NONE", *sys.argv[1:]])
