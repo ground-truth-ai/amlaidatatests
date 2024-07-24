@@ -202,12 +202,14 @@ def init_parser_options_from_config(
     )
     for f in fields(DatatestConfig):
         docstring = get_attribute_docstring(DatatestConfig, f.name)
+        required = OmegaConf.is_missing(STRUCTURED_CONFIG, f.name)
+        default = defaults.get(f.name)
         parser.addoption(
             f"--{f.name}",
             action=IngestConfigAction,
             default=defaults.get(f.name) or f.default,
             help=docstring.docstring_below,
-            required=OmegaConf.is_missing(STRUCTURED_CONFIG, f.name),
+            required=False if default else required,
         )
     return parser
 
