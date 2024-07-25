@@ -1,8 +1,11 @@
 """pytest configuration file for integration with amlaitests"""
 
 import logging
-from dataclasses import fields
-from typing import Optional
+from dataclasses import dataclass, fields
+import os
+import random
+from typing import Dict, Optional, Tuple
+import typing
 
 import pytest
 from omegaconf import OmegaConf
@@ -121,6 +124,10 @@ def pytest_html_results_summary(prefix, summary, postfix) -> None:
     )
 
 
+# store history of failures per test module
+_test_failed_incremental: Dict[str, str] = {}
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     """Pytest-html hook. Does not run if pytest-html is not installed
@@ -136,6 +143,30 @@ def pytest_runtest_makereport(item, call):
     outcome = yield
     report = outcome.get_result()
     report.warning = report.caplog.count("WARNING")
+    # Tab
+    if dict(report.user_properties).get("table_missing"):
+        # the test has failed
+        # retrieve the class name of the test
+        module = str(item.module)
+        # retrieve the index of the test (if parametrize is used in combination with incremental)
+        # retrieve the name of the test function
+        test_name = item.originalname or item.name
+        # store in _test_failed_incremental the original name of the failed test
+        _test_failed_incremental[module] = test_name
+
+
+def pytest_runtest_setup(item):
+    # retrieve the class name of the test
+    module_name = str(item.module)
+    # check if a previous test has failed for this class
+    if test_name := _test_failed_incremental.get(module_name):
+        # retrieve the index of the test (if parametrize is used in combination with incremental)
+        # if name found, test has failed for the combination of class name & test name
+        if test_name is not None:
+            pytest.xfail(
+                "Skipping test as a previous test was unable "
+                "to query table ({})".format(test_name)
+            )
 
 
 @pytest.hookimpl(optionalhook=True)
@@ -184,10 +215,128 @@ def pytest_itemcollected(item):
     """
     old_nodeid = item._nodeid
     # e.g. normal format is
-    #
     path, function = old_nodeid.rsplit("::", maxsplit=1)
     pth = pathlib.Path(path)
     new_nodeid = f"{pth.name}::{function}"
-    print(new_nodeid)
     item._nodeid = new_nodeid
     return item
+
+
+@dataclass
+class AMLAITestReport:
+    message: Optional[str]
+    nodeid: str
+    user_properties: dict[str, str]
+
+
+def render_test_summary(
+    terminalreporter, test_reports: list[AMLAITestReport], **markup: str
+):
+    for f in test_reports:
+        # First line has exception header
+        first_line = f.message.split("\n")[0]
+        first_line = first_line.replace(
+            "amlaidatatests.exceptions.DataTestFailure: ", ""
+        )
+        find_str = "DataTestWarning: "
+        first_line_idx = first_line.find(find_str)
+        if first_line_idx > -1:
+            first_line = first_line[first_line_idx + len(find_str) :]
+
+        test_id: str = f.user_properties.get("test_id") or "."
+        terminalreporter.write(test_id.ljust(7), bold=True, **markup)
+        table_id: str = f.user_properties.get("table") or ""
+        column_id: str = f.user_properties.get("column") or ""
+        if table_id and column_id:
+            terminalreporter.write(f"{table_id}.{column_id}".ljust(54))
+        else:
+            terminalreporter.write(f"{table_id}".ljust(54))
+        terminalreporter.write(f"{first_line}\t")
+        terminalreporter.write("\n")
+
+
+def test_report_to_payload(
+    test_reports: list[pytest.TestReport],
+) -> list[AMLAITestReport]:
+    arr = []
+    for rpt in test_reports:
+        arr.append(
+            AMLAITestReport(
+                message=rpt.longrepr.reprcrash.message if rpt.longrepr else None,
+                nodeid=rpt.nodeid,
+                user_properties=dict(rpt.user_properties),
+            )
+        )
+    return arr
+
+
+def warn_report_to_payload(
+    warning_reports: list, parsed_test_reports: list[AMLAITestReport]
+):
+    arr = []
+    lookup = {rpt.nodeid: rpt for rpt in parsed_test_reports}
+    for rpt in warning_reports:
+        arr.append(
+            AMLAITestReport(
+                message=rpt.message,
+                nodeid=rpt.nodeid,
+                user_properties=lookup[rpt.nodeid].user_properties,
+            )
+        )
+    return arr
+
+
+def skip_report_to_payload(skip_reports: list):
+    arr = []
+    for rpt in skip_reports:
+        arr.append(
+            AMLAITestReport(
+                message=rpt.longrepr[2],
+                nodeid=rpt.nodeid,
+                user_properties=dict(
+                    rpt.user_properties,
+                ),
+            )
+        )
+    return arr
+
+
+def pytest_terminal_summary(terminalreporter: pytest, exitstatus, config):
+    terminalreporter.ensure_newline()
+    terminalreporter.section("amlaidatatests summary", sep="=", blue=True, bold=True)
+
+    passed = terminalreporter.getreports("passed")
+    parsed_passed_tests = test_report_to_payload(passed)
+    terminalreporter.section(
+        f"tests passed: {len(passed)}", sep="-", blue=True, bold=True
+    )
+
+    skips = terminalreporter.getreports("skipped")
+
+    terminalreporter.section(f"skipped: {len(skips)}", sep="-", blue=True, bold=True)
+    if skips:
+        parsed_skips = skip_report_to_payload(skips)
+        render_test_summary(terminalreporter, parsed_skips, light=True)
+
+    # Warnings don't have user attributes on them, so we have to "join" the two lists
+    # render_test_summary(terminalreporter, warnings)
+    warnings = terminalreporter.getreports("warnings")
+    terminalreporter.section(
+        f"warnings: {len(warnings)}", sep="-", blue=True, bold=True
+    )
+    if warnings:
+        parsed_warnings = warn_report_to_payload(warnings, parsed_passed_tests)
+        render_test_summary(terminalreporter, parsed_warnings, yellow=True)
+
+    failures = terminalreporter.getreports("failed")
+    terminalreporter.section(
+        f"failures: {len(failures)}", sep="-", blue=True, bold=True
+    )
+    if failures:
+        parsed_failures = test_report_to_payload(failures)
+        render_test_summary(terminalreporter, parsed_failures, red=True)
+
+
+@pytest.fixture(autouse=True)
+def auto_resource(record_property: typing.Callable[[str, typing.Any], None]):
+    return record_property

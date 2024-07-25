@@ -9,7 +9,7 @@ from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests import common
 
 
-def test_orphaned_deleted_entity(test_connection, create_test_table):
+def test_orphaned_deleted_entity(test_connection, create_test_table, request):
     schema = {
         "id": String(nullable=False),
         "is_entity_deleted": Boolean(nullable=False),
@@ -30,17 +30,19 @@ def test_orphaned_deleted_entity(test_connection, create_test_table):
             schema=schema,
         )
     )
-    table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
+    table_config = ResolvedTableConfig(
+        name=tbl, table=ibis.table(name=tbl, schema=schema)
+    )
 
     t = common.OrphanDeletionsTest(table_config=table_config, entity_ids=["id"])
 
     with pytest.warns(
         DataTestWarning, match="1 rows found with orphaned entity deletions"
     ):
-        t(test_connection)
+        t(test_connection, request)
 
 
-def test_not_orphaned_deleted_entity(test_connection, create_test_table):
+def test_not_orphaned_deleted_entity(test_connection, create_test_table, request):
     schema = {
         "id": String(nullable=False),
         "is_entity_deleted": Boolean(nullable=False),
@@ -68,8 +70,10 @@ def test_not_orphaned_deleted_entity(test_connection, create_test_table):
             schema=schema,
         )
     )
-    table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
+    table_config = ResolvedTableConfig(
+        name=tbl, table=ibis.table(name=tbl, schema=schema)
+    )
     t = common.OrphanDeletionsTest(
         table_config=table_config, entity_ids=["id"], severity=AMLAITestSeverity.ERROR
     )
-    t(test_connection)
+    t(test_connection, request)

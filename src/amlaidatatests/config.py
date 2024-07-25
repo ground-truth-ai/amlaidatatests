@@ -91,6 +91,8 @@ class DatatestConfig:
     interval_end_date: str = field(default_factory=today_isoformat)
     """ The last date of the interval. Defaults to today. """
 
+    testing_mode: bool = False
+
 
 class ConfigSingleton(metaclass=Singleton):
     """Singleton for all amlaidatatest configuration"""

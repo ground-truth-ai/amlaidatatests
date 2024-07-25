@@ -17,7 +17,7 @@ def test_base_table() -> PrimaryKeyColumnsTest:
             schema={"alpha": String(nullable=False), "beta": String(nullable=False)},
         )
 
-        table_config = ResolvedTableConfig(table=table)
+        table_config = ResolvedTableConfig(name=table.get_name(), table=table)
 
         return PrimaryKeyColumnsTest(
             unique_combination_of_columns=["alpha", "beta"], table_config=table_config
@@ -26,15 +26,19 @@ def test_base_table() -> PrimaryKeyColumnsTest:
     return _test_base_table
 
 
-def test_no_duplicate_rows(test_connection, test_base_table, create_test_table):
+def test_no_duplicate_rows(
+    test_connection, test_base_table, create_test_table, request
+):
     data = ibis.memtable([{"alpha": "a", "beta": "1"}, {"alpha": "b", "beta": "2"}])
     tbl = create_test_table(data)
     t = test_base_table(tbl)
 
-    t(test_connection)
+    t(test_connection, request)
 
 
-def test_one_duplicate_rows(test_connection, test_base_table, create_test_table):
+def test_one_duplicate_rows(
+    test_connection, test_base_table, create_test_table, request
+):
     data = ibis.memtable(
         [
             {"alpha": "a", "beta": "1"},
@@ -46,10 +50,12 @@ def test_one_duplicate_rows(test_connection, test_base_table, create_test_table)
     t = test_base_table(tbl)
 
     with pytest.raises(DataTestFailure, match=r"Found 1 duplicate values$"):
-        t(test_connection)
+        t(test_connection, request)
 
 
-def test_two_duplicate_rows(test_connection, test_base_table, create_test_table):
+def test_two_duplicate_rows(
+    test_connection, test_base_table, create_test_table, request
+):
     data = ibis.memtable(
         [
             {"alpha": "a", "beta": "1"},
@@ -62,10 +68,10 @@ def test_two_duplicate_rows(test_connection, test_base_table, create_test_table)
     t = test_base_table(tbl)
 
     with pytest.raises(DataTestFailure, match=r"Found 2 duplicate values$"):
-        t(test_connection)
+        t(test_connection, request)
 
 
-def test_mixed_types(test_connection, create_test_table):
+def test_mixed_types(test_connection, create_test_table, request):
     schema = {
         "id": String(nullable=False),
         "id2": Timestamp(nullable=False, timezone="UTC"),
@@ -83,10 +89,10 @@ def test_mixed_types(test_connection, create_test_table):
     )
     table = ibis.table(name=tbl, schema=schema)
 
-    table_config = ResolvedTableConfig(table=table)
+    table_config = ResolvedTableConfig(name=table.get_name(), table=table)
 
     t = PrimaryKeyColumnsTest(
         unique_combination_of_columns=["id", "id2"], table_config=table_config
     )
 
-    t(test_connection)
+    t(test_connection, request)

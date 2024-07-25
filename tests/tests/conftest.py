@@ -1,5 +1,6 @@
 from typing import Callable
 
+from amlaidatatests.config import cfg
 import ibis
 import pytest
 from ibis import BaseBackend, Table
@@ -27,6 +28,7 @@ def pytest_addoption(parser):
 def test_connection() -> BaseBackend:
     """Test connection fixture which defaults to in memory
     duckdb"""
+    cfg().testing_mode = True
     connection = connection_factory("duckdb://")
     return connection
 

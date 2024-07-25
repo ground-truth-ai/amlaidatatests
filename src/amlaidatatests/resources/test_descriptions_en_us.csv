@@ -29,20 +29,18 @@ P024,Transaction,direction,Check for imbalanced vol types across dataset (e.g. 8
 P025,Transaction,direction,Check for imbalanced vol types across dataset (e.g. 80% DEBIT/20% CREDIT)
 P026,Transaction,account_id,Account with many txns
 P027,Transaction,account_id,Account with many txns
-P028,Transaction,"account_id, counterparty_account",Account with many txns
-P029,Transaction,"account_id, counterparty_account",Account with many txns
+P028,Transaction,"account_id, counterparty_account",Account and Counterparty pairs have many txns
+P029,Transaction,"account_id, counterparty_account",Account and Counterparty pairs have many txns
 P030,AccountPartyLink,account_id,High number of accounts with no txns
 P031,AccountPartyLink,account_id,High number of accounts with no txns
 P032,Transaction,book_time,>= 1 month contains txns less than X the monthly average
 P033,Transaction,book_time,>= 1 month contains txns less than X the monthly average
-P034,Transaction,book_time,High frequency values
-P051,Transaction,type,High requency txn normalized_booked_amount. Checked for each txn type
-P035,PartySupplementaryData,party_supplementary_data_id,"Same number of supplementary_data_id for each customer.
-
-Added - **IDs are consistent for each customer"
+P034,Transaction,book_time,Many transactions have the same book_time
+P051,Transaction,type,Large number of transactions have the same value across any transaction type
+P035,PartySupplementaryData,party_supplementary_data_id,Same number of supplementary_data_id for each customer
 P036,PartySupplementaryData,party_supplementary_data_id,LTE 100 supplementary_data_id for each customer
 P037,PartySupplementaryData,source_system,Check for many values
-P038,RiskCaseEvent,event_time,High frequency values
+P038,RiskCaseEvent,event_time,Many risk case events have the same event_time
 P039,RiskCaseEvent,type,Check >=1 AML_PROCESS_START in table
 P040,RiskCaseEvent,type,Check >=1 AML_PROCESS_END in table
 P041,RiskCaseEvent,type,Check >=1 AML_EXIT in table
@@ -109,8 +107,8 @@ DT011,RiskCaseEvent,event_time,All values are before the interval end date (if p
 DT012,Party,join_date,Join date after birth / establishment date for each party
 DT013,Party,exit_date,Exit date after the first join date for each party
 DT014,RiskCaseEvent,event_time,"Order of case events: AML_START, AML_END and AML_EXIT in correct order for each risk_case_id, party_id"
-C001,All,All non-nullable,No nulls for non-nullable
-C002,All,All non-nullable strings,No empty strings
+C001,All,All non-nullable,No nulls for non-nullable columns
+C002,All,All non-nullable strings,No empty strings in non-nullable fields
 RI001,AccountPartyLink,party_id,All party_id in AccountPartyLink exist in Party
 RI002,Party,party_id,All party_id in Party exist in AccountPartyLink
 RI003,AccountPartyLink,account_id,All account_id in AccountPartyLink exist in Transaction
@@ -142,63 +140,8 @@ PK003,Transaction,"transaction_id, validity_start_time",check columns defined ar
 PK004,RiskCaseEvent,risk_case_event_id,check columns defined are a primary key on the table
 PK005,PartySupplementaryData,"party_supplementary_data_id, party_id, validity_start_time",check columns defined are a primary key on the table
 F001,All,,check no additional fields exist on the table
-F002,All,is_entity_deleted,check for consecutive is_entity_deleted values for the same PK
-F003,Party,party_id,check column exists on table and is the correct type
-F004,Party,validity_start_time,check column exists on table and is the correct type
-F005,Party,is_entity_deleted,check column exists on table and is the correct type
-F006,Party,source_system,check column exists on table and is the correct type
-F007,Party,type,check column exists on table and is the correct type
-F008,Party,birth_date,check column exists on table and is the correct type
-F009,Party,establishment_date,check column exists on table and is the correct type
-F010,Party,occupation,check column exists on table and is the correct type
-F011,Party,gender,check column exists on table and is the correct type
-F012,Party,nationalities,check column exists on table and is the correct type
-F013,Party,nationalities.region_code,check column exists on table and is the correct type
-F014,Party,residencies,check column exists on table and is the correct type
-F015,Party,residencies.region_code,check column exists on table and is the correct type
-F016,Party,exit_date,check column exists on table and is the correct type
-F017,Party,join_date,check column exists on table and is the correct type
-F018,Party,assets_value_range,check column exists on table and is the correct type
-F019,Party,assets_value_range.start_amount,check column exists on table and is the correct type
-F020,Party,assets_value_range.start_amount.currency_code,check column exists on table and is the correct type
-F021,Party,assets_value_range.start_amount.units,check column exists on table and is the correct type
-F022,Party,assets_value_range.start_amount.nanos,check column exists on table and is the correct type
-F023,Party,assets_value_range.end_amount,check column exists on table and is the correct type
-F024,Party,assets_value_range.end_amount.currency_code,check column exists on table and is the correct type
-F025,Party,assets_value_range.end_amount.units,check column exists on table and is the correct type
-F026,Party,assets_value_range.end_amount.nanos,check column exists on table and is the correct type
-F027,Party,civil_status_code,check column exists on table and is the correct type
-F028,Party,education_level_code,check column exists on table and is the correct type
-F029,AccountPartyLink,account_id,check column exists on table and is the correct type
-F030,AccountPartyLink,party_id,check column exists on table and is the correct type
-F031,AccountPartyLink,validity_start_time,check column exists on table and is the correct type
-F032,AccountPartyLink,is_entity_deleted,check column exists on table and is the correct type
-F033,AccountPartyLink,role,check column exists on table and is the correct type
-F034,AccountPartyLink,source_system,check column exists on table and is the correct type
-F035,Transaction,transaction_id,check column exists on table and is the correct type
-F036,Transaction,validity_start_time,check column exists on table and is the correct type
-F037,Transaction,is_entity_deleted,check column exists on table and is the correct type
-F038,Transaction,source_system,check column exists on table and is the correct type
-F039,Transaction,type,check column exists on table and is the correct type
-F040,Transaction,direction,check column exists on table and is the correct type
-F041,Transaction,account_id,check column exists on table and is the correct type
-F042,Transaction,counterparty_account,check column exists on table and is the correct type
-F043,Transaction,counterparty_account.account_id,check column exists on table and is the correct type
-F044,Transaction,book_time,check column exists on table and is the correct type
-F045,Transaction,normalized_booked_amount,"check column exists on table and is the correct type, and contains no extraneous fields in the struct"
-F046,Transaction,normalized_booked_amount.currency_code,check column exists on table and is the correct type
-F047,Transaction,normalized_booked_amount.units,check column exists on table and is the correct type
-F048,Transaction,normalized_booked_amount.nanos,check column exists on table and is the correct type
-F049,RiskCaseEvent,risk_case_event_id,check column exists on table and is the correct type
-F050,RiskCaseEvent,event_time,check column exists on table and is the correct type
-F051,RiskCaseEvent,type,check column exists on table and is the correct type
-F052,RiskCaseEvent,party_id,check column exists on table and is the correct type
-F053,RiskCaseEvent,risk_case_id,check column exists on table and is the correct type
-F054,PartySupplementaryData,party_supplementary_data_id,check column exists on table and is the correct type
-F055,PartySupplementaryData,validity_start_time,check column exists on table and is the correct type
-F056,PartySupplementaryData,is_entity_deleted,check column exists on table and is the correct type
-F057,PartySupplementaryData,source_system,check column exists on table and is the correct type
-F058,PartySupplementaryData,party_id,check column exists on table and is the correct type
-F059,PartySupplementaryData,supplementary_data_payload,"check column exists on table and is the correct type, and contains no extraneous fields in the struct"
-F060,PartySupplementaryData,supplementary_data_payload.value,check column exists on table and is the correct type
+F002,All except RiskCaseEvent,is_entity_deleted,check for consecutive is_entity_deleted values for the same PK
+F003,All,All non-nullable,check column exists on table and is the correct type
+F004,All,All,check column is the correct type on table
+F005,All,,check for entities which are immediately deleted
 T001,All,,"Check all tables are present and not empty, and contains less rows than threshold"

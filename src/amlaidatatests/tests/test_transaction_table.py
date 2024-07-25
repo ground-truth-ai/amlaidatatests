@@ -26,64 +26,73 @@ TXN_TYPES = ["WIRE", "CASH", "CHECK", "CARD"]
 @pytest.mark.parametrize(
     "test", get_generic_table_tests(table_config=TABLE_CONFIG, expected_max_rows=50e9)
 )
-def test_table(connection, test: AbstractTableTest):
-    test(connection=connection)
+def test_table(connection, test, request):
+    test(connection=connection, request=request)
 
 
-def test_PK003_primary_keys(connection):
+def test_PK003_primary_keys(connection, request):
     test = common.PrimaryKeyColumnsTest(
         table_config=TABLE_CONFIG,
         unique_combination_of_columns=["transaction_id", "validity_start_time"],
+        test_id="PK003",
     )
-    test(connection)
+    test(connection, request)
 
 
 # For each column in the schema, check all columns are all present
 @pytest.mark.parametrize("column", get_columns(TABLE_CONFIG))
-def test_column_presence(connection, column: str):
-    test = common.ColumnPresenceTest(table_config=TABLE_CONFIG, column=column)
-    test(connection)
+def test_F003_column_presence(connection, column, request):
+    test = common.ColumnPresenceTest(
+        table_config=TABLE_CONFIG, column=column, test_id="F003"
+    )
+    test(connection, request)
 
 
 # For each column in the schema, check all columns are the correct type
 @pytest.mark.parametrize("column", get_columns(TABLE_CONFIG))
-def test_column_type(connection, column):
-    test = common.ColumnTypeTest(table_config=TABLE_CONFIG, column=column)
-    test(connection)
+def test_F004_column_type(connection, column, request, record_property):
+    test = common.ColumnTypeTest(
+        table_config=TABLE_CONFIG, column=column, test_id="F004"
+    )
+    test(connection, request=request)
 
 
 @pytest.mark.parametrize("test", non_nullable_field_tests(TABLE_CONFIG))
-def test_non_nullable_fields(connection, test: AbstractColumnTest):
-    test(connection)
+def test_non_nullable_fields(connection, test, request):
+    test(connection, request)
 
 
 @pytest.mark.parametrize("test", timestamp_field_tests(TABLE_CONFIG))
-def test_timestamp_fields(connection, test: AbstractColumnTest):
-    test(connection)
+def test_timestamp_fields(connection, test, request):
+    test(connection, request)
 
 
-def test_RI011_temporal_referential_integrity_account_party_link(connection):
+def test_RI011_temporal_referential_integrity_account_party_link(connection, request):
     to_table_config = resolve_table_config("account_party_link")
     test = common.TemporalReferentialIntegrityTest(
-        table_config=TABLE_CONFIG, to_table_config=to_table_config, key="account_id"
+        table_config=TABLE_CONFIG,
+        to_table_config=to_table_config,
+        key="account_id",
+        test_id="RI011",
     )
-    test(connection)
+    test(connection, request)
 
 
-def test_RI004_referential_integrity_account_party_link(connection):
+def test_RI004_referential_integrity_account_party_link(connection, request):
     to_table_config = resolve_table_config("account_party_link")
     test = common.ReferentialIntegrityTest(
-        table_config=TABLE_CONFIG, to_table_config=to_table_config, keys=["account_id"]
+        table_config=TABLE_CONFIG, to_table_config=to_table_config, keys=["account_id"],
+        test_id="RI004"
     )
-    test(connection)
+    test(connection, request)
 
 
 @pytest.mark.parametrize(
     "test",
     get_entity_mutation_tests(table_config=TABLE_CONFIG),
 )
-def test_entity_mutation_tests(connection, test: AbstractColumnTest):
-    test(connection=connection)
+def test_entity_mutation_tests(connection, test, request):
+    test(connection=connection, request=request)
 
 
 @pytest.mark.parametrize(
@@ -103,8 +112,8 @@ def test_entity_mutation_tests(connection, test: AbstractColumnTest):
         ),
     ],
 )
-def test_column_values(connection, test):
-    test(connection)
+def test_column_values(connection, test, request):
+    test(connection, request)
 
 
 @pytest.mark.parametrize(
@@ -131,8 +140,8 @@ def test_currency_value_entity(connection, column, test: AbstractColumnTest):
         )
     ],
 )
-def test_date_consistency(connection, test):
-    test(connection)
+def test_date_consistency(connection, test, request):
+    test(connection, request)
 
 
 @pytest.mark.parametrize(
@@ -247,5 +256,5 @@ def test_date_consistency(connection, test):
         ),
     ],
 )
-def test_profiling(connection, test):
-    test(connection)
+def test_profiling(connection, test, request):
+    test(connection, request=request)

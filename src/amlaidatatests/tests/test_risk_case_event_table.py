@@ -24,41 +24,45 @@ TABLE = TABLE_CONFIG.table
 @pytest.mark.parametrize(
     "test", get_generic_table_tests(table_config=TABLE_CONFIG, expected_max_rows=10e6)
 )
-def test_table(connection, test: AbstractTableTest):
-    test(connection=connection)
+def test_table(connection, test, request):
+    test(connection=connection, request=request)
 
 
-def test_PK004_primary_keys(connection):
+def test_PK004_primary_keys(connection, request):
     test = common.PrimaryKeyColumnsTest(
         table_config=TABLE_CONFIG,
         unique_combination_of_columns=["risk_case_event_id"],
         test_id="PK004",
     )
-    test(connection)
+    test(connection, request)
 
 
 # For each column in the schema, check all columns are all present
 @pytest.mark.parametrize("column", TABLE_CONFIG.table.schema().fields.keys())
-def test_column_presence(connection, column: str):
-    test = common.ColumnPresenceTest(table_config=TABLE_CONFIG, column=column)
-    test(connection)
+def test_F003_column_presence(connection, column, request):
+    test = common.ColumnPresenceTest(
+        table_config=TABLE_CONFIG, column=column, test_id="F003"
+    )
+    test(connection, request)
 
 
 # For each column in the schema, check all columns are the correct type
 @pytest.mark.parametrize("column", TABLE_CONFIG.table.schema().fields.keys())
-def test_column_type(connection, column):
-    test = common.ColumnTypeTest(table_config=TABLE_CONFIG, column=column)
-    test(connection)
+def test_F004_column_type(connection, column, request):
+    test = common.ColumnTypeTest(
+        table_config=TABLE_CONFIG, column=column, test_id="F004"
+    )
+    test(connection, request)
 
 
 @pytest.mark.parametrize("test", non_nullable_field_tests(TABLE_CONFIG))
-def test_non_nullable_fields(connection, test: AbstractColumnTest):
-    test(connection)
+def test_non_nullable_fields(connection, test, request):
+    test(connection, request)
 
 
 @pytest.mark.parametrize("test", timestamp_field_tests(TABLE_CONFIG))
-def test_timestamp_fields(connection, test: AbstractColumnTest):
-    test(connection)
+def test_timestamp_fields(connection, test, request):
+    test(connection, request)
 
 
 @pytest.mark.parametrize(
@@ -80,22 +84,12 @@ def test_timestamp_fields(connection, test: AbstractColumnTest):
             ],
             table_config=TABLE_CONFIG,
             column="type",
+            test_id="E007",
         )
     ],
 )
-def test_column_values(connection, test):
-    test(connection)
-
-
-def test_RI005_referential_integrity_party(connection):
-    to_table_config = resolve_table_config("party")
-    test = common.ReferentialIntegrityTest(
-        table_config=TABLE_CONFIG,
-        to_table_config=to_table_config,
-        keys=["party_id"],
-        test_id="RI005",
-    )
-    test(connection)
+def test_column_values(connection, test, request):
+    test(connection, request)
 
 
 w = ibis.window(
@@ -116,11 +110,11 @@ w = ibis.window(
         ),
     ],
 )
-def test_date_consistency(connection, test):
-    test(connection)
+def test_date_consistency(connection, test, request):
+    test(connection, request)
 
 
-def test_DT014_event_order(connection):
+def test_DT014_event_order(connection, request):
     t = common.EventOrder(
         time_column="event_time",
         column="type",
@@ -129,7 +123,7 @@ def test_DT014_event_order(connection):
         severity=AMLAITestSeverity.ERROR,
         test_id="DT014",
     )
-    t(connection)
+    t(connection, request)
 
 
 class NoTransactionsWithinSuspiciousPeriod(AbstractTableTest):
@@ -403,11 +397,11 @@ class NoTransactionsWithinSuspiciousPeriod(AbstractTableTest):
         ),
     ],
 )
-def test_profiling(connection, test):
-    test(connection)
+def test_profiling(connection, test, request):
+    test(connection, request)
 
 
-def test_RI012_temporal_referential_integrity_party(connection):
+def test_RI012_temporal_referential_integrity_party(connection, request):
     # A warning here means that there are parties without linked accounts
     to_table_config = resolve_table_config("party")
     test = common.TemporalReferentialIntegrityTest(
@@ -417,10 +411,10 @@ def test_RI012_temporal_referential_integrity_party(connection):
         severity=AMLAITestSeverity.WARN,
         test_id="RI012",
     )
-    test(connection)
+    test(connection, request)
 
 
-def test_RI014_temporal_referential_integrity_party(connection):
+def test_RI014_temporal_referential_integrity_party(connection, request):
     # A warning here means that there are parties without linked accounts
     to_table_config = resolve_table_config("party")
     test = common.TemporalReferentialIntegrityTest(
@@ -428,8 +422,9 @@ def test_RI014_temporal_referential_integrity_party(connection):
         to_table_config=to_table_config,
         key="party_id",
         severity=AMLAITestSeverity.WARN,
+        test_id="RI005",
     )
-    test(connection)
+    test(connection, request)
 
 
 if __name__ == "__main__":
