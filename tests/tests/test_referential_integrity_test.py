@@ -284,7 +284,7 @@ def test_temporal_referential_integrity_key_out_of_time(
     t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
-    with pytest.raises(DataTestFailure, match=r"1 keys found in table"):
+    with pytest.raises(DataTestFailure, match=r"1 keys found"):
         t(test_connection, request)
 
 
@@ -419,7 +419,7 @@ def test_temporal_referential_integrity_key_out_of_time_tolerance(
         key="id",
         tolerance="day",
     )
-    with pytest.raises(DataTestFailure, match=r"1 keys found in table"):
+    with pytest.raises(DataTestFailure, match=r"1 keys found"):
         t(test_connection, request)
 
 
@@ -484,7 +484,7 @@ def test_temporal_referential_integrity_fails_before_period(
     t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
-    with pytest.raises(DataTestFailure, match=r"1 keys found in table"):
+    with pytest.raises(DataTestFailure, match=r"1 keys found"):
         t(test_connection, request)
 
 
@@ -549,7 +549,7 @@ def test_temporal_referential_integrity_fails_after_period(
     t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
-    with pytest.raises(DataTestFailure, match=r"1 keys found in table"):
+    with pytest.raises(DataTestFailure, match=r"1 keys found"):
         t(test_connection, request)
 
 
@@ -614,7 +614,7 @@ def test_temporal_referential_integrity_fails_encompassing_period(
     t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
-    with pytest.raises(DataTestFailure, match=r"1 keys found in table"):
+    with pytest.raises(DataTestFailure, match=r"1 keys found"):
         t(test_connection, request)
 
 
@@ -823,5 +823,5 @@ def test_temporal_referential_integrity_multiple_mutations_out_of_period(
     t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
-    with pytest.raises(DataTestFailure, match=r"1 keys found in table"):
+    with pytest.raises(DataTestFailure, match=r"1 keys found"):
         t(test_connection, request)
