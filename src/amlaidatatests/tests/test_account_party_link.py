@@ -17,7 +17,7 @@ from amlaidatatests.utils import get_columns
 TABLE_CONFIG = resolve_table_config("account_party_link")
 
 
-def test_RI001_referential_integrity_party(connection):
+def test_RI001_referential_integrity_party(connection, request):
     # A warning here means that there are parties without linked accounts
     to_table_config = resolve_table_config("party")
     test = common.ReferentialIntegrityTest(
@@ -26,36 +26,41 @@ def test_RI001_referential_integrity_party(connection):
         keys=["party_id"],
         test_id="RI001",
     )
-    test(connection)
+    test(connection, request)
 
 
 @pytest.mark.parametrize(
     "test", get_generic_table_tests(table_config=TABLE_CONFIG, expected_max_rows=500e6)
 )
-def test_table(connection, test: AbstractTableTest):
-    test(connection=connection)
+def test_table(connection, test: AbstractTableTest, request):
+    test(connection=connection, request=request)
 
 
-def test_PK002_primary_keys(connection):
+def test_PK002_primary_keys(connection, request):
     test = common.PrimaryKeyColumnsTest(
         table_config=TABLE_CONFIG,
         unique_combination_of_columns=["party_id", "account_id", "validity_start_time"],
+        test_id="PK002",
     )
-    test(connection)
+    test(connection, request)
 
 
 # For each column in the schema, check all columns are all present
 @pytest.mark.parametrize("column", get_columns(TABLE_CONFIG))
-def test_column_presence(connection: common.BaseBackend, column: str):
-    test = common.ColumnPresenceTest(table_config=TABLE_CONFIG, column=column)
-    test(connection)
+def test_F003_column_presence(connection: common.BaseBackend, column: str, request):
+    test = common.ColumnPresenceTest(
+        table_config=TABLE_CONFIG, column=column, test_id="F003"
+    )
+    test(connection, request)
 
 
 # For each column in the schema, check all columns are the correct type
 @pytest.mark.parametrize("column", get_columns(TABLE_CONFIG))
-def test_column_type(connection, column):
-    test = common.ColumnTypeTest(table_config=TABLE_CONFIG, column=column)
-    test(connection)
+def test_F004_column_type(connection, column, request):
+    test = common.ColumnTypeTest(
+        table_config=TABLE_CONFIG, column=column, test_id="F004"
+    )
+    test(connection, request)
 
 
 @pytest.mark.parametrize(
@@ -69,22 +74,23 @@ def test_column_type(connection, column):
             ],
             column="role",
             table_config=TABLE_CONFIG,
+            test_id="E004",
         )
     ],
 )
-def test_column_values(connection, test):
-    test(connection)
+def test_column_values(connection, test, request):
+    test(connection, request)
 
 
 @pytest.mark.parametrize(
     "test",
     get_entity_mutation_tests(table_config=TABLE_CONFIG),
 )
-def test_entity_mutation_tests(connection, test: AbstractColumnTest):
-    test(connection=connection)
+def test_entity_mutation_tests(connection, test: AbstractColumnTest, request):
+    test(connection=connection, request=request)
 
 
-def test_RI009_temporal_referential_integrity_party(connection):
+def test_RI009_temporal_referential_integrity_party(connection, request):
     # A warning here means that there are parties without linked accounts
     to_table_config = resolve_table_config("party")
     test = common.TemporalReferentialIntegrityTest(
@@ -93,7 +99,7 @@ def test_RI009_temporal_referential_integrity_party(connection):
         key="party_id",
         test_id="RI009",
     )
-    test(connection)
+    test(connection, request)
 
 
 @pytest.mark.parametrize(
@@ -117,19 +123,19 @@ def test_RI009_temporal_referential_integrity_party(connection):
         ),
     ],
 )
-def test_transaction_referential_integrity(connection, test):
+def test_transaction_referential_integrity(connection, test, request):
     """Tests referential integrity between the"""
-    test(connection)
+    test(connection, request)
 
 
 @pytest.mark.parametrize("test", non_nullable_field_tests(TABLE_CONFIG))
-def test_non_nullable_fields(connection, test: AbstractColumnTest):
-    test(connection)
+def test_non_nullable_fields(connection, test, request):
+    test(connection, request)
 
 
 @pytest.mark.parametrize("test", timestamp_field_tests(TABLE_CONFIG))
-def test_timestamp_fields(connection, test: AbstractColumnTest):
-    test(connection)
+def test_timestamp_fields(connection, test, request):
+    test(connection, request)
 
 
 @pytest.mark.parametrize(
@@ -176,5 +182,5 @@ def test_timestamp_fields(connection, test: AbstractColumnTest):
         ),
     ],
 )
-def test_profiling(connection, test):
-    test(connection)
+def test_profiling(connection, test, request):
+    test(connection, request)

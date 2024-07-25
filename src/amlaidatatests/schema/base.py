@@ -41,12 +41,12 @@ class ResolvedTableConfig(TableConfig):
     table instead.
     """
 
-    name: str = field(init=False)
+    resolved_name: str = field(init=False)
     schema: str = field(init=False)
     table: Table
 
     def __post_init__(self):
-        self.name = self.table.get_name()
+        self.resolved_name = self.table.get_name()
         self.schema = self.table.schema()
 
 

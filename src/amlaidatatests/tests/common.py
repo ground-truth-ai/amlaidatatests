@@ -192,10 +192,11 @@ class ColumnCardinalityTest(AbstractColumnTest):
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
         group_by: Optional[list[str]] = None,
     ) -> None:
-        super().__init__(table_config=table_config, column=column, severity=severity)
+        super().__init__(
+            table_config=table_config, column=column, severity=severity, test_id=test_id
+        )
         self.max_number = max_number
         self.min_number = min_number
-        self.test_id = test_id
         self.group_by = group_by
         self.where = where
         self.having = having
@@ -239,7 +240,7 @@ class ColumnCardinalityTest(AbstractColumnTest):
         if results > 0:
             direction = "high" if self.max_number else "low"
             message = (
-                f"column {self.full_column_path} has an "
+                f"column has an "
                 f"unexpectedly {direction} number of distinct values "
                 f"for each {self.group_by} "
                 if self.group_by
@@ -342,8 +343,7 @@ class CountFrequencyValues(AbstractColumnTest):
 
         if results > 0:
             raise DataTestFailure(
-                message=f"{results} values of {self.full_column_path} "
-                "appeared unusually frequently",
+                message=f"{results} column values appeared unusually frequently",
                 expr=expr,
             )
 
@@ -394,10 +394,11 @@ class VerifyTypedValuePresence(AbstractColumnTest):
         compare_group_by_where: Optional[Callable[[Expr], Expr]] = None,
         severity: AMLAITestSeverity = AMLAITestSeverity.WARN,
     ) -> None:
-        super().__init__(table_config=table_config, column=column, severity=severity)
+        super().__init__(
+            table_config=table_config, column=column, severity=severity, test_id=test_id
+        )
         self.max_proportion = max_proportion
         self.min_proportion = min_proportion
-        self.test_id = test_id
         self.value = value
         self.group_by = group_by
         self.where = compare_group_by_where
@@ -436,7 +437,7 @@ class VerifyTypedValuePresence(AbstractColumnTest):
         if self.max_proportion and results["proportion"] >= self.max_proportion:
             raise DataTestFailure(
                 message=f"{proportion:.0%} of {group_by_narrative} "
-                f"had values of {self.value} in {self.full_column_path}. "
+                f"had values of {self.value} in column. "
                 f"Expected at most {self.max_proportion:.0%}",
                 expr=expr,
             )
@@ -444,7 +445,7 @@ class VerifyTypedValuePresence(AbstractColumnTest):
             proportion = results["proportion"]
             raise DataTestFailure(
                 message=f"Only {proportion:.0%} of {group_by_narrative} "
-                f"had values of {self.value} in {self.full_column_path}. "
+                f"had values of {self.value} in column. "
                 f"Expected at least {self.min_proportion:.0%}",
                 expr=expr,
             )
@@ -462,9 +463,11 @@ class ConsecutiveEntityDeletionsTest(AbstractTableTest):
     """
 
     def __init__(
-        self, *, table_config: ResolvedTableConfig, entity_ids: List[str]
+        self, *, table_config: ResolvedTableConfig, entity_ids: List[str], test_id: str
     ) -> None:
-        super().__init__(table_config=table_config, severity=AMLAITestSeverity.WARN)
+        super().__init__(
+            table_config=table_config, severity=AMLAITestSeverity.WARN, test_id=test_id
+        )
         self.entity_ids = entity_ids
 
     def _test(self, *, connection: BaseBackend) -> None:
@@ -500,9 +503,10 @@ class OrphanDeletionsTest(AbstractTableTest):
         *,
         table_config: ResolvedTableConfig,
         entity_ids: List[str],
+        test_id: Optional[str] = None,
         severity: AMLAITestSeverity = AMLAITestSeverity.WARN,
     ) -> None:
-        super().__init__(table_config=table_config, severity=severity)
+        super().__init__(table_config=table_config, severity=severity, test_id=test_id)
         self.entity_ids = entity_ids
 
     def _test(self, *, connection: BaseBackend) -> None:
@@ -550,9 +554,7 @@ class ColumnPresenceTest(AbstractColumnTest):
         try:
             self.table[self.column]
         except IbisTypeError as e:
-            raise DataTestFailure(
-                f"Missing Required Column: {self.full_column_path}"
-            ) from e
+            raise DataTestFailure("Missing Required Column") from e
 
 
 class ColumnTypeTest(AbstractColumnTest):
@@ -598,7 +600,7 @@ class ColumnTypeTest(AbstractColumnTest):
                 )
                 warnings.warn(
                     message=DataTestWarning(
-                        f"Additional fields found in struct in {self.full_column_path}."
+                        f"Additional fields found in struct"
                         f" Full path to the extra fields were: {extra_fields}"
                     )
                 )
@@ -608,14 +610,13 @@ class ColumnTypeTest(AbstractColumnTest):
             if schema_data_type.nullable and not actual_type.nullable:
                 warnings.warn(
                     message=DataTestWarning(
-                        "Schema is stricter than required: expected column"
-                        f" {self.full_column_path} to be {schema_data_type}, "
-                        f"found {actual_type}"
+                        "Schema is stricter than required: expected "
+                        f"{schema_data_type} found {actual_type}"
                     )
                 )
                 return
             raise DataTestFailure(
-                f"Expected column {self.full_column_path} to be {schema_data_type},"
+                f"Column type mismatch: expected {schema_data_type},"
                 f" found {actual_type}",
             )
 
@@ -743,7 +744,7 @@ class ColumnValuesTest(AbstractColumnTest):
         if result > 0:
             valid_values = " ".join(self.allowed_values)
             raise DataTestFailure(
-                f"{result} rows found with invalid values in {self.full_column_path}. "
+                f"{result} rows found with invalid values."
                 f"Valid values are: {valid_values}.",
                 expr=expr,
             )
@@ -771,8 +772,7 @@ class FieldNeverWhitespaceOnlyTest(AbstractColumnTest):
 
         if count_blank > 0:
             raise DataTestFailure(
-                f"{count_blank} rows found with whitespace-only "
-                f"values of {self.full_column_path} in table {self.table.get_name()}",
+                f"{count_blank} rows found with whitespace-only " f"values",
                 expr=expr,
             )
 
@@ -798,8 +798,7 @@ class FieldNeverNullTest(AbstractColumnTest):
 
         if count_null > 0:
             raise DataTestFailure(
-                f"{count_null} rows found with null values of "
-                f"{self.full_column_path} in table {self.table.get_name()}",
+                f"{count_null} rows found with null values",
                 expr=expr,
             )
 
@@ -838,7 +837,7 @@ class NullIfTest(AbstractColumnTest):
         result = connection.execute(expr.count())
         if result > 0:
             raise DataTestFailure(
-                f"{result} rows not fulfilling criteria in {self.full_column_path}",
+                f"{result} rows which should have null column values",
                 expr=expr,
             )
 
@@ -895,30 +894,26 @@ class CountMatchingRows(AbstractColumnTest):
         proportion = result["proportion"]
         if self.min_number and (value < self.min_number):
             raise DataTestFailure(
-                f"{value:d} rows met specified criteria "
-                f"in {self.full_column_path}. Expected at least "
-                f"{self.min_number:d}.",
+                f"{value:d} rows met criteria. "
+                f"Expected at least {self.min_number:d}.",
                 expr=expr,
             )
         if self.max_number and (value > self.max_number):
             raise DataTestFailure(
-                f"{value:d} rows met specified criteria "
-                f"in {self.full_column_path}. Expected at most "
-                f"{self.max_number:d}.",
+                f"{value:d} rows met criteria. "
+                f"Expected at most {self.max_number:d}.",
                 expr=expr,
             )
         if self.max_proportion and (proportion > self.max_proportion):
             raise DataTestFailure(
                 f"A high proportion ({proportion:.0%}) of rows met "
-                "specified criteria "
-                f" in {self.full_column_path}",
+                f" criteria. Expected at most ({self.max_proportion:.0%})",
                 expr=expr,
             )
         if self.min_proportion and (proportion < self.min_proportion):
             raise DataTestFailure(
                 f"A low proportion ({proportion:.0%}) of rows met "
-                "specified criteria "
-                f" in {self.full_column_path}",
+                f" criteria. Expected at least ({self.min_proportion:.0%})",
                 expr=expr,
             )
 
@@ -983,8 +978,8 @@ class EventOrder(AbstractColumnTest):
         result = connection.execute(expr.count())
         if result > 0:
             raise DataTestFailure(
-                f"{result} did not fulfil the required event order "
-                "in {self.full_column_path}",
+                f"{result} did not fulfil the required event order. "
+                f"Expected events to always be in the order {self.events}",
                 expr=expr,
             )
 
@@ -1032,8 +1027,8 @@ class AcceptedRangeTest(AbstractColumnTest):
         result = connection.execute(expr.count())
         if result > 0:
             raise DataTestFailure(
-                f"{result} rows in column {self.full_column_path} in table {self.table}"
-                f" were outside of inclusive range {self.min_value} - {self.max_value}",
+                f"{result} rows were outside"
+                f" of inclusive range {self.min_value} - {self.max_value}",
                 expr=expr,
             )
 
@@ -1370,11 +1365,11 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
         result = connection.execute(expr=expr.count())
         if result > 0:
             msg = (
-                f"{result} keys found in table {self.table.get_name()} which were "
-                f"either not in {self.to_table.get_name()}, or had inconsistent "
+                f"{result} keys found in the table which were "
+                f"either not in {self.to_table_config.name}, or had inconsistent "
                 "time periods, where validity_start_time and is_entity_deleted "
-                f"keys in {self.table.get_name()} did not correspond to the time "
-                f"periods for the same entity in {self.to_table.get_name()}"
+                f"keys in the table which did not correspond to the time "
+                f"periods for the same entity in {self.to_table_config.name}"
             )
             raise DataTestFailure(msg, expr=expr)
         return
@@ -1428,7 +1423,7 @@ class ConsistentIDsPerColumn(AbstractColumnTest):
         result = connection.execute(expr["ids"].nunique())
         if result > 1:
             raise DataTestFailure(
-                f"Inconsistent {self.id_to_verify} across {self.full_column_path}. "
+                f"Inconsistent {self.id_to_verify} across column. "
                 f"Expected all {self.column} to have the same same set of IDs",
                 expr=expr,
             )

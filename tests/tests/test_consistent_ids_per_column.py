@@ -7,7 +7,7 @@ from amlaidatatests.schema.base import ResolvedTableConfig, TableType
 from amlaidatatests.tests import common
 
 
-def test_consistent_ids_per_column(test_connection, create_test_table):
+def test_consistent_ids_per_column(test_connection, create_test_table, request):
     schema = {
         "party_id": String(nullable=False),
         "party_supplementary_data_id": String(nullable=False),
@@ -27,7 +27,7 @@ def test_consistent_ids_per_column(test_connection, create_test_table):
         )
     )
     table_config = ResolvedTableConfig(
-        table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
+        name=tbl, table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
     )
 
     t = common.ConsistentIDsPerColumn(
@@ -35,10 +35,10 @@ def test_consistent_ids_per_column(test_connection, create_test_table):
         column="party_id",
         id_to_verify="party_supplementary_data_id",
     )
-    t(test_connection)  # should succeed
+    t(test_connection, request)  # should succeed
 
 
-def test_inconsistent_ids_per_column(test_connection, create_test_table):
+def test_inconsistent_ids_per_column(test_connection, create_test_table, request):
     schema = {
         "party_id": String(nullable=False),
         "party_supplementary_data_id": String(nullable=False),
@@ -57,7 +57,7 @@ def test_inconsistent_ids_per_column(test_connection, create_test_table):
         )
     )
     table_config = ResolvedTableConfig(
-        table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
+        name=tbl, table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
     )
 
     t = common.ConsistentIDsPerColumn(
@@ -66,4 +66,4 @@ def test_inconsistent_ids_per_column(test_connection, create_test_table):
         id_to_verify="party_supplementary_data_id",
     )
     with pytest.raises(DataTestFailure):
-        t(test_connection)
+        t(test_connection, request)

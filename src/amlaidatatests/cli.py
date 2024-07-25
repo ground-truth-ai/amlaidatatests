@@ -54,7 +54,16 @@ def entry_point():
     # verify the arguments but then pass them through directly -c NONE prevents
     # pytest from discovering setup.cfg elsewhere in the filesytem. this
     # prevents it printing a relative path to the root directory
-    run_tests(["-W ignore::DeprecationWarning", "-c NONE", *sysargs])
+    run_tests(
+        [
+            "-W ignore::DeprecationWarning",
+            "-c NONE",
+            "--tb=short",
+            "--disable-warnings",
+            "-rN",
+            *sysargs,
+        ]
+    )
 
 
 if __name__ == "__main__":

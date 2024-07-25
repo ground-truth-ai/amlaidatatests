@@ -4,6 +4,7 @@ import warnings
 from abc import ABC
 from typing import Any, Callable, Optional
 
+from amlaidatatests.config import cfg
 import ibis
 import pytest
 from google.api_core.exceptions import NotFound as GoogleTableNotFound
@@ -53,9 +54,27 @@ class AbstractBaseTest(ABC):
         test_id: Optional[str] = None,
     ) -> None:
         self.table: Optional[Table] = None
+        """ populated at test call time as part of a table call """
         self.table_config = table_config
         self.severity = severity
+        if (not cfg().testing_mode) and test_id is None:
+            raise ValueError("test_id must be set")
         self.test_id = test_id
+
+    def set_pytest_attributes(self, request: pytest.FixtureRequest):
+        if self.test_id:
+            self._add_pytest_attribute(request, "test_id", self.test_id)
+        self._add_pytest_attribute(request, "table", self.table_config.name)
+
+    def process_test_request(self, request: pytest.FixtureRequest):
+        self.set_pytest_attributes(request)
+        self.set_extra_pytest_attributes(request)
+
+    def set_extra_pytest_attributes(self, request) -> None:
+        """Override to provide additional attributes to pytest in implementing
+        classes
+        """
+        pass
 
     @property
     def id(self) -> Optional[str]:
@@ -73,6 +92,10 @@ class AbstractBaseTest(ABC):
         # both to pytest and to pytest-html
         logging.warning(warning)
         warnings.warn(warning)
+
+    def _add_pytest_attribute(self, request, key, value):
+        """Add a user attribute for pytest to use"""
+        request.node.user_properties.append((key, value))
 
     def _run_with_severity(self, f: Callable, **kwargs) -> Any | None:
         """Execute an arbitrary function, catching errors attributed to
@@ -152,7 +175,10 @@ class AbstractTableTest(AbstractBaseTest):
         super().__init__(table_config=table_config, severity=severity, test_id=test_id)
 
     def check_table_exists(
-        self, connection: BaseBackend, table_config: ResolvedTableConfig
+        self,
+        connection: BaseBackend,
+        table_config: ResolvedTableConfig,
+        request: Optional[pytest.FixtureRequest] = None,
     ):
         try:
             return connection.table(table_config.table.get_name())
@@ -167,12 +193,14 @@ class AbstractTableTest(AbstractBaseTest):
         except IbisError as e:
             if connection.name != "duckdb":
                 raise e
+        if request:
+            self._add_pytest_attribute(request, "table_missing", True)
         self._skip_test_if_optional_table(table_config=table_config)
 
     def _skip_test_if_optional_table(self, table_config: ResolvedTableConfig):
         if table_config.optional:  # is optional
             raise SkipTest(
-                f"Skipping test: optional table {table_config.table.get_name()}"
+                f"Skipping test: optional table {table_config.table.get_name()} "
                 "does not exist"
             )
         else:
@@ -202,12 +230,14 @@ class AbstractTableTest(AbstractBaseTest):
             ),
         ).filter(_.row_num == 0)
 
-    def __call__(self, connection: BaseBackend):
+    def __call__(self, connection: BaseBackend, request):
+        self.process_test_request(request)
         # Check if table exists
         self.table = self._run_with_severity(
             connection=connection,
             f=self.check_table_exists,
             table_config=self.table_config,
+            request=request,
         )
         self._run_with_severity(connection=connection, f=self._test)
 
@@ -223,6 +253,9 @@ class AbstractColumnTest(AbstractTableTest):
         """ """
         self.column = column
         super().__init__(table_config=table_config, severity=severity, test_id=test_id)
+
+    def set_extra_pytest_attributes(self, request):
+        self._add_pytest_attribute(request, "column", self.column)
 
     @property
     def id(self) -> Optional[str]:
@@ -251,7 +284,12 @@ class AbstractColumnTest(AbstractTableTest):
             # likely fail
             pass
 
-    def __call__(self, connection: BaseBackend, prefix: Optional[str] = None):
+    def __call__(
+        self,
+        connection: BaseBackend,
+        request: pytest.FixtureRequest,
+        prefix: Optional[str] = None,
+    ):
         """Execute the test.
 
         1) Checks the table exists. If the table is required, amlaidatatests will
@@ -263,12 +301,14 @@ class AbstractColumnTest(AbstractTableTest):
             connection: ibis backend object to execute the tests against
             prefix: _description_. Defaults to None.
         """
+        self.process_test_request(request)
         # It's fine for the top level column to be missing if it's
         # an optional field. If it is, we can skip the whole test
         self.table = self._run_with_severity(
             connection=connection,
             f=self.check_table_exists,
             table_config=self.table_config,
+            request=request,
         )
         __prefix_revert = None
         if prefix:

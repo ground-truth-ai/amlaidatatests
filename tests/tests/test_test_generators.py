@@ -14,6 +14,7 @@ from amlaidatatests.test_generators import (
 def test_nonnullable_fields():
 
     test_table_config = ResolvedTableConfig(
+        name="tbl",
         table=ibis.table(
             name="tbl",
             schema=ibis.schema(
@@ -22,7 +23,7 @@ def test_nonnullable_fields():
                     "b": Struct(nullable=True, fields={"a": String(nullable=False)}),
                 }
             ),
-        )
+        ),
     )
 
     ttt = get_non_nullable_fields(test_table_config)
@@ -31,16 +32,17 @@ def test_nonnullable_fields():
 
 def test_timestamp_fields():
     test_table_config = ResolvedTableConfig(
+        name="tbl",
         table=ibis.table(
             name="tbl", schema=ibis.schema({"a": Timestamp(nullable=False)})
-        )
+        ),
     )
 
     ttt = get_timestamp_fields(test_table_config)
     assert ttt == ["a"]
 
 
-def test_find_consistent_timestamp_offset(test_connection, create_test_table):
+def test_find_consistent_timestamp_offset(test_connection, create_test_table, request):
 
     schema = ibis.schema({"a": Timestamp(nullable=False)})
     tbl = create_test_table(

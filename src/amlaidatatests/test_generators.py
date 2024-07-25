@@ -1,5 +1,6 @@
 """ Collection of functions to automatically generate tests based on schema
 information or other parameterization"""
+
 import functools
 from typing import Callable, Optional, Union
 
@@ -101,10 +102,14 @@ def get_entity_mutation_tests(
             test_id="P058",
         ),
         ConsecutiveEntityDeletionsTest(
-            table_config=table_config, entity_ids=table_config.entity_keys
+            table_config=table_config,
+            entity_ids=table_config.entity_keys,
+            test_id="F002",
         ),
         OrphanDeletionsTest(
-            table_config=table_config, entity_ids=table_config.entity_keys
+            table_config=table_config,
+            entity_ids=table_config.entity_keys,
+            test_id="F005",
         ),
     ]
 

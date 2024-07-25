@@ -7,7 +7,7 @@ from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests import common
 
 
-def test_null_if_succeeds(test_connection, create_test_table):
+def test_null_if_succeeds(test_connection, create_test_table, request):
     schema = {"type": String(), "b": String()}
     tbl = create_test_table(
         ibis.memtable(
@@ -16,17 +16,19 @@ def test_null_if_succeeds(test_connection, create_test_table):
         )
     )
 
-    table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
+    table_config = ResolvedTableConfig(
+        name=tbl, table=ibis.table(name=tbl, schema=schema)
+    )
 
     t = common.NullIfTest(
         table_config=table_config,
         column="b",
         expression=lambda t: t.type == "card",
     )
-    t(test_connection)
+    t(test_connection, request)
 
 
-def test_null_if_fails(test_connection, create_test_table):
+def test_null_if_fails(test_connection, create_test_table, request):
     schema = {"type": String(), "b": String()}
 
     tbl = create_test_table(
@@ -35,12 +37,14 @@ def test_null_if_fails(test_connection, create_test_table):
             schema=schema,
         )
     )
-    table_config = ResolvedTableConfig(table=ibis.table(name=tbl, schema=schema))
+    table_config = ResolvedTableConfig(
+        name=tbl, table=ibis.table(name=tbl, schema=schema)
+    )
 
     t = common.NullIfTest(
         table_config=table_config,
         column="b",
         expression=lambda t: t.type == "card",
     )
-    with pytest.raises(DataTestFailure, match=r"1 rows not fulfilling criteria"):
-        t(test_connection)
+    with pytest.raises(DataTestFailure, match=r"1 rows"):
+        t(test_connection, request)

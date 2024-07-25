@@ -8,7 +8,7 @@ from amlaidatatests.tests import common
 from amlaidatatests.exceptions import AMLAITestSeverity
 
 
-def test_max_proportion_group_by(test_connection, create_test_table):
+def test_max_proportion_group_by(test_connection, create_test_table, request):
     schema = {"account_id": String(nullable=False), "column": String(nullable=False)}
 
     tbl = create_test_table(
@@ -22,7 +22,7 @@ def test_max_proportion_group_by(test_connection, create_test_table):
         )
     )
     table_config = ResolvedTableConfig(
-        table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
+        name=tbl, table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
     )
 
     # Check not all account_id have a value of married
@@ -33,10 +33,10 @@ def test_max_proportion_group_by(test_connection, create_test_table):
         column="column",
         value="married",
     )
-    t(test_connection)  # should succeed
+    t(test_connection, request)  # should succeed
 
 
-def test_max_proportion_group_by_fails(test_connection, create_test_table):
+def test_max_proportion_group_by_fails(test_connection, create_test_table, request):
     schema = {"account_id": String(nullable=False), "column": String(nullable=False)}
 
     tbl = create_test_table(
@@ -51,7 +51,7 @@ def test_max_proportion_group_by_fails(test_connection, create_test_table):
         )
     )
     table_config = ResolvedTableConfig(
-        table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
+        name=tbl, table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
     )
 
     # Checks not all account_id have a value of married
@@ -64,10 +64,12 @@ def test_max_proportion_group_by_fails(test_connection, create_test_table):
         severity=AMLAITestSeverity.ERROR,
     )
     with pytest.raises(DataTestFailure):
-        t(test_connection)
+        t(test_connection, request)
 
 
-def test_collar_proportion_group_by_fails_too_high(test_connection, create_test_table):
+def test_collar_proportion_group_by_fails_too_high(
+    test_connection, create_test_table, request
+):
     schema = {
         "transaction_id": String(nullable=False),
         "direction": String(nullable=False),
@@ -91,7 +93,7 @@ def test_collar_proportion_group_by_fails_too_high(test_connection, create_test_
         )
     )
     TABLE_CONFIG = ResolvedTableConfig(
-        table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
+        name=tbl, table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
     )
 
     # Checks not all account_id have a value of married
@@ -105,10 +107,12 @@ def test_collar_proportion_group_by_fails_too_high(test_connection, create_test_
         value="DEBIT",
     )
     with pytest.raises(DataTestFailure):
-        t(test_connection)
+        t(test_connection, request)
 
 
-def test_collar_proportion_group_by_fails_too_low(test_connection, create_test_table):
+def test_collar_proportion_group_by_fails_too_low(
+    test_connection, create_test_table, request
+):
     schema = {
         "transaction_id": String(nullable=False),
         "direction": String(nullable=False),
@@ -132,7 +136,7 @@ def test_collar_proportion_group_by_fails_too_low(test_connection, create_test_t
         )
     )
     TABLE_CONFIG = ResolvedTableConfig(
-        table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
+        name=tbl, table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
     )
 
     # Checks not all account_id have a value of married
@@ -146,10 +150,10 @@ def test_collar_proportion_group_by_fails_too_low(test_connection, create_test_t
         value="CREDIT",
     )
     with pytest.raises(DataTestFailure):
-        t(test_connection)
+        t(test_connection, request)
 
 
-def test_collar_proportion_group_by(test_connection, create_test_table):
+def test_collar_proportion_group_by(test_connection, create_test_table, request):
     schema = {
         "transaction_id": String(nullable=False),
         "direction": String(nullable=False),
@@ -173,7 +177,7 @@ def test_collar_proportion_group_by(test_connection, create_test_table):
         )
     )
     TABLE_CONFIG = ResolvedTableConfig(
-        table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
+        name=tbl, table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
     )
 
     # Checks not all account_id have a value of married
@@ -186,10 +190,10 @@ def test_collar_proportion_group_by(test_connection, create_test_table):
         severity=AMLAITestSeverity.ERROR,
         value="CREDIT",
     )
-    t(test_connection)
+    t(test_connection, request)
 
 
-def test_collar_proportion_group_by_where(test_connection, create_test_table):
+def test_collar_proportion_group_by_where(test_connection, create_test_table, request):
     schema = {
         "transaction_id": String(nullable=False),
         "direction": String(nullable=False),
@@ -213,7 +217,7 @@ def test_collar_proportion_group_by_where(test_connection, create_test_table):
         )
     )
     TABLE_CONFIG = ResolvedTableConfig(
-        table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
+        name=tbl, table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
     )
 
     # Checks not all account_id have a value of married
@@ -229,4 +233,4 @@ def test_collar_proportion_group_by_where(test_connection, create_test_table):
         severity=AMLAITestSeverity.ERROR,
         value="CREDIT",
     )
-    t(test_connection)
+    t(test_connection, request)

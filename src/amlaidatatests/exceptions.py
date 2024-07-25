@@ -66,9 +66,8 @@ class DataTestFailure(Exception):
         Returns:
             Message for presentation to the user
         """
-        test_id_message = f"(Test ID: {self.test_id})" if self.test_id else ""
         description_message = f"{self.description}:" if self.description else ""
-        msg = f"""{test_id_message} {description_message} {self.message or ""}"""
+        msg = f"""{description_message} {self.message or ""}"""
         if self.sql:
             msg += "\nTo reproduce this result, run:\n"
             msg += self.sql
