@@ -45,7 +45,7 @@ def test_column_has_invalid_values(test_connection, create_test_table, request):
     )
     with pytest.raises(
         expected_exception=DataTestFailure,
-        match=rf"1 rows",
+        match="1 rows",
     ):
         t(test_connection, request)
 

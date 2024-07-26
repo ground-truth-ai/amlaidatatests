@@ -1,7 +1,6 @@
-""" Utility CLI for amlaidatatests """
+"""Utility CLI for amlaidatatests"""
 
 import argparse
-import os
 import sys
 import typing
 
@@ -30,6 +29,12 @@ def build_parser():
         dest="pytesthelp",
         action="store_true",
     )
+    parser.add_argument(
+        "--show-sql",
+        help="Show SQL for errors/warnings",
+        dest="showsql",
+        action="store_true",
+    )
     return parser
 
 
@@ -48,21 +53,22 @@ def entry_point():
     args, extra = parser.parse_known_args()
 
     if args.pytesthelp:
-        sysargs = sysargs.remove("--pytest-help")
+        sysargs.remove("--pytest-help")
+
+    # Default show
+    show_sql = ["--tb=no", "--disable-warnings"]
+    if args.showsql:
+        show_sql = ["--tb=short"]
+        sysargs.remove("--show-sql")
+
+    sysargs += show_sql
 
     # For now, just pass all command line arguments through. This allows us to
     # verify the arguments but then pass them through directly -c NONE prevents
     # pytest from discovering setup.cfg elsewhere in the filesytem. this
     # prevents it printing a relative path to the root directory
     run_tests(
-        [
-            "-W ignore::DeprecationWarning",
-            "-c NONE",
-            "--tb=short",
-            "--disable-warnings",
-            "-rN",
-            *sysargs,
-        ]
+        ["-W ignore::DeprecationWarning", "-c NONE", "-rN", "--no-header", *sysargs]
     )
 
 

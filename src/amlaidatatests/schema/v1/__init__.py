@@ -1,4 +1,4 @@
-""" AML AI schema version 1. Full Google documentation is at:
+"""AML AI schema version 1. Full Google documentation is at:
 https://cloud.google.com/financial-services/anti-money-laundering/docs/reference/rest
 """
 

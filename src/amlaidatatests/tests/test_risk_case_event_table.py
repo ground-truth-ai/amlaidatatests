@@ -6,14 +6,14 @@ import ibis
 import pytest
 from ibis import _
 
-from amlaidatatests.base import AbstractColumnTest, AbstractTableTest
+from amlaidatatests.base import AbstractTableTest
 from amlaidatatests.config import cfg
 from amlaidatatests.exceptions import AMLAITestSeverity, DataTestFailure
 from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.test_generators import (
     get_generic_table_tests,
-    timestamp_field_tests,
     non_nullable_field_tests,
+    timestamp_field_tests,
 )
 from amlaidatatests.tests import common
 
@@ -122,6 +122,7 @@ def test_DT014_event_order(connection, request):
         events=["AML_PROCESS_START", "AML_SAR", "AML_EXIT", "AML_PROCESS_END"],
         severity=AMLAITestSeverity.ERROR,
         test_id="DT014",
+        group_by=["risk_case_id", "party_id"],
     )
     t(connection, request)
 

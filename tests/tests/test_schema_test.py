@@ -19,7 +19,7 @@ def test_missing_required_column(test_connection, create_test_table, request):
 
     t = common.ColumnPresenceTest(table_config=table_config, column="b")
 
-    with pytest.raises(DataTestFailure, match=rf"Missing Required Column"):
+    with pytest.raises(DataTestFailure, match="Missing Required Column"):
         t(test_connection, request)
 
 
@@ -94,7 +94,7 @@ def test_excess_field_in_struct_warns(
     t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.warns(
         amlaidatatests.base.DataTestWarning,
-        match=f"Additional fields found in struct",
+        match="Additional fields found in struct",
     ):
         t(test_connection, request)
 
@@ -116,7 +116,7 @@ def test_missing_field_in_struct(test_connection, create_test_table, request) ->
     t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.raises(
         amlaidatatests.exceptions.DataTestFailure,
-        match=(f"Column type mismatch"),
+        match=("Column type mismatch"),
     ):
         t(test_connection, request)
 
@@ -142,7 +142,7 @@ def test_excess_field_in_embedded_struct(
     t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.warns(
         amlaidatatests.base.DataTestWarning,
-        match=f"Additional fields found in struct",
+        match="Additional fields found in struct",
     ):
         t(test_connection, request)
 
@@ -239,7 +239,7 @@ def test_column_wrong_type(test_connection, create_test_table, request):
     t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.raises(
         amlaidatatests.exceptions.DataTestFailure,
-        match=f"Column type mismatch:",
+        match="Column type mismatch:",
     ):
         t(test_connection, request)
 
@@ -255,7 +255,7 @@ def test_column_non_nullable_type(test_connection, create_test_table, request):
     t = common.ColumnTypeTest(table_config=table_config, column="a")
     with pytest.raises(
         amlaidatatests.exceptions.DataTestFailure,
-        match=f"Column type mismatch",
+        match="Column type mismatch",
     ):
         t(test_connection, request)
 

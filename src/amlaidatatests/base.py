@@ -4,7 +4,6 @@ import warnings
 from abc import ABC
 from typing import Any, Callable, Optional
 
-from amlaidatatests.config import cfg
 import ibis
 import pytest
 from google.api_core.exceptions import NotFound as GoogleTableNotFound
@@ -12,11 +11,12 @@ from ibis import BaseBackend, Expr, IbisError, Table, _
 from ibis import selectors as s
 from ibis.common.exceptions import IbisTypeError
 
+from amlaidatatests.config import cfg
 from amlaidatatests.exceptions import (
     AMLAITestSeverity,
     DataTestFailure,
-    SkipTest,
     DataTestWarning,
+    SkipTest,
 )
 from amlaidatatests.schema.base import ResolvedTableConfig, TableType
 

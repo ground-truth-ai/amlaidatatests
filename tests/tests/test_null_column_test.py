@@ -21,7 +21,7 @@ def test_column_is_always_null(test_connection, create_test_table, request):
 
     with pytest.raises(
         expected_exception=DataTestFailure,
-        match=f"2 rows",
+        match="2 rows",
     ):
         t(test_connection, request)
 
@@ -69,7 +69,7 @@ def test_column_optional_parent_field_missing(
 
     with pytest.raises(
         expected_exception=DataTestFailure,
-        match=f"1 rows",
+        match="1 rows",
     ):
         t(test_connection, request)
 
@@ -88,7 +88,7 @@ def test_column_is_sometimes_null(test_connection, create_test_table, request):
 
     with pytest.raises(
         expected_exception=DataTestFailure,
-        match=f"1 rows",
+        match="1 rows",
     ):
         t(test_connection, request)
 
@@ -126,7 +126,7 @@ def test_string_column_blanks(
 
     with pytest.raises(
         expected_exception=DataTestFailure,
-        match=f"2 rows ",
+        match="2 rows ",
     ):
         t(test_connection, request)
 

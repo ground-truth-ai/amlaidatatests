@@ -1,10 +1,10 @@
 from typing import Callable
 
-from amlaidatatests.config import cfg
 import ibis
 import pytest
 from ibis import BaseBackend, Table
 
+from amlaidatatests.config import cfg
 from amlaidatatests.connection import connection_factory
 from amlaidatatests.tests.conftest import (
     pytest_addoption as passthrough_pytest_addoption,

@@ -1,6 +1,7 @@
-""" Common tests used by amlaidatatests """
+"""Common tests used by amlaidatatests"""
 
 import datetime
+import functools
 import itertools
 import warnings
 from functools import reduce
@@ -11,11 +12,7 @@ from ibis import BaseBackend, Expr, _
 from ibis.common.exceptions import IbisTypeError
 from ibis.expr.datatypes import Array, DataType, Struct, Timestamp
 
-from amlaidatatests.base import (
-    AbstractColumnTest,
-    AbstractTableTest,
-    resolve_field,
-)
+from amlaidatatests.base import AbstractColumnTest, AbstractTableTest, resolve_field
 from amlaidatatests.exceptions import (
     AMLAITestSeverity,
     DataTestFailure,
@@ -177,6 +174,7 @@ class ColumnCardinalityTest(AbstractColumnTest):
         having:         _description_. Defaults to None.
         severity:       _description_. Defaults to AMLAITestSeverity.ERROR.
         group_by:       _description_. Defaults to None.
+        keep_nulls:     By default, nulls are not included as a valid value to count
     """
 
     def __init__(
@@ -191,6 +189,7 @@ class ColumnCardinalityTest(AbstractColumnTest):
         having: Optional[Callable[[Expr], Expr]] = None,
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
         group_by: Optional[list[str]] = None,
+        keep_nulls: bool = False,
     ) -> None:
         super().__init__(
             table_config=table_config, column=column, severity=severity, test_id=test_id
@@ -200,6 +199,7 @@ class ColumnCardinalityTest(AbstractColumnTest):
         self.group_by = group_by
         self.where = where
         self.having = having
+        self.keep_nulls = keep_nulls
 
     def _test(self, *, connection: BaseBackend) -> None:
         # References to validity_start_time are unnecessary, but they do ensure
@@ -213,6 +213,10 @@ class ColumnCardinalityTest(AbstractColumnTest):
             table = self.get_latest_rows(table)
 
         table, column = resolve_field(table=table, column=self.column)
+
+        if not self.keep_nulls:
+            table = table.filter(column.notnull())
+
         grp_columns = None
         if self.group_by:
             grp_columns = []
@@ -276,6 +280,8 @@ class CountFrequencyValues(AbstractColumnTest):
                         max_proportion tested. Defaults to None.
         group_by:       If set, proportions and number counts are for the column
                         rows in this list. Defaults to None.
+        keep_nulls:     By default, nulls are not included in any proportion count or
+                        as a valid value to count
     """
 
     def __init__(
@@ -290,6 +296,7 @@ class CountFrequencyValues(AbstractColumnTest):
         having: Optional[Callable[[Expr], Expr]] = None,
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
         group_by: Optional[list[str]] = None,
+        keep_nulls: bool = False,
     ) -> None:
         super().__init__(
             table_config=table_config, column=column, severity=severity, test_id=test_id
@@ -305,6 +312,7 @@ class CountFrequencyValues(AbstractColumnTest):
         self.where = where
         self.having = having
         self.group_by = group_by if group_by else []
+        self.keep_nulls = keep_nulls
 
     def _test(self, *, connection: BaseBackend) -> None:
         table = self.table
@@ -314,9 +322,13 @@ class CountFrequencyValues(AbstractColumnTest):
         ):
             # For these tables, we need to identify the latest row
             table = self.get_latest_rows(table)
+
         if self.where is not None:
             table = table.filter(self.where)
         table, column = resolve_field(table=table, column=self.column)
+
+        if not self.keep_nulls:
+            table = table.filter(column.notnull())
 
         grp_columns = []
         for grp in self.group_by:
@@ -367,18 +379,20 @@ class VerifyTypedValuePresence(AbstractColumnTest):
         from table
 
     Args:
-        table_config:   The resolved table config to test
-        severity:       The error type to emit on test failure
-                        Defaults to AMLAITestSeverity.ERROR
-        test_id:        A unique identifier for the test
-        column:         The column being tested
-        group_by:       list of column_ids to group by
-        max_proportion: The maximum proportion, inclusive. Defaults to None.
-        min_proportion: The minimum proportion, inclusive. Defaults to None.
-        where:          Applies a filter to the proportion denominator. If None,
-                        the denominator = count(*)
-        value:          The value in the numerator to count for, equivalent to
-                        `where column = value`
+        table_config:           The resolved table config to test
+        severity:               The error type to emit on test failure
+                                Defaults to AMLAITestSeverity.ERROR
+        test_id:                A unique identifier for the test
+        column:                 The column being tested
+        group_by:               list of column_ids to group by
+        max_proportion:         The maximum proportion, inclusive. Defaults to None.
+        min_proportion:         The minimum proportion, inclusive. Defaults to None.
+        compare_group_by_where: Applies a filter to the proportion denominator.
+                                the denominator = count(*)
+        value:                  The value in the numerator to count for, equivalent to
+                                `where column = value`
+        keep_nulls:             By default, nulls are not included in any proportion
+                                count or as a valid value to count
     """
 
     def __init__(
@@ -393,6 +407,7 @@ class VerifyTypedValuePresence(AbstractColumnTest):
         min_proportion: Optional[float] = None,
         compare_group_by_where: Optional[Callable[[Expr], Expr]] = None,
         severity: AMLAITestSeverity = AMLAITestSeverity.WARN,
+        keep_nulls: bool = False,
     ) -> None:
         super().__init__(
             table_config=table_config, column=column, severity=severity, test_id=test_id
@@ -402,6 +417,7 @@ class VerifyTypedValuePresence(AbstractColumnTest):
         self.value = value
         self.group_by = group_by
         self.where = compare_group_by_where
+        self.keep_nulls = keep_nulls
 
     def _test(self, *, connection: BaseBackend) -> None:
         table = self.table
@@ -412,6 +428,9 @@ class VerifyTypedValuePresence(AbstractColumnTest):
             # For these tables, we need to identify the latest row
             table = self.get_latest_rows(table)
         table, column = resolve_field(table=table, column=self.column)
+
+        if not self.keep_nulls:
+            table = table.filter(column.notnull())
 
         where_group_kwargs = {"where": self.where(_)} if self.where else {}
 
@@ -471,6 +490,7 @@ class ConsecutiveEntityDeletionsTest(AbstractTableTest):
         self.entity_ids = entity_ids
 
     def _test(self, *, connection: BaseBackend) -> None:
+
         counted = (
             self.table.filter(_.is_entity_deleted)
             .group_by(self.entity_ids)
@@ -940,6 +960,7 @@ class EventOrder(AbstractColumnTest):
         column: str,
         time_column: str,
         events: list[str],
+        group_by: list[str],
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
         test_id: Optional[str] = None,
     ) -> None:
@@ -949,7 +970,7 @@ class EventOrder(AbstractColumnTest):
         self.time_column = time_column
         self.column = column
         self.events = events
-        self.group_by = ["risk_case_id", "party_id"]
+        self.group_by = group_by
 
     @property
     def id(self):
@@ -972,9 +993,9 @@ class EventOrder(AbstractColumnTest):
         # the first of the minimum events. The combinations are without
         # replacement so will build comparisons from left to right
         for first, compare in itertools.combinations(self.events, 2):
-            comparisons.append(expr[f"{first}_max"] >= expr[f"{compare}_min"])
+            comparisons.append(expr[f"{first}_max"] > expr[f"{compare}_min"])
 
-        expr = expr.filter(itertools.accumulate(comparisons, lambda x, y: x | y))
+        expr = expr.filter(functools.reduce(lambda x, y: x | y, comparisons))
         result = connection.execute(expr.count())
         if result > 0:
             raise DataTestFailure(
@@ -1147,7 +1168,14 @@ class TemporalProfileTest(AbstractColumnTest):
 
 
 class TemporalReferentialIntegrityTest(AbstractTableTest):
-    """_summary_
+    """Validate that tables are referentially integral over times
+
+    A temporal validation involves validating the specified table against
+    entries in a to_table. For example, a customer event table might be
+    validated against a customer table. Events should not happen to a customer
+    before or after they existed.
+
+    There are two types of table to validated
 
 
     Args:
@@ -1333,33 +1361,46 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
             else totbl.last_date
         )
 
-        expr = tbl.join(
-            right=totbl,
-            predicates=(
-                (tbl[self.key] == totbl[self.key])
-                # If this item is before the first date on the base table
-                & (
-                    tbl.first_date.between(
-                        lower=first_date_with_tolerance, upper=last_date_with_tolerance
-                    ).negate()
-                    |
-                    # If this item is after the last date on the base table
-                    tbl.last_date.between(
-                        lower=first_date_with_tolerance, upper=last_date_with_tolerance
-                    ).negate()
-                )
-            ),
-        ).mutate(
-            last_date=ibis.ifelse(
-                condition=_.last_date == self.MAX_DATETIME_VALUE,
-                true_expr=None,
-                false_expr=_.last_date,
-            ),
-            last_date_right=ibis.ifelse(
-                condition=_.last_date_right == self.MAX_DATETIME_VALUE,
-                true_expr=None,
-                false_expr=_.last_date_right,
-            ),
+        expr = (
+            tbl.join(
+                right=totbl,
+                predicates=(
+                    (tbl[self.key] == totbl[self.key])
+                    # If this item is before the first date on the base table
+                    & (
+                        tbl.first_date.between(
+                            lower=first_date_with_tolerance,
+                            upper=last_date_with_tolerance,
+                        ).negate()
+                        |
+                        # If this item is after the last date on the base table
+                        tbl.last_date.between(
+                            lower=first_date_with_tolerance,
+                            upper=last_date_with_tolerance,
+                        ).negate()
+                    )
+                ),
+            )
+            .mutate(
+                last_date=ibis.ifelse(
+                    condition=_.last_date == self.MAX_DATETIME_VALUE,
+                    true_expr=None,
+                    false_expr=_.last_date,
+                ),
+                last_date_right=ibis.ifelse(
+                    condition=_.last_date_right == self.MAX_DATETIME_VALUE,
+                    true_expr=None,
+                    false_expr=_.last_date_right,
+                ),
+            )
+            .rename(
+                {
+                    f"first_date_{self.table_config.name}": "first_date",
+                    f"last_date_{self.table_config.name}": "last_date",
+                    f"first_date_{self.to_table_config.name}": "first_date_right",
+                    f"last_date_{self.to_table_config.name}": "last_date_right",
+                }
+            )
         )
 
         result = connection.execute(expr=expr.count())

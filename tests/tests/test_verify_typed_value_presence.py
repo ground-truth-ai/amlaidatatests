@@ -2,10 +2,9 @@ import ibis
 import pytest
 from ibis.expr.datatypes import String
 
-from amlaidatatests.exceptions import DataTestFailure
+from amlaidatatests.exceptions import AMLAITestSeverity, DataTestFailure
 from amlaidatatests.schema.base import ResolvedTableConfig, TableType
 from amlaidatatests.tests import common
-from amlaidatatests.exceptions import AMLAITestSeverity
 
 
 def test_max_proportion_group_by(test_connection, create_test_table, request):

@@ -2,7 +2,7 @@
 
 import pytest
 
-from amlaidatatests.base import AbstractColumnTest, AbstractTableTest
+from amlaidatatests.base import AbstractColumnTest
 from amlaidatatests.config import cfg
 from amlaidatatests.exceptions import AMLAITestSeverity
 from amlaidatatests.schema.utils import resolve_table_config
@@ -81,8 +81,10 @@ def test_RI011_temporal_referential_integrity_account_party_link(connection, req
 def test_RI004_referential_integrity_account_party_link(connection, request):
     to_table_config = resolve_table_config("account_party_link")
     test = common.ReferentialIntegrityTest(
-        table_config=TABLE_CONFIG, to_table_config=to_table_config, keys=["account_id"],
-        test_id="RI004"
+        table_config=TABLE_CONFIG,
+        to_table_config=to_table_config,
+        keys=["account_id"],
+        test_id="RI004",
     )
     test(connection, request)
 
@@ -123,8 +125,8 @@ def test_column_values(connection, test, request):
 @pytest.mark.parametrize(
     "test", get_entity_tests(table_config=TABLE_CONFIG, entity_name="CurrencyValue")
 )
-def test_currency_value_entity(connection, column, test: AbstractColumnTest):
-    test(connection=connection, prefix=column)
+def test_currency_value_entity(connection, column, test: AbstractColumnTest, request):
+    test(connection=connection, prefix=column, request=request)
 
 
 @pytest.mark.parametrize(

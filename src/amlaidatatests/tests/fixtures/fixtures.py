@@ -1,7 +1,7 @@
-""" Fixtures for amlaidatatests """
+"""Fixtures for amlaidatatests"""
 
-from ibis import BaseBackend
 import pytest
+from ibis import BaseBackend
 
 from amlaidatatests.connection import connection_factory
 

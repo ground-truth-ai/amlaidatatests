@@ -1,4 +1,4 @@
-""" Misc utils for amlaidatatests """
+"""Misc utils for amlaidatatests"""
 
 from amlaidatatests.config import ConfigSingleton
 from amlaidatatests.connection import connection_factory
