@@ -1,3 +1,5 @@
+from sphinxawesome_theme.postprocess import Icons
+
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -29,3 +31,10 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "sphinxawesome_theme"
 html_static_path = ["_static"]
+html_permalinks_icon = Icons.permalinks_icon
+
+rst_prolog = """
+.. include:: <s5defs.txt>
+
+"""
+html_css_files = ["css/s4defs-roles.css"]

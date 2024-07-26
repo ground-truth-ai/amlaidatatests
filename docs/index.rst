@@ -2,7 +2,6 @@
 AML AI Datatests documentation
 ==============================
 
-
 Introduction
 ============
 
@@ -18,40 +17,26 @@ It aims to:
  * Validate the schema in which the data is being stored.
  * Validate the data stored in the schema.
 
-amlaidatatests is based on two main libraries:
- * `Ibis Project <https://ibis-project.org/>`_ - which provides the ability to
-   test the data in multiple databases. Only bigquery is supported at this time.
- * `pytest <https://docs.pytest.org/en/latest/contents.html/>`_ - which allows
-   the use of multiple common python testing plugins.
-
-
-Get Started
-===========
-
-These sections cover the basics of using and configuring amlaidatatests
-
 .. toctree::
-   :maxdepth: 1
-
-   usage/installing
-   usage/quickstart
-
-Reference
-=========
-
-.. toctree::
+   :caption: Get Started
+   :titlesonly:
    :maxdepth: 2
 
-   configuration
+   get-started/installing/index
+   get-started/quickstart/index
+
+.. toctree::
+   :caption: User Guides
+   :titlesonly:
+   :maxdepth: 2
+
+   usage/interpreting-schematests
+
+.. toctree::
+   :caption: Reference
+   :titlesonly:
+   :maxdepth: 1
+
    databases/index
-   tests/index
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
-.. _CNN: http://cnn.com/
+   reference/test-list
+   reference/configuration
