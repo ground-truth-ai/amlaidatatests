@@ -1,13 +1,12 @@
 import datetime
+
 import ibis
 import pytest
-from ibis.expr.datatypes import String
+from ibis.expr.datatypes import Int64, String, Timestamp
 
 from amlaidatatests.exceptions import DataTestFailure
 from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.tests import common
-from ibis.expr.datatypes import String, Timestamp, Int64
-
 
 SCHEMA = {
     "id": Int64(nullable=False),

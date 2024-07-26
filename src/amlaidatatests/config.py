@@ -2,15 +2,14 @@
 
 import argparse
 import datetime
+import typing
 from dataclasses import dataclass, field, fields
 from typing import Any, Optional, Union
-import typing
 from urllib.parse import urlparse
 
-from omegaconf import OmegaConf
 import pytest
+from omegaconf import OmegaConf
 from simple_parsing.docstring import get_attribute_docstring
-
 
 from .singleton import Singleton
 

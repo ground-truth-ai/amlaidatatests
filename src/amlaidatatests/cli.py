@@ -1,7 +1,6 @@
 """Utility CLI for amlaidatatests"""
 
 import argparse
-import os
 import sys
 import typing
 

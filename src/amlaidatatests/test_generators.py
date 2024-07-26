@@ -4,8 +4,8 @@ information or other parameterization"""
 import functools
 from typing import Callable, Optional, Union
 
-from ibis import Schema, literal, Table
 import ibis
+from ibis import Schema, Table, literal
 from ibis.expr.datatypes import Array, DataType, Struct, Timestamp
 
 from amlaidatatests.base import AbstractBaseTest, AbstractColumnTest
@@ -34,7 +34,7 @@ ENTITIES = {"CurrencyValue": CurrencyValue(), "ValueEntity": ValueEntity()}
 def get_entity_tests(
     table_config: ResolvedTableConfig, entity_name: str
 ) -> list[AbstractColumnTest]:
-    """_summary_
+    """Retrieve a list of tests for the specified entity
 
     Args:
         table: _description_
@@ -175,14 +175,13 @@ def get_entities(
     Args:
         item: The [ibis.Schema] or [ibis.common.collections.MapSet] which
               corresponds to this item.
-        entity_types: The entities to locate. Defaults to ENTITIES.keys().
+        entity_types: The entities to locate. Defaults to all entities
 
     Returns:
         A list of the entities paths
     """
-    return get_fields(
-        table_config.schema, filter_field=lambda dtype: dtype in entity_types
-    )
+    entities = [ENTITIES[ent] for ent in entity_types]
+    return get_fields(table_config.schema, filter_field=lambda dtype: dtype in entities)
 
 
 def get_timestamp_fields(

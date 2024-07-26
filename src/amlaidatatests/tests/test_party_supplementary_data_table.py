@@ -2,7 +2,6 @@
 
 import pytest
 
-from amlaidatatests.base import AbstractColumnTest, AbstractTableTest
 from amlaidatatests.exceptions import AMLAITestSeverity
 from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.test_generators import (

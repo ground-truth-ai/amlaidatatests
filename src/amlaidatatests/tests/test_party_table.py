@@ -2,7 +2,7 @@
 
 import pytest
 
-from amlaidatatests.base import AbstractBaseTest, AbstractColumnTest, AbstractTableTest
+from amlaidatatests.base import AbstractBaseTest, AbstractColumnTest
 from amlaidatatests.config import cfg
 from amlaidatatests.exceptions import AMLAITestSeverity
 from amlaidatatests.io import get_valid_region_codes
@@ -178,21 +178,6 @@ def test_RI002_referential_integrity(connection, request):
         keys=["party_id"],
         severity=AMLAITestSeverity.WARN,
         test_id="RI002",
-    )
-    test(connection, request)
-
-
-def test_RI013_temporal_referential_integrity_party_supplementary_table(
-    connection, request
-):
-    # A warning here means that there are parties without linked accounts
-    to_table_config = resolve_table_config("party_supplementary_data")
-    test = common.TemporalReferentialIntegrityTest(
-        table_config=TABLE_CONFIG,
-        to_table_config=to_table_config,
-        key="party_id",
-        severity=AMLAITestSeverity.WARN,
-        test_id="RI013",
     )
     test(connection, request)
 

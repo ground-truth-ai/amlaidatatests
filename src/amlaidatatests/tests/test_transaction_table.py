@@ -2,7 +2,7 @@
 
 import pytest
 
-from amlaidatatests.base import AbstractColumnTest, AbstractTableTest
+from amlaidatatests.base import AbstractColumnTest
 from amlaidatatests.config import cfg
 from amlaidatatests.exceptions import AMLAITestSeverity
 from amlaidatatests.schema.utils import resolve_table_config
@@ -125,8 +125,8 @@ def test_column_values(connection, test, request):
 @pytest.mark.parametrize(
     "test", get_entity_tests(table_config=TABLE_CONFIG, entity_name="CurrencyValue")
 )
-def test_currency_value_entity(connection, column, test: AbstractColumnTest):
-    test(connection=connection, prefix=column)
+def test_currency_value_entity(connection, column, test: AbstractColumnTest, request):
+    test(connection=connection, prefix=column, request=request)
 
 
 @pytest.mark.parametrize(

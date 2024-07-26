@@ -12,11 +12,7 @@ from ibis import BaseBackend, Expr, _
 from ibis.common.exceptions import IbisTypeError
 from ibis.expr.datatypes import Array, DataType, Struct, Timestamp
 
-from amlaidatatests.base import (
-    AbstractColumnTest,
-    AbstractTableTest,
-    resolve_field,
-)
+from amlaidatatests.base import AbstractColumnTest, AbstractTableTest, resolve_field
 from amlaidatatests.exceptions import (
     AMLAITestSeverity,
     DataTestFailure,
@@ -178,6 +174,7 @@ class ColumnCardinalityTest(AbstractColumnTest):
         having:         _description_. Defaults to None.
         severity:       _description_. Defaults to AMLAITestSeverity.ERROR.
         group_by:       _description_. Defaults to None.
+        keep_nulls:     By default, nulls are not included as a valid value to count
     """
 
     def __init__(
@@ -192,6 +189,7 @@ class ColumnCardinalityTest(AbstractColumnTest):
         having: Optional[Callable[[Expr], Expr]] = None,
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
         group_by: Optional[list[str]] = None,
+        keep_nulls: bool = False,
     ) -> None:
         super().__init__(
             table_config=table_config, column=column, severity=severity, test_id=test_id
@@ -201,6 +199,7 @@ class ColumnCardinalityTest(AbstractColumnTest):
         self.group_by = group_by
         self.where = where
         self.having = having
+        self.keep_nulls = keep_nulls
 
     def _test(self, *, connection: BaseBackend) -> None:
         # References to validity_start_time are unnecessary, but they do ensure
@@ -214,6 +213,10 @@ class ColumnCardinalityTest(AbstractColumnTest):
             table = self.get_latest_rows(table)
 
         table, column = resolve_field(table=table, column=self.column)
+
+        if not self.keep_nulls:
+            table = table.filter(column.notnull())
+
         grp_columns = None
         if self.group_by:
             grp_columns = []
@@ -277,6 +280,8 @@ class CountFrequencyValues(AbstractColumnTest):
                         max_proportion tested. Defaults to None.
         group_by:       If set, proportions and number counts are for the column
                         rows in this list. Defaults to None.
+        keep_nulls:     By default, nulls are not included in any proportion count or
+                        as a valid value to count
     """
 
     def __init__(
@@ -374,18 +379,20 @@ class VerifyTypedValuePresence(AbstractColumnTest):
         from table
 
     Args:
-        table_config:   The resolved table config to test
-        severity:       The error type to emit on test failure
-                        Defaults to AMLAITestSeverity.ERROR
-        test_id:        A unique identifier for the test
-        column:         The column being tested
-        group_by:       list of column_ids to group by
-        max_proportion: The maximum proportion, inclusive. Defaults to None.
-        min_proportion: The minimum proportion, inclusive. Defaults to None.
-        where:          Applies a filter to the proportion denominator. If None,
-                        the denominator = count(*)
-        value:          The value in the numerator to count for, equivalent to
-                        `where column = value`
+        table_config:           The resolved table config to test
+        severity:               The error type to emit on test failure
+                                Defaults to AMLAITestSeverity.ERROR
+        test_id:                A unique identifier for the test
+        column:                 The column being tested
+        group_by:               list of column_ids to group by
+        max_proportion:         The maximum proportion, inclusive. Defaults to None.
+        min_proportion:         The minimum proportion, inclusive. Defaults to None.
+        compare_group_by_where: Applies a filter to the proportion denominator.
+                                the denominator = count(*)
+        value:                  The value in the numerator to count for, equivalent to
+                                `where column = value`
+        keep_nulls:             By default, nulls are not included in any proportion
+                                count or as a valid value to count
     """
 
     def __init__(
@@ -400,6 +407,7 @@ class VerifyTypedValuePresence(AbstractColumnTest):
         min_proportion: Optional[float] = None,
         compare_group_by_where: Optional[Callable[[Expr], Expr]] = None,
         severity: AMLAITestSeverity = AMLAITestSeverity.WARN,
+        keep_nulls: bool = False,
     ) -> None:
         super().__init__(
             table_config=table_config, column=column, severity=severity, test_id=test_id
@@ -409,6 +417,7 @@ class VerifyTypedValuePresence(AbstractColumnTest):
         self.value = value
         self.group_by = group_by
         self.where = compare_group_by_where
+        self.keep_nulls = keep_nulls
 
     def _test(self, *, connection: BaseBackend) -> None:
         table = self.table
@@ -419,6 +428,9 @@ class VerifyTypedValuePresence(AbstractColumnTest):
             # For these tables, we need to identify the latest row
             table = self.get_latest_rows(table)
         table, column = resolve_field(table=table, column=self.column)
+
+        if not self.keep_nulls:
+            table = table.filter(column.notnull())
 
         where_group_kwargs = {"where": self.where(_)} if self.where else {}
 
@@ -478,6 +490,7 @@ class ConsecutiveEntityDeletionsTest(AbstractTableTest):
         self.entity_ids = entity_ids
 
     def _test(self, *, connection: BaseBackend) -> None:
+
         counted = (
             self.table.filter(_.is_entity_deleted)
             .group_by(self.entity_ids)
@@ -1155,7 +1168,14 @@ class TemporalProfileTest(AbstractColumnTest):
 
 
 class TemporalReferentialIntegrityTest(AbstractTableTest):
-    """_summary_
+    """Validate that tables are referentially integral over times
+
+    A temporal validation involves validating the specified table against
+    entries in a to_table. For example, a customer event table might be
+    validated against a customer table. Events should not happen to a customer
+    before or after they existed.
+
+    There are two types of table to validated
 
 
     Args:

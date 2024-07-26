@@ -71,7 +71,7 @@ def test_count_frequency_values_fails(test_connection, create_test_table, reques
 
     with pytest.raises(
         expected_exception=DataTestFailure,
-        match=f"2 column values",
+        match="2 column values",
     ):
         t(test_connection, request)  # should succeed
 

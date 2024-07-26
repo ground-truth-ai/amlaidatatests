@@ -1,13 +1,13 @@
 import datetime
 
-from amlaidatatests.schema.base import ResolvedTableConfig
 import ibis
-from ibis.expr.datatypes import Timestamp, Struct, String
+from ibis.expr.datatypes import String, Struct, Timestamp
 
+from amlaidatatests.schema.base import ResolvedTableConfig
 from amlaidatatests.test_generators import (
     find_consistent_timestamp_offset,
-    get_timestamp_fields,
     get_non_nullable_fields,
+    get_timestamp_fields,
 )
 
 

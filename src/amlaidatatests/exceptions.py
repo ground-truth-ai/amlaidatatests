@@ -1,8 +1,8 @@
 """Exceptions for amlaidatatests"""
 
 import enum
-from enum import auto
 import importlib
+from enum import auto
 from typing import Optional
 
 import ibis

@@ -1,11 +1,10 @@
 """pytest configuration file for integration with amlaitests"""
 
 import logging
-from dataclasses import dataclass, fields
-import os
-import random
-from typing import Dict, Optional, Tuple
+import pathlib
 import typing
+from dataclasses import dataclass, fields
+from typing import Dict, Optional
 
 import pytest
 from omegaconf import OmegaConf
@@ -16,7 +15,6 @@ from amlaidatatests.config import (
     DatatestConfig,
     init_parser_options_from_config,
 )
-import pathlib
 
 pytest_plugins = [
     "amlaidatatests.tests.fixtures.fixtures",
@@ -130,10 +128,12 @@ _test_failed_incremental: Dict[str, str] = {}
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
-    """Pytest-html hook. Does not run if pytest-html is not installed
+    """Pytest hook on test report completion time
 
-    Compile the number of warnings captured by each test for consumption by the
+    1) Compiles the number of warnings captured by each test for consumption by the
     hooks further down this file
+    2) Check if the test failed due to the table being missing.
+    Record that the test failed and xfail all other tests in the module
 
     Args:
         item: The reported pytest item call: the stage of the report collection
@@ -148,7 +148,6 @@ def pytest_runtest_makereport(item, call):
         # the test has failed
         # retrieve the class name of the test
         module = str(item.module)
-        # retrieve the index of the test (if parametrize is used in combination with incremental)
         # retrieve the name of the test function
         test_name = item.originalname or item.name
         # store in _test_failed_incremental the original name of the failed test
@@ -156,16 +155,15 @@ def pytest_runtest_makereport(item, call):
 
 
 def pytest_runtest_setup(item):
-    # retrieve the class name of the test
+    # retrieve the module name of the test
     module_name = str(item.module)
-    # check if a previous test has failed for this class
+    # check if a previous test has failed for this module
     if test_name := _test_failed_incremental.get(module_name):
-        # retrieve the index of the test (if parametrize is used in combination with incremental)
-        # if name found, test has failed for the combination of class name & test name
+        # if name found, xfail this test
         if test_name is not None:
             pytest.xfail(
                 "Skipping test as a previous test was unable "
-                "to query table ({})".format(test_name)
+                f"to query table ({test_name})"
             )
 
 
