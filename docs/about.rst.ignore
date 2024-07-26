@@ -1,0 +1,12 @@
+=====
+About
+=====
+
+Design
+------
+
+amlaidatatests is based on two main libraries:
+ * `Ibis Project <https://ibis-project.org/>`_ - which provides the ability to
+   test the data in multiple databases. Only bigquery is supported at this time.
+ * `pytest <https://docs.pytest.org/en/latest/contents.html/>`_ - which allows
+   the use of multiple common python testing plugins.

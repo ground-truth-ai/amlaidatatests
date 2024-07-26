@@ -9,12 +9,6 @@ Configuration Flags
    :func: build_parser
    :prog: amlaidatatests
 
-   foo
-        This text will go right after the "foo" positional argument help.
-
-   --conf
-       Content appended to the --output option, regardless of the argument group. Lol
-
 Useful Pytest Options
 ---------------------
 
@@ -26,7 +20,7 @@ To view all available pytest configuration values, run ``amlaidatatests
 <https://docs.pytest.org/en/latest/reference/reference.html#command-line-flags>`_.
 
 .. confval:: -k
-   :type: ``str``
 
    The pytest keyword option allows filtering
-   tests to run
+   tests to run. For example ``-k transaction_table and primary_key`` will run
+   only tests with those keywords.
