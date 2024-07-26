@@ -8,7 +8,9 @@ from amlaidatatests.exceptions import AMLAITestSeverity
 from amlaidatatests.io import get_valid_region_codes
 from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.test_generators import (
+    get_entities,
     get_entity_mutation_tests,
+    get_entity_tests,
     get_generic_table_tests,
     non_nullable_field_tests,
     timestamp_field_tests,
@@ -75,6 +77,17 @@ def test_non_nullable_fields(connection, test, request):
 @pytest.mark.parametrize("test", timestamp_field_tests(TABLE_CONFIG))
 def test_timestamp_fields(connection, test: AbstractColumnTest, request):
     test(connection, request=request)
+
+
+@pytest.mark.parametrize(
+    "column",
+    get_entities(table_config=TABLE_CONFIG, entity_types=["CurrencyValue"]),
+)
+@pytest.mark.parametrize(
+    "test", get_entity_tests(table_config=TABLE_CONFIG, entity_name="CurrencyValue")
+)
+def test_currency_value_entity(connection, column, test: AbstractColumnTest, request):
+    test(connection=connection, prefix=column, request=request)
 
 
 @pytest.mark.parametrize(

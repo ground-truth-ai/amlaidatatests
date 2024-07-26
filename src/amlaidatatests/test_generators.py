@@ -37,7 +37,7 @@ def get_entity_tests(
     """Retrieve a list of tests for the specified entity
 
     Args:
-        table: _description_
+        table_config: _description_
         entity_name: _description_
 
     Raises:
