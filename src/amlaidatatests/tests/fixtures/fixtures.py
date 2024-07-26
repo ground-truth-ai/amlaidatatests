@@ -1,4 +1,4 @@
-""" Fixtures for amlaidatatests """
+"""Fixtures for amlaidatatests"""
 
 from ibis import BaseBackend
 import pytest

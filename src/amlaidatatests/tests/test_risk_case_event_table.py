@@ -122,6 +122,7 @@ def test_DT014_event_order(connection, request):
         events=["AML_PROCESS_START", "AML_SAR", "AML_EXIT", "AML_PROCESS_END"],
         severity=AMLAITestSeverity.ERROR,
         test_id="DT014",
+        group_by=["risk_case_id", "party_id"],
     )
     t(connection, request)
 

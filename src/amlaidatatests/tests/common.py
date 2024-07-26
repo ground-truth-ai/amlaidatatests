@@ -1,6 +1,7 @@
-""" Common tests used by amlaidatatests """
+"""Common tests used by amlaidatatests"""
 
 import datetime
+import functools
 import itertools
 import warnings
 from functools import reduce
@@ -290,6 +291,7 @@ class CountFrequencyValues(AbstractColumnTest):
         having: Optional[Callable[[Expr], Expr]] = None,
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
         group_by: Optional[list[str]] = None,
+        keep_nulls: bool = False,
     ) -> None:
         super().__init__(
             table_config=table_config, column=column, severity=severity, test_id=test_id
@@ -305,6 +307,7 @@ class CountFrequencyValues(AbstractColumnTest):
         self.where = where
         self.having = having
         self.group_by = group_by if group_by else []
+        self.keep_nulls = keep_nulls
 
     def _test(self, *, connection: BaseBackend) -> None:
         table = self.table
@@ -314,9 +317,13 @@ class CountFrequencyValues(AbstractColumnTest):
         ):
             # For these tables, we need to identify the latest row
             table = self.get_latest_rows(table)
+
         if self.where is not None:
             table = table.filter(self.where)
         table, column = resolve_field(table=table, column=self.column)
+
+        if not self.keep_nulls:
+            table = table.filter(column.notnull())
 
         grp_columns = []
         for grp in self.group_by:
@@ -940,6 +947,7 @@ class EventOrder(AbstractColumnTest):
         column: str,
         time_column: str,
         events: list[str],
+        group_by: list[str],
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
         test_id: Optional[str] = None,
     ) -> None:
@@ -949,7 +957,7 @@ class EventOrder(AbstractColumnTest):
         self.time_column = time_column
         self.column = column
         self.events = events
-        self.group_by = ["risk_case_id", "party_id"]
+        self.group_by = group_by
 
     @property
     def id(self):
@@ -972,9 +980,9 @@ class EventOrder(AbstractColumnTest):
         # the first of the minimum events. The combinations are without
         # replacement so will build comparisons from left to right
         for first, compare in itertools.combinations(self.events, 2):
-            comparisons.append(expr[f"{first}_max"] >= expr[f"{compare}_min"])
+            comparisons.append(expr[f"{first}_max"] > expr[f"{compare}_min"])
 
-        expr = expr.filter(itertools.accumulate(comparisons, lambda x, y: x | y))
+        expr = expr.filter(functools.reduce(lambda x, y: x | y, comparisons))
         result = connection.execute(expr.count())
         if result > 0:
             raise DataTestFailure(
@@ -1333,33 +1341,46 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
             else totbl.last_date
         )
 
-        expr = tbl.join(
-            right=totbl,
-            predicates=(
-                (tbl[self.key] == totbl[self.key])
-                # If this item is before the first date on the base table
-                & (
-                    tbl.first_date.between(
-                        lower=first_date_with_tolerance, upper=last_date_with_tolerance
-                    ).negate()
-                    |
-                    # If this item is after the last date on the base table
-                    tbl.last_date.between(
-                        lower=first_date_with_tolerance, upper=last_date_with_tolerance
-                    ).negate()
-                )
-            ),
-        ).mutate(
-            last_date=ibis.ifelse(
-                condition=_.last_date == self.MAX_DATETIME_VALUE,
-                true_expr=None,
-                false_expr=_.last_date,
-            ),
-            last_date_right=ibis.ifelse(
-                condition=_.last_date_right == self.MAX_DATETIME_VALUE,
-                true_expr=None,
-                false_expr=_.last_date_right,
-            ),
+        expr = (
+            tbl.join(
+                right=totbl,
+                predicates=(
+                    (tbl[self.key] == totbl[self.key])
+                    # If this item is before the first date on the base table
+                    & (
+                        tbl.first_date.between(
+                            lower=first_date_with_tolerance,
+                            upper=last_date_with_tolerance,
+                        ).negate()
+                        |
+                        # If this item is after the last date on the base table
+                        tbl.last_date.between(
+                            lower=first_date_with_tolerance,
+                            upper=last_date_with_tolerance,
+                        ).negate()
+                    )
+                ),
+            )
+            .mutate(
+                last_date=ibis.ifelse(
+                    condition=_.last_date == self.MAX_DATETIME_VALUE,
+                    true_expr=None,
+                    false_expr=_.last_date,
+                ),
+                last_date_right=ibis.ifelse(
+                    condition=_.last_date_right == self.MAX_DATETIME_VALUE,
+                    true_expr=None,
+                    false_expr=_.last_date_right,
+                ),
+            )
+            .rename(
+                {
+                    f"first_date_{self.table_config.name}": "first_date",
+                    f"last_date_{self.table_config.name}": "last_date",
+                    f"first_date_{self.to_table_config.name}": "first_date_right",
+                    f"last_date_{self.to_table_config.name}": "last_date_right",
+                }
+            )
         )
 
         result = connection.execute(expr=expr.count())

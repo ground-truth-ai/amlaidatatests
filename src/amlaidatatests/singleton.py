@@ -1,4 +1,4 @@
-""" Singleton function, derived from the hydra project """
+"""Singleton function, derived from the hydra project"""
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 #

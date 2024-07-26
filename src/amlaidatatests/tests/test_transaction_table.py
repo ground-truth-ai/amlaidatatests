@@ -81,8 +81,10 @@ def test_RI011_temporal_referential_integrity_account_party_link(connection, req
 def test_RI004_referential_integrity_account_party_link(connection, request):
     to_table_config = resolve_table_config("account_party_link")
     test = common.ReferentialIntegrityTest(
-        table_config=TABLE_CONFIG, to_table_config=to_table_config, keys=["account_id"],
-        test_id="RI004"
+        table_config=TABLE_CONFIG,
+        to_table_config=to_table_config,
+        keys=["account_id"],
+        test_id="RI004",
     )
     test(connection, request)
 

@@ -1,4 +1,4 @@
-""" Collection of functions to automatically generate tests based on schema
+"""Collection of functions to automatically generate tests based on schema
 information or other parameterization"""
 
 import functools

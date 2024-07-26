@@ -1,4 +1,4 @@
-""" Entities for AML AI schema """
+"""Entities for AML AI schema"""
 
 from ibis.expr.datatypes import Int64, String, Struct
 

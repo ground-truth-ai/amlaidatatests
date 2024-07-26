@@ -1,4 +1,4 @@
-""" Base classes and enumerations for schema specification """
+"""Base classes and enumerations for schema specification"""
 
 import enum
 from abc import ABC, abstractmethod
@@ -42,7 +42,7 @@ class ResolvedTableConfig(TableConfig):
     """
 
     resolved_name: str = field(init=False)
-    schema: str = field(init=False)
+    schema: Schema = field(init=False)
     table: Table
 
     def __post_init__(self):
