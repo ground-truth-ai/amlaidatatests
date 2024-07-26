@@ -27,7 +27,7 @@ Steps
 
        $ pip install amlaidatatests
 
-#. Install the gcloud SDK, following the instructions for your platform `here <https://cloud.google.com/sdk/docs/install>`_.
+#. Install the gcloud SDK, following the `instructions for your platform <https://cloud.google.com/sdk/docs/install>`_.
 
 #. Authenticate to Google using the gcloud SDK
 

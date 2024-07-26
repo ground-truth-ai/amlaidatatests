@@ -1,10 +1,7 @@
 ### AMLAIDatatests
 
-This is a work in progress, early development build of amlaidatatests.
+User guide and documentation for amlaidatatests are located at https://amlaidatatests.readthedocs.io/en/latest/.
 
-User guide and documentation are located at https://amlaidatatests.readthedocs.io/en/latest/
+#### Issues
 
-
-#### Building the documentation
-
-`sphinx-autobuild docs docs/_build/html`
+Please raise any issues with amlaidatatests at on [github](https://github.com/ground-truth-ai/amlaidatatests/issues).
