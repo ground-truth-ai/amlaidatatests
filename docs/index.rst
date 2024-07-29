@@ -40,3 +40,4 @@ It aims to:
    databases/index
    reference/test-list
    reference/configuration
+   about/index

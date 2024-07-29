@@ -19,9 +19,14 @@ Requirements
 Operating Systems
 -----------------
 
-We test on modern linux distributions
+We test on modern linux distributions.
 
 Python Versions
 ----------------
 
 Python 3.10, 3.11, and 3.12.
+
+Backends
+--------
+
+See `backends <../../databases/index>`_ for a list of supported backends.
