@@ -231,7 +231,8 @@ def render_test_summary(
     terminalreporter, test_reports: list[AMLAITestReport], **markup: str
 ):
     for f in test_reports:
-        # First line has exception header
+        # First line has exception header. This takes up
+        # quite a bit of space so we'll remove it
         first_line = f.message.split("\n")[0]
         first_line = first_line.replace(
             "amlaidatatests.exceptions.DataTestFailure: ", ""
@@ -274,11 +275,15 @@ def warn_report_to_payload(
     arr = []
     lookup = {rpt.nodeid: rpt for rpt in parsed_test_reports}
     for rpt in warning_reports:
+        main_test_report = lookup.get(rpt.nodeid)
+        user_properties = {}
+        if main_test_report:
+            user_properties = main_test_report.user_properties
         arr.append(
             AMLAITestReport(
                 message=rpt.message,
                 nodeid=rpt.nodeid,
-                user_properties=lookup[rpt.nodeid].user_properties,
+                user_properties=user_properties,
             )
         )
     return arr
@@ -303,36 +308,37 @@ def pytest_terminal_summary(terminalreporter: pytest, exitstatus, config):
     terminalreporter.ensure_newline()
     terminalreporter.section("amlaidatatests summary", sep="=", blue=True, bold=True)
 
-    passed = terminalreporter.getreports("passed")
-    parsed_passed_tests = test_report_to_payload(passed)
+    passed_tests = test_report_to_payload(terminalreporter.getreports("passed"))
+    failed_tests = test_report_to_payload(terminalreporter.getreports("failed"))
+    skipped_tests = test_report_to_payload(terminalreporter.getreports("skipped"))
+
     terminalreporter.section(
-        f"tests passed: {len(passed)}", sep="-", blue=True, bold=True
+        f"tests passed: {len(passed_tests)}", sep="-", blue=True, bold=True
     )
 
-    skips = terminalreporter.getreports("skipped")
-
-    terminalreporter.section(f"skipped: {len(skips)}", sep="-", blue=True, bold=True)
-    if skips:
-        parsed_skips = skip_report_to_payload(skips)
-        render_test_summary(terminalreporter, parsed_skips, light=True)
+    terminalreporter.section(
+        f"skipped: {len(skipped_tests)}", sep="-", blue=True, bold=True
+    )
+    if skipped_tests:
+        render_test_summary(terminalreporter, skipped_tests, light=True)
 
     # Warnings don't have user attributes on them, so we have to "join" the two lists
-    # render_test_summary(terminalreporter, warnings)
-    warnings = terminalreporter.getreports("warnings")
+    warned_tests = terminalreporter.getreports("warnings")
     terminalreporter.section(
-        f"warnings: {len(warnings)}", sep="-", blue=True, bold=True
+        f"warnings: {len(warned_tests)}", sep="-", blue=True, bold=True
     )
-    if warnings:
-        parsed_warnings = warn_report_to_payload(warnings, parsed_passed_tests)
+    if warned_tests:
+        # Warnings can come from any test state, so we need to check all other test types
+        parsed_warnings = warn_report_to_payload(
+            warned_tests, passed_tests + failed_tests + skipped_tests
+        )
         render_test_summary(terminalreporter, parsed_warnings, yellow=True)
 
-    failures = terminalreporter.getreports("failed")
     terminalreporter.section(
-        f"failures: {len(failures)}", sep="-", blue=True, bold=True
+        f"failures: {len(failed_tests)}", sep="-", blue=True, bold=True
     )
-    if failures:
-        parsed_failures = test_report_to_payload(failures)
-        render_test_summary(terminalreporter, parsed_failures, red=True)
+    if failed_tests:
+        render_test_summary(terminalreporter, failed_tests, red=True)
 
 
 @pytest.fixture(autouse=True)
