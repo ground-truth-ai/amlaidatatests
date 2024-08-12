@@ -310,7 +310,7 @@ def pytest_terminal_summary(terminalreporter: pytest, exitstatus, config):
 
     passed_tests = test_report_to_payload(terminalreporter.getreports("passed"))
     failed_tests = test_report_to_payload(terminalreporter.getreports("failed"))
-    skipped_tests = test_report_to_payload(terminalreporter.getreports("skipped"))
+    skipped_tests = skip_report_to_payload(terminalreporter.getreports("skipped"))
 
     terminalreporter.section(
         f"tests passed: {len(passed_tests)}", sep="-", blue=True, bold=True
