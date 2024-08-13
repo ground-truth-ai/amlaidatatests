@@ -12,6 +12,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     strategy:
       fail-fast: false
       matrix:
@@ -42,30 +43,75 @@ jobs:
     - name: Build
       run: |
         python -m build
-    - name: Install
-      run: |
-        pip install dist/*.whl
-    - name: Test with pytest
-      run: |
-        pytest
-    - id: 'auth'
-      name: 'Authenticate to Google Cloud'
-      uses: 'google-github-actions/auth@v2'
-      with:
-        create_credentials_file: true
-        export_environment_variables: true
-        workload_identity_provider: '${{ secrets.CI_WORKLOAD_IDENTITY_PROVIDER }}'
-        service_account: '${{ secrets.CI_SERVICE_ACCOUNT }}'
-    - name: Test with pytest (BQ)
-      run: |
-        pytest --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}/aml_ai_input_dataset?location=US --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset -x
     - name: Store the distribution packages
       uses: actions/upload-artifact@v4
       with:
         name: python-package-distributions-${{ matrix.python-version }}
         path: dist/
 
-  integration-test:
+  unit-test-bq:
+    needs:
+    - build
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.12
+
+      - name: Install
+        run: |
+          pip install -e .
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          create_credentials_file: true
+          export_environment_variables: true
+          workload_identity_provider: '${{ secrets.CI_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.CI_SERVICE_ACCOUNT }}'
+
+      - name: Test with pytest
+        run: |
+          pytest --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}/aml_ai_input_dataset?location=US --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset -x
+
+  unit-test-duckdb:
+    needs:
+    - build
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install
+        run: |
+          pip install -e .
+
+      - name: Test with pytest
+        run: |
+          pytest
+
+  integration-test-bq:
     needs:
     - build
 
@@ -102,4 +148,4 @@ jobs:
 
       - name: Test against bigquery
         run: |
-          python -m amlaidatatests.tests --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}?location=US --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset -x -k primary_keys
+          amlaidatatests --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}?location=US --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset -x -k primary_keys
