@@ -17,6 +17,7 @@ from amlaidatatests.exceptions import (
     DataTestFailure,
     DataTestWarning,
     SkipTest,
+    get_test_failure_descriptions,
 )
 from amlaidatatests.schema.base import ResolvedTableConfig, TableType
 
@@ -231,7 +232,7 @@ class AbstractTableTest(AbstractBaseTest):
             ),
         ).filter(_.row_num == 0)
 
-    def __call__(self, connection: BaseBackend, request):
+    def __call__(self, connection: BaseBackend, request: pytest.FixtureRequest):
         self.process_test_request(request)
         # Check if table exists
         self.table = self._run_with_severity(
@@ -240,7 +241,26 @@ class AbstractTableTest(AbstractBaseTest):
             table_config=self.table_config,
             request=request,
         )
+        return self._generate_sql(connection)
+
         self._run_with_severity(connection=connection, f=self._test)
+
+    def _generate_sql(self, connection: BaseBackend):
+        def __compile_sql(expr: ibis.Expr) -> str:
+            with open(f"output/{self.test_id}.sql", "wb") as f:
+                # Write the test description to the top of the file as a comment
+                f.write(
+                    f"-- {get_test_failure_descriptions(self.test_id)} \n".encode(
+                        "utf-8"
+                    )
+                )
+                f.write(str(ibis.to_sql(expr, pretty=True)).encode("utf-8"))
+                return 0
+
+        # Money patch connection.execute so we can
+        # print the resultant sql
+        connection.execute = __compile_sql
+        self._test(connection=connection)
 
 
 class AbstractColumnTest(AbstractTableTest):
@@ -315,6 +335,7 @@ class AbstractColumnTest(AbstractTableTest):
         if prefix:
             __prefix_revert = self.column
             self.column = f"{prefix}.{self.column}"
+        return self._generate_sql(connection)
         self._run_with_severity(f=self._check_column_exists)
         self._run_with_severity(connection=connection, f=self._test)
         if __prefix_revert:
