@@ -2,3 +2,4 @@ sphinxawesome-theme==5.2.0
 sphinx-toolbox==3.7.0
 sphinx-autobuild
 sphinx-argparse
+.
