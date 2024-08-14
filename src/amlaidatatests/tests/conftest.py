@@ -242,7 +242,7 @@ def render_test_summary(
         if first_line_idx > -1:
             first_line = first_line[first_line_idx + len(find_str) :]
 
-        test_id: str = f.user_properties.get("test_id") or "."
+        test_id: str = f.user_properties.get("test_id") or f.nodeid
         terminalreporter.write(test_id.ljust(7), bold=True, **markup)
         table_id: str = f.user_properties.get("table") or ""
         column_id: str = f.user_properties.get("column") or ""
@@ -304,13 +304,14 @@ def skip_report_to_payload(skip_reports: list):
     return arr
 
 
-def pytest_terminal_summary(terminalreporter: pytest, exitstatus, config):
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
     terminalreporter.ensure_newline()
     terminalreporter.section("amlaidatatests summary", sep="=", blue=True, bold=True)
 
     passed_tests = test_report_to_payload(terminalreporter.getreports("passed"))
     failed_tests = test_report_to_payload(terminalreporter.getreports("failed"))
-    skipped_tests = skip_report_to_payload(terminalreporter.getreports("skipped"))
+    skipped_tests = test_report_to_payload(terminalreporter.getreports("skipped"))
+    errored_tests = test_report_to_payload(terminalreporter.getreports("error"))
 
     terminalreporter.section(
         f"tests passed: {len(passed_tests)}", sep="-", blue=True, bold=True
@@ -339,6 +340,12 @@ def pytest_terminal_summary(terminalreporter: pytest, exitstatus, config):
     )
     if failed_tests:
         render_test_summary(terminalreporter, failed_tests, red=True)
+
+    terminalreporter.section(
+        f"errors: {len(errored_tests)}", sep="-", blue=True, bold=True
+    )
+    if errored_tests:
+        render_test_summary(terminalreporter, errored_tests, red=True)
 
 
 @pytest.fixture(autouse=True)
