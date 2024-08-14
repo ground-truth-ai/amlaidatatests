@@ -6,12 +6,12 @@ P057,All,validity_start_time,Excessive validity start changes for other PK colum
 P058,All,validity_start_time,Excessive validity start changes for other PK columns
 P001,All,validity_start_time,High frequency values
 P002,Party,source_system,Many values
-P003,Party,birth_date,"WHEN type='COMSUMER', check for high frequency values"
+P003,Party,birth_date,"WHEN type='CONSUMER', check for high frequency values"
 P004,Party,establishment_date,"WHEN type='COMPANY', check for high frequency values"
-P005,Party,occupation,"WHEN type='COMSUMER', check for high frequency values"
-P006,Party,nationalities,"WHEN type='COMSUMER', check for high frequency of empty lists"
+P005,Party,occupation,"WHEN type='CONSUMER', check for high frequency values"
+P006,Party,nationalities,"WHEN type='CONSUMER', check for high frequency of empty lists"
 P007,Party,nationalities.region_code,Check for parties with many nationalities
-P008,Party,residencies,"WHEN type='COMSUMER', check for high frequency of empty lists"
+P008,Party,residencies,"WHEN type='CONSUMER', check for high frequency of empty lists"
 P009,Party,residencies.region_code,Check for parties with many residencies
 P010,Party,exit_date,High frequency values
 P011,Party,join_date,High frequency values
@@ -23,10 +23,10 @@ P017,AccountPartyLink,"account_id, party_id",Check for party with many accounts
 P018,AccountPartyLink,"account_id, party_id",Check for party with many accounts
 P019,AccountPartyLink,source_system,Many values
 P021,Transaction,source_system,Many values
-P022,Transaction,type,Check for missing types (e.g. no WIRE in dataset)
-P023,Transaction,direction,Check for missing direction (e.g. no DEBIT in dataset)
-P024,Transaction,direction,Check for imbalanced vol types across dataset (e.g. 80% DEBIT/20% CREDIT)
-P025,Transaction,direction,Check for imbalanced vol types across dataset (e.g. 80% DEBIT/20% CREDIT)
+P022,Transaction,type,Check for missing transaction types
+P023,Transaction,direction,Check for missing direction
+P024,Transaction,direction,Check for imbalanced vol types across dataset
+P025,Transaction,direction,Check for imbalanced vol types across dataset
 P026,Transaction,account_id,Account with many txns
 P027,Transaction,account_id,Account with many txns
 P028,Transaction,"account_id, counterparty_account",Account and Counterparty pairs have many txns
@@ -56,7 +56,7 @@ P054,RiskCaseEvent,risk_case_event_id,Number of risk case events within risk cas
 P055,RiskCaseEvent,risk_case_event_id,Number of risk case events for party
 P056,RiskCaseEvent,risk_case_event_id,Number of risk case events for party
 P059,"Transaction, RiskCaseEvent","book_time,
-type",Positive examples with no transactions within SUSPICOUS acitivity period or for X months prior to AML PROCESS START if suspicious activity period not defined
+type",Positive examples with no transactions within SUSPICIOUS activity period or for X months prior to AML PROCESS START if suspicious activity period not defined
 P060,RiskCaseEvent,type,>1 suspicious activity period start for party in risk case
 P061,RiskCaseEvent,type,>1 suspicious activity period end for party in risk case
 P062,RiskCaseEvent,type,Suspicious activity period end but no start for party in risk case
@@ -70,7 +70,7 @@ V005,Party,assets_value_range.start_amount.nanos,"All values between 0 and +999,
 V006,Party,assets_value_range.end_amount.units,Check all are positive or zero
 V007,Party,assets_value_range.end_amount.nanos,"All values between 0 and +999,999,999 inclusive"
 V008,Party,birth_date,"WHEN type='COMPANY', check all are null"
-V009,Party,establishment_date,"WHEN type='COMSUMER', check all are null"
+V009,Party,establishment_date,"WHEN type='CONSUMER', check all are null"
 V010,Party,occupation,"WHEN type='COMPANY', check all are null"
 V011,Party,gender,"WHEN type='COMPANY', check all are null"
 V012,Party,assets_value_range.start_amount,"If non-empty check currency code, units and nanos all not null"
@@ -142,6 +142,6 @@ PK005,PartySupplementaryData,"party_supplementary_data_id, party_id, validity_st
 F001,All,,check no additional fields exist on the table
 F002,All except RiskCaseEvent,is_entity_deleted,check for consecutive is_entity_deleted values for the same PK
 F003,All,All non-nullable,check column exists on table and is the correct type
-F004,All,All,check column is the correct type on table
+F004,All,All,check column is the correct type on table. See https://amlaidatatests.readthedocs.io/en/latest/usage/interpreting-schematests.html
 F005,All,,check for entities which are immediately deleted
 T001,All,,"Check all tables are present and not empty, and contains less rows than threshold"
