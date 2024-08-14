@@ -880,6 +880,7 @@ class CountMatchingRows(AbstractColumnTest):
         min_number:     The minimum absolute number of matching rows. Inclusive.
         max_proportion: The maximum proportion of matching rows over all rows
         min_proportion: The minimum proportion of matching rows over all rows
+        explanation:    A human readable explanation of the criteria
     """
 
     def __init__(
@@ -894,6 +895,7 @@ class CountMatchingRows(AbstractColumnTest):
         min_number: Optional[int] = None,
         max_proportion: Optional[float] = None,
         min_proportion: Optional[int] = None,
+        explanation: Optional[str] = None,
     ) -> None:
         super().__init__(
             table_config=table_config, column=column, severity=severity, test_id=test_id
@@ -903,6 +905,7 @@ class CountMatchingRows(AbstractColumnTest):
         self.min_number = min_number
         self.max_proportion = max_proportion
         self.min_proportion = min_proportion
+        self.explanation = explanation
 
     def _test(self, *, connection: BaseBackend):
         table = self.get_latest_rows(self.table)
@@ -912,28 +915,31 @@ class CountMatchingRows(AbstractColumnTest):
         result = connection.execute(expr).iloc[0]
         value = int(result["matching_rows"])
         proportion = result["proportion"]
+        criteria_explained = (
+            "criteria" if not self.explanation else f"criteria: {self.explanation}"
+        )
         if self.min_number and (value < self.min_number):
             raise DataTestFailure(
-                f"{value:d} rows met criteria. "
+                f"{value:d} rows met {criteria_explained}. "
                 f"Expected at least {self.min_number:d}.",
                 expr=expr,
             )
         if self.max_number and (value > self.max_number):
             raise DataTestFailure(
-                f"{value:d} rows met criteria. "
+                f"{value:d} rows met {criteria_explained}. "
                 f"Expected at most {self.max_number:d}.",
                 expr=expr,
             )
         if self.max_proportion and (proportion > self.max_proportion):
             raise DataTestFailure(
                 f"A high proportion ({proportion:.0%}) of rows met "
-                f" criteria. Expected at most ({self.max_proportion:.0%})",
+                f" {criteria_explained}. Expected at most ({self.max_proportion:.0%})",
                 expr=expr,
             )
         if self.min_proportion and (proportion < self.min_proportion):
             raise DataTestFailure(
                 f"A low proportion ({proportion:.0%}) of rows met "
-                f" criteria. Expected at least ({self.min_proportion:.0%})",
+                f" {criteria_explained}. Expected at least ({self.min_proportion:.0%})",
                 expr=expr,
             )
 
