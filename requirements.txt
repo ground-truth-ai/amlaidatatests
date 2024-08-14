@@ -1,5 +1,4 @@
-# TODO: Bump dependency when ibis v10 is available
-ibis-framework==10.0.0.dev97
+ibis-framework>=9.2
 ibis-framework[bigquery]
 ibis-framework[duckdb]
 pytest
