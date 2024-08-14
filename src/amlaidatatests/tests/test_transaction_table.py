@@ -184,6 +184,7 @@ def test_date_consistency(connection, test, request):
                 min_number=1,
                 expression=lambda t: t["type"] == typ,
                 test_id="P022",
+                explanation=f"Expected at least one row with type == '{typ}'",
             )
             for typ in TXN_TYPES
         ],
