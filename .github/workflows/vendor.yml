@@ -86,4 +86,4 @@ jobs:
         uses: 'google-github-actions/upload-cloud-storage@v2'
         with:
           path: '${{ matrix.operating-system }}-python-${{ matrix.python-version }}.tgz'
-          destination: 'amlai-public-vendored-artifacts-hosting/${{ github.ref_name }}.'
+          destination: 'amlai-public-vendored-artifacts-hosting/${{ github.ref_name }}'
