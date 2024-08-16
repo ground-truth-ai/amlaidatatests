@@ -2,6 +2,7 @@
 
 import argparse
 import datetime
+import importlib
 import typing
 from dataclasses import dataclass, field, fields
 from typing import Any, Optional, Union
@@ -45,7 +46,12 @@ def infer_database(connection_str: str) -> str | None:
         # "/my_bq_input_dataset" -> "my_bq_input_dataset"
         return parsed_url.path[1:]
     if parsed_url.scheme == "duckdb":
-        return None
+        if importlib.util.find_spec("duckdb"):
+            return None
+        raise ImportError(
+            "duckdb is not installed. To use duckdb, run "
+            "`pip install amlaidatatests[duckdb]`"
+        )
     raise ValueError(
         f"Unsupported database or invalid connection string: {connection_str}"
     )

@@ -106,6 +106,7 @@ jobs:
       - name: Install
         run: |
           pip install -e .
+          pip install -e .[duckdb]
 
       - name: Test with pytest
         run: |
