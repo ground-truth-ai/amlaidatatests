@@ -1,0 +1,89 @@
+
+
+name: Vendor Package
+
+on:
+  release:
+    types: [published]
+
+jobs:
+
+  vendor:
+    strategy:
+      fail-fast: false
+      matrix:
+        operating-system: ["ubuntu-24.04", "ubuntu-22.04", "ubuntu-20.04"]
+        python-version:   ["3.10", "3.11", "3.12"]
+
+    runs-on: ${{ matrix.operating-system }}
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install flake8 pytest
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Build
+      run: |
+        python -m build
+
+    - name: Obtain dependencies
+      run: |
+        pip download . -d dist/
+
+    - name: Build package
+      run: |
+        tar czvf ${{ matrix.operating-system }}-python-${{ matrix.python-version }}.tgz -C dist/ .
+
+    - name: Store the distribution packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.operating-system }}-python-${{ matrix.python-version }}
+        path: ${{ matrix.operating-system }}-python-${{ matrix.python-version }}.tgz
+
+  publish-vendored:
+    strategy:
+      fail-fast: false
+      matrix:
+        operating-system: ["ubuntu-24.04", "ubuntu-22.04", "ubuntu-20.04"]
+        python-version:   ["3.10", "3.11", "3.12"]
+
+    name: >-
+      Publish Vendored Package
+    # if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
+    needs:
+      - vendor
+    runs-on: ubuntu-latest
+    environment: release
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.operating-system }}-python-${{ matrix.python-version }}
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          create_credentials_file: true
+          export_environment_variables: true
+          workload_identity_provider: '${{ secrets.CI_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.CI_SERVICE_ACCOUNT }}'
+
+      - id: 'upload-vendored-file'
+        uses: 'google-github-actions/upload-cloud-storage@v2'
+        with:
+          path: '${{ matrix.operating-system }}-python-${{ matrix.python-version }}.tgz'
+          destination: 'amlai-public-vendored-artifacts-hosting/${{ github.ref_name }}.'
