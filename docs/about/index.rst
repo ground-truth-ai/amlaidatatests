@@ -15,6 +15,10 @@ Feature requests and support
 Please raise any feature requests or support issues on the project's `issues
 page on github <https://github.com/ground-truth-ai/amlaidatatests/issues>`_.
 
+If you cannot use github, we have a mailing list:
+
+``amlaidatatests -ampersand symbol- groundtruthai.net``
+
 Licence
 -------
 

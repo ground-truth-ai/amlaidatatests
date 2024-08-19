@@ -134,4 +134,10 @@ Steps
        ---------------------- failures: 1 -----------------------------------------------------------------------------------
        P043   risk_case_event.type                                  Check >=1 party with AML_SAR: 0 rows met criteria. Expected at least 1.
 
-### Next Steps
+Next Steps
+----------
+
+Read the :doc:`configuration reference <../../reference/configuration>` to:
+
+- Select specific tests to run
+- Print the sql used for any failed tests

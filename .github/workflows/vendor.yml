@@ -82,8 +82,52 @@ jobs:
           workload_identity_provider: '${{ secrets.CI_WORKLOAD_IDENTITY_PROVIDER }}'
           service_account: '${{ secrets.CI_SERVICE_ACCOUNT }}'
 
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+
       - id: 'upload-vendored-file'
         uses: 'google-github-actions/upload-cloud-storage@v2'
         with:
           path: '${{ matrix.operating-system }}-python-${{ matrix.python-version }}.tgz'
           destination: 'amlai-public-vendored-artifacts-hosting/${{ github.ref_name }}'
+
+  publish-index:
+    needs:
+      - publish-vendored
+    name: >-
+      Update index for documentation
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          create_credentials_file: true
+          export_environment_variables: true
+          workload_identity_provider: '${{ secrets.CI_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.CI_SERVICE_ACCOUNT }}'
+
+      - name: 'List hosted versions'
+        run: |
+          gcloud storage ls gs://amlai-public-vendored-artifacts-hosting/** > index
+
+      - name: 'Build version index'
+        run: |
+          scripts/build_vendored_index.py index
+
+      - id: 'upload-index'
+        uses: 'google-github-actions/upload-cloud-storage@v2'
+        with:
+          path: 'index.csv'
+          destination: 'amlai-public-vendored-artifacts-hosting'

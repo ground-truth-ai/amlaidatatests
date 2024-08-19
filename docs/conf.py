@@ -21,6 +21,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx_toolbox.confval",
     "sphinxarg.ext",
+    "sphinx.ext.autosectionlabel",
 ]
 
 templates_path = ["_templates"]
