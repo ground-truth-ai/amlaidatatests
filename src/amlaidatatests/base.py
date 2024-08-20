@@ -57,6 +57,7 @@ class AbstractBaseTest(ABC):
         """ populated at test call time as part of a table call """
         self.table_config = table_config
         self.severity = severity
+        # In testing mode tests can be anonymous
         if (not cfg().testing_mode) and test_id is None:
             raise ValueError("test_id must be set")
         self.test_id = test_id
