@@ -4,7 +4,7 @@ import ibis
 import pytest
 from ibis import BaseBackend, Table
 
-from amlaidatatests.config import cfg
+from amlaidatatests.config import ConfigSingleton, cfg
 from amlaidatatests.connection import connection_factory
 from amlaidatatests.tests.conftest import (
     pytest_addoption as passthrough_pytest_addoption,
@@ -31,6 +31,15 @@ def test_connection() -> BaseBackend:
     cfg().testing_mode = True
     connection = connection_factory("duckdb://")
     return connection
+
+
+@pytest.fixture()
+def protect_config():
+    """Temporarily store the config and restore it. This is useful when we call
+    the config between test invocations"""
+    config = cfg()
+    yield
+    ConfigSingleton().set_config(config)
 
 
 @pytest.fixture(scope="session")

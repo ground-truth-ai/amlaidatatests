@@ -68,6 +68,7 @@ jobs:
       - name: Install
         run: |
           pip install -e .
+          pip install -e .[duckdb]
 
       - id: 'auth'
         name: 'Authenticate to Google Cloud'
@@ -148,3 +149,72 @@ jobs:
       - name: Test against bigquery
         run: |
           amlaidatatests --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}?location=US --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset -x -k primary_keys
+
+
+  integration-test-duckdb:
+    needs:
+    - build
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os-version: ["windows-latest", "macos-latest"]
+
+    runs-on: ${{ matrix.os-version }}
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions-3.12
+          path: dist/
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.12
+
+      - name: Install
+        if: ${{ matrix.os-version != 'windows-latest' }}
+        run: |
+          pip install dist/*.whl
+          pip install duckdb
+
+      - name: Install
+        if: ${{ matrix.os-version == 'windows-latest' }}
+        run: |
+          Get-ChildItem -Path .\dist\*.whl -File | ForEach-Object { pip install $_.FullName }
+          pip install duckdb
+
+      - name: Cache duckdb
+        id: cache-duckdb
+        uses: actions/cache@v3
+        with:
+          # npm cache files are stored in `~/.npm` on Linux/macOS
+          path: ~/duckdb.ddb
+          key: ${{ runner.os }}-primes
+
+      - if: ${{ steps.cache-duckdb.outputs.cache-hit != 'true' }}
+        name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - if: ${{ steps.cache-duckdb.outputs.cache-hit != 'true' }}
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          create_credentials_file: true
+          export_environment_variables: true
+          workload_identity_provider: '${{ secrets.CI_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.CI_SERVICE_ACCOUNT }}'
+
+      - if: ${{ steps.cache-duckdb.outputs.cache-hit != 'true' }}
+        name: 'Get duckdb'
+        run: |
+          gcloud storage cp gs://amlai-datatest-ci-bucket/duckdb.ddb ./
+
+      - name: Integration test
+        run: |
+          amlaidatatests --connection_string=duckdb://duckdb.ddb --id=1234 -x -k primary_keys

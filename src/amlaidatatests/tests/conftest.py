@@ -4,9 +4,10 @@ import logging
 import pathlib
 import typing
 from dataclasses import dataclass, fields
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 import pytest
+from _pytest._code.code import ExceptionRepr, TerminalRepr
 from omegaconf import OmegaConf
 
 from amlaidatatests.base import AbstractBaseTest
@@ -233,14 +234,16 @@ def render_test_summary(
     for f in test_reports:
         # First line has exception header. This takes up
         # quite a bit of space so we'll remove it
-        first_line = f.message.split("\n")[0]
-        first_line = first_line.replace(
-            "amlaidatatests.exceptions.DataTestFailure: ", ""
-        )
-        find_str = "DataTestWarning: "
-        first_line_idx = first_line.find(find_str)
-        if first_line_idx > -1:
-            first_line = first_line[first_line_idx + len(find_str) :]
+        first_line = ""
+        if f.message:
+            first_line = f.message.split("\n")[0]
+            first_line = first_line.replace(
+                "amlaidatatests.exceptions.DataTestFailure: ", ""
+            )
+            find_str = "DataTestWarning: "
+            first_line_idx = first_line.find(find_str)
+            if first_line_idx > -1:
+                first_line = first_line[first_line_idx + len(find_str) :]
 
         test_id: str = f.user_properties.get("test_id") or f.nodeid
         terminalreporter.write(test_id.ljust(7), bold=True, **markup)
@@ -257,11 +260,24 @@ def render_test_summary(
 def test_report_to_payload(
     test_reports: list[pytest.TestReport],
 ) -> list[AMLAITestReport]:
+    """For each provided test report, convert into an
+    AMLAITestReport object so we can standardize the
+    output"""
     arr = []
     for rpt in test_reports:
+        longrepr = rpt.longrepr
+        message: str | None = None
+        if isinstance(longrepr, Tuple):
+            message = longrepr[-1]
+        if isinstance(longrepr, pytest.ExceptionInfo):
+            message = longrepr.getrepr().reprcrash.message
+        if isinstance(longrepr, ExceptionRepr):
+            message = longrepr.reprcrash.message
+        if isinstance(longrepr, str):
+            message = longrepr
         arr.append(
             AMLAITestReport(
-                message=rpt.longrepr.reprcrash.message if rpt.longrepr else None,
+                message=message,
                 nodeid=rpt.nodeid,
                 user_properties=dict(rpt.user_properties),
             )
@@ -272,6 +288,9 @@ def test_report_to_payload(
 def warn_report_to_payload(
     warning_reports: list, parsed_test_reports: list[AMLAITestReport]
 ):
+    """Warnings don't have any information about the test output,
+    only that a warning was captured. This means we need to get the outputs
+     for any reports which might have errored"""
     arr = []
     lookup = {rpt.nodeid: rpt for rpt in parsed_test_reports}
     for rpt in warning_reports:
@@ -284,21 +303,6 @@ def warn_report_to_payload(
                 message=rpt.message,
                 nodeid=rpt.nodeid,
                 user_properties=user_properties,
-            )
-        )
-    return arr
-
-
-def skip_report_to_payload(skip_reports: list):
-    arr = []
-    for rpt in skip_reports:
-        arr.append(
-            AMLAITestReport(
-                message=rpt.longrepr[2],
-                nodeid=rpt.nodeid,
-                user_properties=dict(
-                    rpt.user_properties,
-                ),
             )
         )
     return arr
@@ -330,9 +334,8 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
     )
     if warned_tests:
         # Warnings can come from any test state, so we need to check all other test types
-        parsed_warnings = warn_report_to_payload(
-            warned_tests, passed_tests + failed_tests + skipped_tests
-        )
+        all_reports = passed_tests + failed_tests + skipped_tests + errored_tests
+        parsed_warnings = warn_report_to_payload(warned_tests, all_reports)
         render_test_summary(terminalreporter, parsed_warnings, yellow=True)
 
     terminalreporter.section(

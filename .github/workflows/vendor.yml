@@ -61,7 +61,7 @@ jobs:
     # if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
     needs:
       - vendor
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.operating-system }}
     environment: release
 
     permissions:
@@ -81,9 +81,6 @@ jobs:
           export_environment_variables: true
           workload_identity_provider: '${{ secrets.CI_WORKLOAD_IDENTITY_PROVIDER }}'
           service_account: '${{ secrets.CI_SERVICE_ACCOUNT }}'
-
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v2'
 
       - id: 'upload-vendored-file'
         uses: 'google-github-actions/upload-cloud-storage@v2'
@@ -109,6 +106,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+
       - id: 'auth'
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v2'
@@ -117,6 +117,7 @@ jobs:
           export_environment_variables: true
           workload_identity_provider: '${{ secrets.CI_WORKLOAD_IDENTITY_PROVIDER }}'
           service_account: '${{ secrets.CI_SERVICE_ACCOUNT }}'
+
 
       - name: 'List hosted versions'
         run: |

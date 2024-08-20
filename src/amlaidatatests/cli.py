@@ -3,6 +3,7 @@
 import argparse
 import sys
 import typing
+from typing import List
 
 from amlaidatatests.config import ConfigSingleton, init_parser_options_from_config
 from amlaidatatests.connection import connection_factory
@@ -38,24 +39,27 @@ def build_parser():
     return parser
 
 
-def entry_point():
+def entry_point(sysargs: List[str] | None = None) -> None:
     """Configure an argparse based entry point for amlaidatatests
 
     This is configured somewhat differently from the pytest dataset, which is
     somewhat clunky to configure"""
     parser = build_parser()
 
-    sysargs = sys.argv[1:]
+    if sysargs is None:
+        sysargs = sys.argv[1:]
+
     if "--pytest-help" in sysargs:
         run_tests(["-h"])
         # will exit
 
-    args, extra = parser.parse_known_args()
+    args, extra = parser.parse_known_args(sysargs)
 
     if args.pytesthelp:
         sysargs.remove("--pytest-help")
 
-    # Default show
+    # show sql really just shows the full tracebacks which
+    # prints the full sql
     show_sql = ["--tb=no", "--disable-warnings"]
     if args.showsql:
         show_sql = ["--tb=short"]
