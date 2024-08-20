@@ -94,6 +94,8 @@ jobs:
     name: >-
       Update index for documentation
 
+    runs-on: ubuntu-latest
+
     permissions:
       contents: 'read'
       id-token: 'write'
