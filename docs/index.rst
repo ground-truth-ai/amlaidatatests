@@ -31,6 +31,7 @@ It aims to:
    :maxdepth: 2
 
    usage/interpreting-schematests
+   usage/data-sources
    usage/troubleshooting
 
 .. toctree::
