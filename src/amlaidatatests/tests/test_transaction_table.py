@@ -74,6 +74,7 @@ def test_RI011_temporal_referential_integrity_account_party_link(connection, req
         to_table_config=to_table_config,
         key="account_id",
         test_id="RI011",
+        validate_datetime_column="book_time",
     )
     test(connection, request)
 

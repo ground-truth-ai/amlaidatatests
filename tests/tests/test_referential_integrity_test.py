@@ -5,7 +5,7 @@ import pytest
 from ibis.expr.datatypes import Boolean, String, Timestamp
 
 from amlaidatatests.exceptions import DataTestFailure, SkipTest
-from amlaidatatests.schema.base import ResolvedTableConfig
+from amlaidatatests.schema.base import ResolvedTableConfig, TableType
 from amlaidatatests.tests import common
 
 
@@ -284,7 +284,7 @@ def test_temporal_referential_integrity_key_out_of_time(
     t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
-    with pytest.raises(DataTestFailure, match=r"1 keys found"):
+    with pytest.raises(DataTestFailure, match=r"1 values"):
         t(test_connection, request)
 
 
@@ -419,7 +419,7 @@ def test_temporal_referential_integrity_key_out_of_time_tolerance(
         key="id",
         tolerance="day",
     )
-    with pytest.raises(DataTestFailure, match=r"1 keys found"):
+    with pytest.raises(DataTestFailure, match=r"1 values"):
         t(test_connection, request)
 
 
@@ -484,7 +484,7 @@ def test_temporal_referential_integrity_fails_before_period(
     t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
-    with pytest.raises(DataTestFailure, match=r"1 keys found"):
+    with pytest.raises(DataTestFailure, match=r"1 values"):
         t(test_connection, request)
 
 
@@ -549,7 +549,7 @@ def test_temporal_referential_integrity_fails_after_period(
     t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
-    with pytest.raises(DataTestFailure, match=r"1 keys found"):
+    with pytest.raises(DataTestFailure, match=r"1 values"):
         t(test_connection, request)
 
 
@@ -614,7 +614,7 @@ def test_temporal_referential_integrity_fails_encompassing_period(
     t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
-    with pytest.raises(DataTestFailure, match=r"1 keys found"):
+    with pytest.raises(DataTestFailure, match=r"1 values"):
         t(test_connection, request)
 
 
@@ -823,5 +823,268 @@ def test_temporal_referential_integrity_multiple_mutations_out_of_period(
     t = common.TemporalReferentialIntegrityTest(
         table_config=table_config, to_table_config=otr_table_config, key="id"
     )
-    with pytest.raises(DataTestFailure, match=r"1 keys found"):
+    with pytest.raises(DataTestFailure, match=r"1 values"):
+        t(test_connection, request)
+
+
+def test_temporal_referential_integrity_multiple_local_valid(
+    test_connection, create_test_table, request
+):
+    """Test for cases where there are multiple IDs
+    on the local table for validation.
+
+    In this example, there are multiple parties
+    associated with an account on different time periods,
+    but they overlap and one entity is deleted.
+
+    Two entities associated with account_id: 0:
+        party_id 0: created 2020-01-01T00:00:00 deleted 2020-01-01T00:01:00
+        party_id 1: created 2020-01-01T00:00:00
+
+    Transactions:
+        transaction: 2020-01-01T00:00:00
+        transaction: 2020-01-02T00:00:00
+        transaction: 2020-01-03T00:00:00
+    """
+    schema_link = {
+        "party_id": str,
+        "account_id": str,
+        "validity_start_time": Timestamp(timezone="UTC"),
+        "is_entity_deleted": Boolean(),
+    }
+
+    lcl_tbl = create_test_table(
+        ibis.memtable(
+            data=[
+                {
+                    "party_id": "0",
+                    "account_id": "0",
+                    "validity_start_time": datetime.datetime(
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
+                    ),
+                    "is_entity_deleted": False,
+                },
+                {
+                    "party_id": "0",
+                    "account_id": "0",
+                    "validity_start_time": datetime.datetime(
+                        2020, 1, 1, hour=1, tzinfo=datetime.timezone.utc
+                    ),
+                    "is_entity_deleted": True,
+                },
+                {
+                    "party_id": "1",
+                    "account_id": "0",
+                    "validity_start_time": datetime.datetime(
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
+                    ),
+                    "is_entity_deleted": False,
+                },
+            ],
+            schema=schema_link,
+        )
+    )
+
+    schema_txn = {
+        "id": str,
+        "account_id": str,
+        "validity_start_time": Timestamp(timezone="UTC"),
+        "book_time": Timestamp(timezone="UTC"),
+        "is_entity_deleted": Boolean(),
+    }
+
+    txn_tbl = create_test_table(
+        ibis.memtable(
+            data=[
+                {
+                    "id": "0",
+                    "account_id": "0",
+                    "validity_start_time": datetime.datetime(
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
+                    ),
+                    "book_time": datetime.datetime(
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
+                    ),
+                    "is_entity_deleted": False,
+                },
+                {
+                    "id": "1",
+                    "account_id": "0",
+                    "validity_start_time": datetime.datetime(
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
+                    ),
+                    "book_time": datetime.datetime(
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
+                    ),
+                    "is_entity_deleted": False,
+                },
+                {
+                    "id": "2",
+                    "account_id": "0",
+                    "validity_start_time": datetime.datetime(
+                        2020, 1, 3, tzinfo=datetime.timezone.utc
+                    ),
+                    "book_time": datetime.datetime(
+                        2020, 1, 3, tzinfo=datetime.timezone.utc
+                    ),
+                    "is_entity_deleted": False,
+                },
+            ],
+            schema=schema_txn,
+        )
+    )
+
+    lnk_table_config = ResolvedTableConfig(
+        name=lcl_tbl,
+        table=ibis.table(name=lcl_tbl, schema=schema_link),
+        entity_keys=["party_id", "account_id"],
+    )
+
+    txn_table_config = ResolvedTableConfig(
+        name=txn_tbl,
+        table=ibis.table(name=txn_tbl, schema=schema_txn),
+        entity_keys=["id"],
+        table_type=TableType.OPEN_ENDED_ENTITY,
+    )
+
+    t = common.TemporalReferentialIntegrityTest(
+        table_config=txn_table_config,
+        to_table_config=lnk_table_config,
+        key="account_id",
+        validate_datetime_column="book_time",
+    )
+
+    # Should not fail
+    t(test_connection, request)
+
+
+def test_temporal_referential_integrity_multiple_local_invalid(
+    test_connection, create_test_table, request
+):
+    """
+    Two entities associated with account_id: 0:
+        party_id 0: created 2020-01-01T00:00:00 deleted 2020-01-01T00:01:00
+        party_id 1: created 2020-01-01T00:00:00 deleted 2020-01-02T00:00:00
+
+    Transactions:
+        transaction: 2020-01-01T00:00:00
+        transaction: 2020-01-02T00:00:00
+        transaction: 2020-01-03T00:00:00
+    """
+    schema = {
+        "party_id": str,
+        "account_id": str,
+        "validity_start_time": Timestamp(timezone="UTC"),
+        "is_entity_deleted": Boolean(),
+    }
+    lnk_tbl = create_test_table(
+        ibis.memtable(
+            data=[
+                {
+                    "party_id": "0",
+                    "account_id": "0",
+                    "validity_start_time": datetime.datetime(
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
+                    ),
+                    "is_entity_deleted": False,
+                },
+                {
+                    "party_id": "0",
+                    "account_id": "0",
+                    "validity_start_time": datetime.datetime(
+                        2020, 1, 1, hour=1, tzinfo=datetime.timezone.utc
+                    ),
+                    "is_entity_deleted": True,
+                },
+                {
+                    "party_id": "1",
+                    "account_id": "0",
+                    "validity_start_time": datetime.datetime(
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
+                    ),
+                    "is_entity_deleted": False,
+                },
+                {
+                    "party_id": "1",
+                    "account_id": "0",
+                    "validity_start_time": datetime.datetime(
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
+                    ),
+                    "is_entity_deleted": True,
+                },
+            ],
+            schema=schema,
+        )
+    )
+
+    schema_txn = {
+        "id": str,
+        "account_id": str,
+        "validity_start_time": Timestamp(timezone="UTC"),
+        "book_time": Timestamp(timezone="UTC"),
+        "is_entity_deleted": Boolean(),
+    }
+
+    txn_tbl = create_test_table(
+        ibis.memtable(
+            data=[
+                {
+                    "id": "0",
+                    "account_id": "0",
+                    "validity_start_time": datetime.datetime(
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
+                    ),
+                    "book_time": datetime.datetime(
+                        2020, 1, 1, tzinfo=datetime.timezone.utc
+                    ),
+                    "is_entity_deleted": False,
+                },
+                {
+                    "id": "1",
+                    "account_id": "0",
+                    "validity_start_time": datetime.datetime(
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
+                    ),
+                    "book_time": datetime.datetime(
+                        2020, 1, 2, tzinfo=datetime.timezone.utc
+                    ),
+                    "is_entity_deleted": False,
+                },
+                {
+                    "id": "2",
+                    "account_id": "0",
+                    "validity_start_time": datetime.datetime(
+                        2020, 1, 3, tzinfo=datetime.timezone.utc
+                    ),
+                    "book_time": datetime.datetime(
+                        2020, 1, 3, tzinfo=datetime.timezone.utc
+                    ),
+                    "is_entity_deleted": False,
+                },
+            ],
+            schema=schema_txn,
+        )
+    )
+
+    lnk_table_config = ResolvedTableConfig(
+        name=lnk_tbl,
+        table=ibis.table(name=lnk_tbl, schema=schema),
+        entity_keys=["party_id", "account_id"],
+    )
+
+    txn_table_config = ResolvedTableConfig(
+        name=txn_tbl,
+        table=ibis.table(name=txn_tbl, schema=schema_txn),
+        entity_keys=["id"],
+        table_type=TableType.OPEN_ENDED_ENTITY,
+    )
+
+    t = common.TemporalReferentialIntegrityTest(
+        table_config=txn_table_config,
+        to_table_config=lnk_table_config,
+        key="account_id",
+        validate_datetime_column="book_time",
+    )
+
+    with pytest.raises(DataTestFailure, match=r"1 values of account_id"):
         t(test_connection, request)

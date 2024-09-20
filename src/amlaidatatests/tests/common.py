@@ -1186,6 +1186,28 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
 
     Args:
         AbstractTableTest (_type_): _description_
+        table_config            : The table to be validated. Columns in this
+                                    dataset will be validated against the
+                                    to_table to check the columns are not out of
+                                    scope with the range of corresponding dates
+        to_table_config         : The table to validate against. The dates in
+                                    this table are used as a source of truth for
+                                    the range of dates and times the events
+                                    could have existed over, and are not
+                                    directly checked against the table_config.
+        validate_datetime_column: The column to validate. Defaults to
+                                    "validity_start_time"
+        key                     : The unique identifier to validate across in
+                                    both tables. For example, if account_id, the
+                                    table will have the range of values in
+                                    validate_datetime_column validated against
+                                    the range of dates presented by the first
+                                    and last validity_start_time values of
+                                    to_table
+        tolerance               : An order of magnitude to validate against. For
+                                    example, if 'day', inconsistencies
+                                    of less than a day will be ignored and will
+                                    not result in a test failure
     """
 
     MAX_DATETIME_VALUE = datetime.datetime(9995, 1, 1, tzinfo=datetime.timezone.utc)
@@ -1196,7 +1218,8 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
         table_config: ResolvedTableConfig,
         to_table_config: ResolvedTableConfig,
         key: str,
-        # BQ doesn't support values beyond day
+        validate_datetime_column: Optional[str] = None,
+        # BQ doesn't support values longer than a day
         tolerance: Optional[
             Literal[
                 "day",
@@ -1214,6 +1237,7 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
 
         super().__init__(table_config=table_config, severity=severity, test_id=test_id)
         self.to_table = to_table_config.table
+        self.validate_datetime_column = validate_datetime_column
         self.to_table_config = to_table_config
         self.tolerance = tolerance
         self.key = key
@@ -1231,7 +1255,8 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
         # |   1    |    0    |      00:00:00    |     null      |     False
         table = table_config.table
 
-        keys = set([self.key])  # , *table_config.entity_keys])
+        # Select potentially overlapping keys between these two entity tables
+        keys = set([self.key, *table_config.entity_keys])
 
         if table_config.table_type == TableType.EVENT:
             return table.select(first_date=_.event_time, last_date=_.event_time, *keys)
@@ -1277,7 +1302,7 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
             # For closed ended entities, e.g. parties, we need to assume the
             # entity persists until it is deleted. This means that the maximum
             # validity date time
-            return (
+            res = (
                 cte3
                 # At the moment, we only pay attention to the first/last dates,
                 # not where there are multiple flips if the only row and the row
@@ -1297,7 +1322,7 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
             )
         else:
             # The entity's validity is counted only as of the last datetime provided
-            return (
+            res = (
                 cte3
                 # At the moment, we only pay attention to the first/last dates,
                 # not where there are multiple flips
@@ -1306,6 +1331,13 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
                     last_date=_.validity_start_time.max(),
                 )
             )
+        # There may be multiple group_by keys, which doesn't correspond
+        # to the referential integrity test testing a single key. This is because
+        # we need to handle the case where there are multiple entity keys,
+        # e.g. a party_link table where we are validating the account_id
+        return res.group_by(self.key).agg(
+            first_date=_.first_date.min(), last_date=_.last_date.max()
+        )
 
     def _test(self, *, connection: BaseBackend):
         # Table 1
@@ -1320,10 +1352,20 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
         # |   1    |    1    |     01:00:00    |     02:00:00  |     True
         # |   1    |    2    |     02:00:00    |       null    |     False
         # Get the first and last validity periods of the entities in both tables
-        tbl = self.get_entity_state_windows(self.table_config)
+        if self.validate_datetime_column:
+            # If a different column is specified for validation,
+            # then obtain the latest row and then validate it
+            latest_rows = self.get_latest_rows(
+                self.table_config.table, self.table_config
+            )
+            tbl = latest_rows.group_by(self.key).aggregate(
+                first_date=_[self.validate_datetime_column].min(),
+                last_date=_[self.validate_datetime_column].max(),
+            )
+        else:
+            tbl = self.get_entity_state_windows(self.table_config)
         totbl = self.get_entity_state_windows(self.to_table_config)
         # First, associate keys by joining
-        # self.table.mutate(row_number=ibis.row_number().over(group_by=_.party_id, ))
         # We want to find items where the
         # tbl=party_id ---
         # totbl=party_account_id_link table ---
@@ -1354,6 +1396,10 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
         # | tbl           ---- last_date
         # |
         # ---- last_date
+
+        # Avoid overlapping tablenames
+        tbl = tbl.alias("table")
+        totbl = totbl.alias("validation_table")
 
         # Find elements which do not overlap
         first_date_with_tolerance = (
@@ -1412,12 +1458,22 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
         result = connection.execute(expr=expr.count())
         if result > 0:
             msg = (
-                f"{result} keys found in the table which were "
+                f"{result} values of {self.key} found in the table which were "
                 f"either not in {self.to_table_config.name}, or had inconsistent "
                 "time periods, where validity_start_time and is_entity_deleted "
-                f"keys in the table which did not correspond to the time "
-                f"periods for the same entity in {self.to_table_config.name}"
+                f"columns in {self.table_config.name} did not correspond to the time "
+                f"periods defined by validity_start_time and is_entity_deleted "
+                f"columns in {self.to_table_config.name}"
             )
+            if self.validate_datetime_column:
+                msg = (
+                    f"{result} values of {self.key} found in the table which were "
+                    f"either not in {self.to_table_config.name}, or had inconsistent "
+                    f"time periods, where the {self.validate_datetime_column} "
+                    f"column in {self.table_config.name} did not correspond to the "
+                    f"time periods defined by validity_start_time and "
+                    f"is_entity_deleted columns in {self.to_table_config.name}"
+                )
             raise DataTestFailure(msg, expr=expr)
         return
 
