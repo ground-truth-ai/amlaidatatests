@@ -233,3 +233,81 @@ def test_collar_proportion_group_by_where(test_connection, create_test_table, re
         value="CREDIT",
     )
     t(test_connection, request)
+
+
+def test_proportion_counts_succeeds(test_connection, create_test_table, request):
+    schema = {
+        "party_id": String(nullable=False),
+        "risk_case_id": String(nullable=False),
+        "type": String(nullable=False),
+    }
+
+    tbl = create_test_table(
+        ibis.memtable(
+            data=[
+                {"party_id": "1", "risk_case_id": "1", "type": "AML_PROCESS_START"},
+                {"party_id": "1", "risk_case_id": "1", "type": "OTHER_EVENT"},
+                {"party_id": "1", "risk_case_id": "1", "type": "OTHER_EVENT"},
+                {"party_id": "1", "risk_case_id": "1", "type": "OTHER_EVENT"},
+                {"party_id": "1", "risk_case_id": "1", "type": "OTHER_EVENT"},
+                {"party_id": "1", "risk_case_id": "1", "type": "AML_SAR"},
+                {"party_id": "2", "risk_case_id": "2", "type": "AML_PROCESS_START"},
+                {"party_id": "2", "risk_case_id": "2", "type": "OTHER_EVENT"},
+                {"party_id": "2", "risk_case_id": "2", "type": "AML_SAR"},
+            ],
+            schema=schema,
+        )
+    )
+    TABLE_CONFIG = ResolvedTableConfig(
+        name=tbl, table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
+    )
+
+    t = common.VerifyTypedValuePresence(
+        column="type",
+        table_config=TABLE_CONFIG,
+        min_proportion=1,
+        group_by=["party_id", "risk_case_id"],
+        compare_group_by_where=lambda t: t.type == "AML_SAR",
+        value="AML_PROCESS_START",
+    )
+
+    t(test_connection, request)
+
+
+def test_proportion_counts_fails(test_connection, create_test_table, request):
+    schema = {
+        "party_id": String(nullable=False),
+        "risk_case_id": String(nullable=False),
+        "type": String(nullable=False),
+    }
+
+    tbl = create_test_table(
+        ibis.memtable(
+            data=[
+                {"party_id": "1", "risk_case_id": "1", "type": "AML_PROCESS_START"},
+                {"party_id": "1", "risk_case_id": "1", "type": "OTHER_EVENT"},
+                {"party_id": "1", "risk_case_id": "1", "type": "OTHER_EVENT"},
+                {"party_id": "1", "risk_case_id": "1", "type": "OTHER_EVENT"},
+                {"party_id": "1", "risk_case_id": "1", "type": "OTHER_EVENT"},
+                {"party_id": "1", "risk_case_id": "1", "type": "AML_SAR"},
+                {"party_id": "2", "risk_case_id": "2", "type": "OTHER_EVENT"},
+                {"party_id": "2", "risk_case_id": "2", "type": "AML_SAR"},
+            ],
+            schema=schema,
+        )
+    )
+    TABLE_CONFIG = ResolvedTableConfig(
+        name=tbl, table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
+    )
+
+    t = common.VerifyTypedValuePresence(
+        column="type",
+        table_config=TABLE_CONFIG,
+        min_proportion=1,
+        group_by=["party_id", "risk_case_id"],
+        compare_group_by_where=lambda t: t.type == "AML_SAR",
+        value="AML_PROCESS_START",
+        severity=AMLAITestSeverity.ERROR,
+    )
+    with pytest.raises(DataTestFailure):
+        t(test_connection, request)
