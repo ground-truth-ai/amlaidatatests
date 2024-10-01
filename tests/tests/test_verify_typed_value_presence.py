@@ -226,9 +226,9 @@ def test_collar_proportion_group_by_where(test_connection, create_test_table, re
         min_proportion=0.4,
         max_proportion=0.6,
         group_by=["transaction_id"],
-        compare_group_by_where=lambda t: t["transaction_id"]
-        .like("%internal_account%")
-        .negate(),
+        compare_group_by_where=lambda t: ~t["transaction_id"].like(
+            "%internal_account%"
+        ),
         severity=AMLAITestSeverity.ERROR,
         value="CREDIT",
     )

@@ -1315,7 +1315,7 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
                     first_date=_.validity_start_time.min(),
                     last_date=ibis.ifelse(
                         condition=_.next_row_validity_start_time.isnull()
-                        & _.is_entity_deleted.negate(),
+                        & ~_.is_entity_deleted,
                         true_expr=TemporalReferentialIntegrityTest.MAX_DATETIME_VALUE,
                         false_expr=_.validity_start_time,
                     ).max(),
@@ -1421,16 +1421,16 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
                     (tbl[self.key] == totbl[self.key])
                     # If this item is before the first date on the base table
                     & (
-                        tbl.first_date.between(
+                        ~tbl.first_date.between(
                             lower=first_date_with_tolerance,
                             upper=last_date_with_tolerance,
-                        ).negate()
+                        )
                         |
                         # If this item is after the last date on the base table
-                        tbl.last_date.between(
+                        ~tbl.last_date.between(
                             lower=first_date_with_tolerance,
                             upper=last_date_with_tolerance,
-                        ).negate()
+                        )
                     )
                 ),
             )
