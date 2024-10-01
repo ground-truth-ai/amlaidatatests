@@ -1,5 +1,6 @@
 """Tests for the party table"""
 
+import ibis
 import pytest
 
 from amlaidatatests.base import AbstractBaseTest, AbstractColumnTest
@@ -210,7 +211,7 @@ def test_RI002_referential_integrity(connection, request):
             column="birth_date",
             table_config=TABLE_CONFIG,
             max_number=0,
-            expression=lambda t: t.birth_date > cfg().interval_end_date,
+            expression=lambda t: t.birth_date > ibis.today(),
             severity=AMLAITestSeverity.WARN,
             test_id="DT002",
         ),
@@ -218,7 +219,7 @@ def test_RI002_referential_integrity(connection, request):
             column="establishment_date",
             table_config=TABLE_CONFIG,
             max_number=0,
-            expression=lambda t: t.establishment_date > cfg().interval_end_date,
+            expression=lambda t: t.establishment_date > ibis.today(),
             severity=AMLAITestSeverity.WARN,
             test_id="DT003",
         ),
@@ -226,7 +227,7 @@ def test_RI002_referential_integrity(connection, request):
             column="exit_date",
             table_config=TABLE_CONFIG,
             max_number=0,
-            expression=lambda t: t.exit_date > cfg().interval_end_date,
+            expression=lambda t: t.exit_date > ibis.today(),
             severity=AMLAITestSeverity.WARN,
             test_id="DT004",
         ),
@@ -234,7 +235,7 @@ def test_RI002_referential_integrity(connection, request):
             column="join_date",
             table_config=TABLE_CONFIG,
             max_number=0,
-            expression=lambda t: t.join_date > cfg().interval_end_date,
+            expression=lambda t: t.join_date > ibis.today(),
             severity=AMLAITestSeverity.WARN,
             test_id="DT005",
         ),
@@ -244,7 +245,7 @@ def test_RI002_referential_integrity(connection, request):
             max_number=0,
             expression=lambda t: t.join_date > t.establishment_date,
             severity=AMLAITestSeverity.WARN,
-            test_id="DT0012",
+            test_id="DT012",
         ),
         common.CountMatchingRows(
             column="join_date",
@@ -252,7 +253,7 @@ def test_RI002_referential_integrity(connection, request):
             max_number=0,
             expression=lambda t: t.join_date > t.birth_date,
             severity=AMLAITestSeverity.WARN,
-            test_id="DT0013",
+            test_id="DT013",
         ),
     ],
 )

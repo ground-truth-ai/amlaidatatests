@@ -1,0 +1,1 @@
+-- check column is the correct type on table. See https://amlaidatatests.readthedocs.io/en/latest/usage/interpreting-schematests.html

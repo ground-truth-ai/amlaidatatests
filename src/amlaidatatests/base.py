@@ -1,8 +1,11 @@
+import contextlib
 import copy
 import logging
 import warnings
 from abc import ABC
+from functools import partial
 from typing import Any, Callable, Optional
+from urllib.parse import parse_qsl, urlparse
 
 import ibis
 import pytest
@@ -261,6 +264,7 @@ class AbstractTableTest(AbstractBaseTest):
 
             # Dry run does not execute against the connection,
             # so patch in a skip/no-op
+            # so patch in a skip/no-op. We don't add to the patch list
             execute = __no_op
 
         # Configure sql logging
@@ -269,32 +273,44 @@ class AbstractTableTest(AbstractBaseTest):
             # The class uses a flavour name to class map to
             # identify the map, so we get the first map. This
             # gets the first match from the generator function
-            friendly_flavour_name = next(
-                (
-                    k
-                    for k, v in connection.dialect.classes.items()
-                    if v == connection.dialect
-                )
-            )
+            def __compile_sql(
+                execute: Callable[[ibis.Expr], Any], expr: ibis.Expr
+            ) -> str:
 
-            def __compile_sql(expr: ibis.Expr) -> str:
-                with open(
-                    path.joinpath(f"{self.test_id}-{friendly_flavour_name}.sql"), "wb"
-                ) as f:
+                with open(path.joinpath(f"{self.test_id}.sql"), "wb") as f:
+                    connection_string = cfg().get("connection_string")
+                    result = urlparse(connection_string)
+
                     # Write the test description to the top of the file as a comment
                     f.write(
                         f"-- {get_test_failure_descriptions(self.test_id)} \n".encode(
                             "utf-8"
                         )
                     )
-                    f.write(str(ibis.to_sql(expr, pretty=True)).encode("utf-8"))
+                    # Important to get the dialect here **from the connection string**
+                    # since the dryrun mode sets the internal configuration
+                    f.write(
+                        str(
+                            ibis.to_sql(expr, pretty=True, dialect=result.scheme)
+                        ).encode("utf-8")
+                    )
                     return execute(expr)
 
-            execute = __compile_sql(execute)
+            connection.execute = partial(__compile_sql, execute)
 
-        # Money patch connection.execute so we can
-        # capture the sql
-        connection.execute = execute
+
+@contextlib.contextmanager
+def use_column_prefix(cls: "AbstractColumnTest", prefix: str):
+    """Context manager for managing the column prefix. If a test fails without
+    cleaning up the value of cls.column, it still gets reverted due to the
+    finally statement"""
+    revert = copy.deepcopy(cls.column)
+    try:
+        if prefix:
+            cls.column = f"{prefix}.{cls.column}"
+        yield
+    finally:
+        cls.column = revert
 
 
 class AbstractColumnTest(AbstractTableTest):
@@ -306,6 +322,8 @@ class AbstractColumnTest(AbstractTableTest):
         test_id: Optional[str] = None,
     ) -> None:
         """ """
+        # Deep copy to avoid modifying the column variable globally if
+        # a prefix is provided
         self.column = column
         super().__init__(table_config=table_config, severity=severity, test_id=test_id)
 
@@ -389,7 +407,8 @@ class AbstractColumnTest(AbstractTableTest):
 
         Args:
             connection: ibis backend object to execute the tests against
-            prefix: _description_. Defaults to None.
+            prefix:     a prefix for the column to be tested. Used to specify a
+                        specific column to be tested for an entity. Defaults to None.
         """
         # It's fine for the top level column to be missing if it's
         # an optional field. If it is, we can skip the whole test
@@ -400,15 +419,10 @@ class AbstractColumnTest(AbstractTableTest):
             request=request,
         )
         self.process_test_request(request)
-        __prefix_revert = None
-        if prefix:
-            __prefix_revert = self.column
-            self.column = f"{prefix}.{self.column}"
-        self._pre_test_hooks(connection)
-        self._run_with_severity(f=self._check_column_exists)
-        self._run_with_severity(connection=connection, f=self._test)
-        if __prefix_revert:
-            self.column = __prefix_revert
+        with use_column_prefix(self, prefix):
+            self._pre_test_hooks(connection)
+            self._run_with_severity(f=self._check_column_exists)
+            self._run_with_severity(connection=connection, f=self._test)
 
     def filter_null_parent_fields(self):
         """Get

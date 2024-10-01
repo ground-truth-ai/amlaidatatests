@@ -5,6 +5,7 @@ import datetime
 import importlib
 import typing
 from dataclasses import dataclass, field, fields
+from pathlib import Path
 from typing import Any, Optional, Union
 from urllib.parse import urlparse
 
@@ -41,6 +42,10 @@ def infer_database(connection_str: str) -> str | None:
         The inferred database, or None
     """
     parsed_url = urlparse(connection_str)
+
+    if cfg().dry_run:
+        # Dry run uses pandas - no database
+        return None
 
     if parsed_url.scheme == "bigquery":
         # "/my_bq_input_dataset" -> "my_bq_input_dataset"

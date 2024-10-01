@@ -96,7 +96,7 @@ def get_entity_mutation_tests(
         ColumnCardinalityTest(
             column="validity_start_time",
             table_config=table_config,
-            max_number=1000,
+            max_number=10000,
             group_by=table_config.entity_keys,
             severity=AMLAITestSeverity.WARN,
             test_id="P058",
@@ -329,8 +329,7 @@ def get_generic_table_tests(
             CountMatchingRows(
                 table_config=table_config,
                 column="validity_start_time",
-                expression=lambda t: t.validity_start_time.date()
-                > cfg().interval_end_date,
+                expression=lambda t: t.validity_start_time.date() > ibis.today(),
                 test_id="DT001",
             ),
             CountFrequencyValues(
