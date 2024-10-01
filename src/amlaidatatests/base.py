@@ -11,12 +11,13 @@ from ibis import BaseBackend, Expr, IbisError, Table, _
 from ibis import selectors as s
 from ibis.common.exceptions import IbisTypeError
 
-from amlaidatatests.config import cfg
+from amlaidatatests.config import ConfigSingleton, cfg
 from amlaidatatests.exceptions import (
     AMLAITestSeverity,
     DataTestFailure,
     DataTestWarning,
     SkipTest,
+    get_test_failure_descriptions,
 )
 from amlaidatatests.schema.base import ResolvedTableConfig, TableType
 
@@ -234,6 +235,7 @@ class AbstractTableTest(AbstractBaseTest):
     def __call__(self, connection: BaseBackend, request):
         self.process_test_request(request)
         # Check if table exists
+        self._pre_test_hooks(connection)
         self.table = self._run_with_severity(
             connection=connection,
             f=self.check_table_exists,
@@ -241,6 +243,58 @@ class AbstractTableTest(AbstractBaseTest):
             request=request,
         )
         self._run_with_severity(connection=connection, f=self._test)
+
+    def _pre_test_hooks(self, connection: BaseBackend):
+        """Using the global configuration, modifies the
+        state for any pre-execution configuration.
+
+        Args:
+            connection: The ibis connection object
+        """
+        _cfg = ConfigSingleton.get()
+        # Configure dry run
+        execute = connection.execute
+        if _cfg.dry_run:
+
+            def __no_op(*args, **kwargs):
+                pytest.xfail("Skipping test because dry_run selected")
+
+            # Dry run does not execute against the connection,
+            # so patch in a skip/no-op
+            execute = __no_op
+
+        # Configure sql logging
+
+        if path := _cfg.log_sql_path:
+            # The class uses a flavour name to class map to
+            # identify the map, so we get the first map. This
+            # gets the first match from the generator function
+            friendly_flavour_name = next(
+                (
+                    k
+                    for k, v in connection.dialect.classes.items()
+                    if v == connection.dialect
+                )
+            )
+
+            def __compile_sql(expr: ibis.Expr) -> str:
+                with open(
+                    path.joinpath(f"{self.test_id}-{friendly_flavour_name}.sql"), "wb"
+                ) as f:
+                    # Write the test description to the top of the file as a comment
+                    f.write(
+                        f"-- {get_test_failure_descriptions(self.test_id)} \n".encode(
+                            "utf-8"
+                        )
+                    )
+                    f.write(str(ibis.to_sql(expr, pretty=True)).encode("utf-8"))
+                    return execute(expr)
+
+            execute = __compile_sql(execute)
+
+        # Money patch connection.execute so we can
+        # capture the sql
+        connection.execute = execute
 
 
 class AbstractColumnTest(AbstractTableTest):
@@ -350,6 +404,7 @@ class AbstractColumnTest(AbstractTableTest):
         if prefix:
             __prefix_revert = self.column
             self.column = f"{prefix}.{self.column}"
+        self._pre_test_hooks(connection)
         self._run_with_severity(f=self._check_column_exists)
         self._run_with_severity(connection=connection, f=self._test)
         if __prefix_revert:

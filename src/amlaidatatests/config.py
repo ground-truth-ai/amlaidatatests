@@ -98,6 +98,12 @@ class DatatestConfig:
 
     testing_mode: bool = False
 
+    log_sql_path: Optional[Path] = None
+    """ If set, log the SQL generated for a test to a path"""
+
+    dry_run: bool = False
+    """ If set, do not execute the test """
+
 
 class ConfigSingleton(metaclass=Singleton):
     """Singleton for all amlaidatatest configuration"""
