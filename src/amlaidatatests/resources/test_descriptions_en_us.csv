@@ -1,41 +1,41 @@
 id,table,column,description
 P049,All,is_entity_deleted,"When is_entity_deleted = True, all non-key fields should be left unset or NULL"
-P050,All,is_entity_deleted,high frequency of is_entity_deleted = TRUE
-P052,All,All,"High frequency of values assigned to a ""round hour or half hour"" except 00:00:00"
-P057,All,validity_start_time,Excessive validity start changes for other PK columns
-P058,All,validity_start_time,Excessive validity start changes for other PK columns
-P001,All,validity_start_time,High frequency values
-P002,Party,source_system,Many values
-P003,Party,birth_date,"WHEN type='CONSUMER', check for high frequency values"
-P004,Party,establishment_date,"WHEN type='COMPANY', check for high frequency values"
-P005,Party,occupation,"WHEN type='CONSUMER', check for high frequency values"
-P006,Party,nationalities,"WHEN type='CONSUMER', check for high frequency of empty lists"
-P007,Party,nationalities.region_code,Check for parties with many nationalities
-P008,Party,residencies,"WHEN type='CONSUMER', check for high frequency of empty lists"
-P009,Party,residencies.region_code,Check for parties with many residencies
-P010,Party,exit_date,High frequency values
-P011,Party,join_date,High frequency values
-P012,Party,civil_status_code,High frequency values
-P013,Party,education_level_code,High frequency values
-P015,AccountPartyLink,"account_id, party_id",Check for account with many parties
-P016,AccountPartyLink,"account_id, party_id",Check for account with many parties
-P017,AccountPartyLink,"account_id, party_id",Check for party with many accounts
-P018,AccountPartyLink,"account_id, party_id",Check for party with many accounts
-P019,AccountPartyLink,source_system,Many values
-P021,Transaction,source_system,Many values
-P022,Transaction,type,Check for missing transaction types
-P023,Transaction,direction,Check for missing direction
-P024,Transaction,direction,Check for imbalanced vol types across dataset
-P025,Transaction,direction,Check for imbalanced vol types across dataset
-P026,Transaction,account_id,Account with many txns
-P027,Transaction,account_id,Account with many txns
-P028,Transaction,"account_id, counterparty_account",Account and Counterparty pairs have many txns
-P029,Transaction,"account_id, counterparty_account",Account and Counterparty pairs have many txns
-P030,AccountPartyLink,account_id,High number of accounts with no txns
-P031,AccountPartyLink,account_id,High number of accounts with no txns
-P032,Transaction,book_time,>= 1 month contains txns less than X the monthly average
-P033,Transaction,book_time,>= 1 month contains txns less than X the monthly average
-P034,Transaction,book_time,Many transactions have the same book_time
+P050,All,is_entity_deleted,More than 40% of entities have is_entity_deleted = TRUE. Warning.
+P052,All,All,More than 10% of transactions have book_time with a round hour or half hour except 00:00:00. Common indicator of a datetime mapping from a source system in a different timezone e.g. transactions book_time=23:30:00 could be assigned to the wrong day.
+P057,All,validity_start_time,An entity has more than 500 validity_start_time changes. Warning.
+P058,All,validity_start_time,An entity has more than 10000 validity_start_time changes. Error.
+P001,All,validity_start_time,More than 1% of the fields in this table have the same validity_start_time. Warning.
+P002,Party,source_system,Excessive distinct values of source_system. Warns above 500.
+P003,Party,birth_date,"WHEN type='CONSUMER', check for more than 1% of parties with the same birth_date. Warning."
+P004,Party,establishment_date,"WHEN type='COMPANY', check for more than 1% of parties with the same establishment_date. Warning"
+P005,Party,occupation,"WHEN type='CONSUMER', check for more than 10% of parties with the same occupation. Warning."
+P006,Party,nationalities,"WHEN type='CONSUMER', more than 5% of parties have no nationality"
+P007,Party,nationalities.region_code,Check for parties with more than 5 nationalities
+P008,Party,residencies,"WHEN type='CONSUMER', more than 5% of parties have no residencies"
+P009,Party,residencies.region_code,A party has more than 5 residencies. WARNING.
+P010,Party,exit_date,Check for more than 5% of parties with the same exit_date. Warning.
+P011,Party,join_date,Check for more than 5% of parties with the same join_date. Warning.
+P012,Party,civil_status_code,Check for more than 75% of parties with the same civil_status_code. Warning.
+P013,Party,education_level_code,Check for more than 75% of parties with the same education_level_code. Warning.
+P015,AccountPartyLink,"account_id, party_id",Check for accounts linked to a erroneously high number of parties. The API will not ingest more than 60000 links per account.
+P016,AccountPartyLink,"account_id, party_id",Check for accounts linked to a erroneously high number of parties. Warning only.
+P017,AccountPartyLink,"account_id, party_id",Check for parties linked to a erroneously high number of accounts. The API will not ingest more than 60000 links per account.
+P018,AccountPartyLink,"account_id, party_id",Check for parties linked to a erroneously high number of accounts. Warning only.
+P019,AccountPartyLink,source_system,Excessive distinct values of source_system. Warns above 500.
+P021,Transaction,source_system,Excessive distinct values of source_system. Warns above 500.
+P022,Transaction,type,"At least one transaction type is completely missing from the transactions. Checks for WIRE,  CASH, CHECK, CARD."
+P023,Transaction,direction,Check for missing direction across the entire dataset. Expect at least one credit and one debit.
+P024,Transaction,direction,Check the overall ratio of CREDITs to DEBITs by count of transaction_id in this dataset. Warns if the ratio of one direction is more than 80%.
+P025,Transaction,direction,Check the overall ratio of CREDITs to DEBITs by count of transaction_id in this dataset. ERRORs if the ratio of one direction is more than 95%.
+P026,Transaction,account_id,One or more accounts have a very high number of transactions. Errors at 50 million.
+P027,Transaction,account_id,One or more accounts have a very high number of transactions. Warn at 10 million.
+P028,Transaction,"account_id, counterparty_account",A single account and counterparty combination have many transactions. Errors at 5 million.
+P029,Transaction,"account_id, counterparty_account",Account and Counterparty pairs have many transactions. Warns at 1 million.
+P030,AccountPartyLink,account_id,More than 20% of accounts in the dataset have no transactions at all.
+P031,AccountPartyLink,account_id,High number of accounts with no transactions
+P032,Transaction,book_time,>= 1 month has a transaction volume of less than 40% of the monthly average by volume. Warning.
+P033,Transaction,book_time,>= 1 month has a transaction volume of less than 66% the monthly average by volume. Error.
+P034,Transaction,book_time,More than 1% of transactions have the same book_time.
 P051,Transaction,type,Large number of transactions have the same value across any transaction type
 P035,PartySupplementaryData,party_supplementary_data_id,Same number of supplementary_data_id for each customer
 P036,PartySupplementaryData,party_supplementary_data_id,LTE 100 supplementary_data_id for each customer
@@ -53,10 +53,10 @@ P047,RiskCaseEvent,type,<=1 AML_EXIT per risk_case_id and party_id
 P048,RiskCaseEvent,type,All AML_EXIT events have AML_PROCESS_START for same risk_case_id and party_id
 P068,RiskCaseEvent,type,All AML_SAR events have AML_PROCESS_START for same risk_case_id and party_id
 P067,RiskCaseEvent,type,All AML_SAR and AML_EXIT events have AML_PROCESS_START for same risk_case_id and party_id
-P053,RiskCaseEvent,risk_case_event_id,Number of risk case events within risk case
-P054,RiskCaseEvent,risk_case_event_id,Number of risk case events within risk case
-P055,RiskCaseEvent,risk_case_event_id,Number of risk case events for party
-P056,RiskCaseEvent,risk_case_event_id,Number of risk case events for party
+P053,RiskCaseEvent,risk_case_event_id,More than 5000 risk case events for a single case. Error
+P054,RiskCaseEvent,risk_case_event_id,More than 1000 risk case events for a single case. Warning.
+P055,RiskCaseEvent,risk_case_event_id,More than 1000 risk case events for a single party. Warning.
+P056,RiskCaseEvent,risk_case_event_id,More than 5000 risk case events for a single party. Error.
 P059,"Transaction, RiskCaseEvent","book_time,
 type",Positive examples with no transactions within SUSPICIOUS activity period or for X months prior to AML PROCESS START if suspicious activity period not defined
 P060,RiskCaseEvent,type,>1 suspicious activity period start for party in risk case
@@ -65,16 +65,16 @@ P062,RiskCaseEvent,type,Suspicious activity period end but no start for party in
 P063,RiskCaseEvent,type,Additional risk case events for party in risk case after AML_EXIT other than AML_PROCESS_END
 P064,RiskCaseEvent,type,No risk case events before AML process start for party on the risk case
 P066,RiskCaseEvent,type,Party with multiple AML_EXIT events
-V002,Party,nationalities,"WHEN type='COMPANY', check is empty list"
-V003,Party,residencies,"WHEN type='COMPANY', check is empty list"
+V002,Party,nationalities,"WHEN type='COMPANY', check no nationalities specified"
+V003,Party,residencies,"WHEN type='COMPANY', check no nationalities specified"
 V004,Party,assets_value_range.start_amount.units,Check all are positive or zero
 V005,Party,assets_value_range.start_amount.nanos,"All values between 0 and +999,999,999 inclusive"
 V006,Party,assets_value_range.end_amount.units,Check all are positive or zero
 V007,Party,assets_value_range.end_amount.nanos,"All values between 0 and +999,999,999 inclusive"
-V008,Party,birth_date,"WHEN type='COMPANY', check all are null"
-V009,Party,establishment_date,"WHEN type='CONSUMER', check all are null"
-V010,Party,occupation,"WHEN type='COMPANY', check all are null"
-V011,Party,gender,"WHEN type='COMPANY', check all are null"
+V008,Party,birth_date,"WHEN type='COMPANY', check no birth_date specified"
+V009,Party,establishment_date,"WHEN type='CONSUMER', check no establishment_date specified"
+V010,Party,occupation,"WHEN type='COMPANY', check no occupation specified"
+V011,Party,gender,"WHEN type='COMPANY', check no gender specified"
 V012,Party,assets_value_range.start_amount,"If non-empty check currency code, units and nanos all not null"
 V013,Party,assets_value_range.end_amount,"If non-empty check currency code, units and nanos all not null"
 V014,Transaction,normalized_booked_amount,"If non-empty check currency code, units and nanos all not null"

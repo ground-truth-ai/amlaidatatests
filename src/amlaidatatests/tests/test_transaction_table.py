@@ -1,5 +1,6 @@
 """Tests for the transaction table"""
 
+import ibis
 import pytest
 
 from amlaidatatests.base import AbstractColumnTest
@@ -137,7 +138,7 @@ def test_currency_value_entity(connection, column, test: AbstractColumnTest, req
             column="book_time",
             table_config=TABLE_CONFIG,
             max_number=0,
-            expression=lambda t: t.book_time >= cfg().interval_end_date,
+            expression=lambda t: t.book_time >= ibis.today(),
             severity=AMLAITestSeverity.WARN,
             test_id="DT008",
         )
@@ -153,7 +154,7 @@ def test_date_consistency(connection, test, request):
         common.CountFrequencyValues(
             column="book_time",
             table_config=TABLE_CONFIG,
-            max_number=1e6,
+            max_proportion=0.01,
             severity=AMLAITestSeverity.WARN,
             test_id="P034",
         ),
@@ -167,14 +168,14 @@ def test_date_consistency(connection, test, request):
         common.CountFrequencyValues(
             column="account_id",
             table_config=TABLE_CONFIG,
-            max_number=5e9,
+            max_number=5e7,
             severity=AMLAITestSeverity.ERROR,
             test_id="P026",
         ),
         common.CountFrequencyValues(
             column="account_id",
             table_config=TABLE_CONFIG,
-            max_number=1e9,
+            max_number=1e7,
             severity=AMLAITestSeverity.WARN,
             test_id="P027",
         ),
@@ -183,23 +184,23 @@ def test_date_consistency(connection, test, request):
                 column="type",
                 table_config=TABLE_CONFIG,
                 min_number=1,
-                expression=lambda t: t["type"] == typ,
+                expression=lambda t: (t["type"] == typ),
                 test_id="P022",
                 explanation=f"Expected at least one row with type == '{typ}'",
             )
             for typ in TXN_TYPES
         ],
-        # Implicitly checks CREDIT:DEBIT ratio - since these are
-        # the only two values in the colum
-        common.VerifyTypedValuePresence(
-            column="direction",
-            table_config=TABLE_CONFIG,
-            min_proportion=0.4,
-            max_proportion=0.6,
-            group_by=["transaction_id"],
-            test_id="P024",
-            value="DEBIT",
-        ),
+        *[
+            common.CountMatchingRows(
+                column="direction",
+                table_config=TABLE_CONFIG,
+                min_number=1,
+                expression=lambda t: t["direction"] == direction,
+                test_id="P023",
+                explanation=f"Expected at least one row with direction == '{direction}'",
+            )
+            for direction in ["CREDIT", "DEBIT"]
+        ],
         # Implicitly checks CREDIT:DEBIT ratio - since these are
         # the only two values in the colum
         common.VerifyTypedValuePresence(
@@ -208,6 +209,15 @@ def test_date_consistency(connection, test, request):
             min_proportion=0.2,
             max_proportion=0.8,
             group_by=["transaction_id"],
+            test_id="P024",
+            value="DEBIT",
+        ),
+        common.VerifyTypedValuePresence(
+            column="direction",
+            table_config=TABLE_CONFIG,
+            min_proportion=0.05,
+            max_proportion=0.95,
+            group_by=["transaction_id"],
             test_id="P025",
             severity=AMLAITestSeverity.ERROR,
             value="DEBIT",
@@ -215,7 +225,7 @@ def test_date_consistency(connection, test, request):
         common.ColumnCardinalityTest(
             column="transaction_id",
             table_config=TABLE_CONFIG,
-            max_number=10e6,
+            max_number=5e6,
             group_by=["account_id", "counterparty_account.account_id"],
             severity=AMLAITestSeverity.ERROR,
             test_id="P028",
@@ -223,7 +233,7 @@ def test_date_consistency(connection, test, request):
         common.ColumnCardinalityTest(
             column="transaction_id",
             table_config=TABLE_CONFIG,
-            max_number=5e6,
+            max_number=1e6,
             group_by=["account_id", "counterparty_account.account_id"],
             severity=AMLAITestSeverity.WARN,
             test_id="P029",
@@ -241,16 +251,16 @@ def test_date_consistency(connection, test, request):
             column="book_time",
             table_config=TABLE_CONFIG,
             period="MONTH",
-            threshold=0.90,
+            threshold=0.60,
             test_id="P032",
+            severity=AMLAITestSeverity.WARN,
         ),
         common.TemporalProfileTest(
             column="book_time",
             table_config=TABLE_CONFIG,
             period="MONTH",
-            threshold=0.75,
+            threshold=0.33,
             test_id="P033",
-            severity=AMLAITestSeverity.WARN,
         ),
         common.ColumnCardinalityTest(
             column="normalized_booked_amount.currency_code",

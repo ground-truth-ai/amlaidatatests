@@ -144,7 +144,7 @@ def test_timestamp_fields(connection, test, request):
         common.ColumnCardinalityTest(
             column="account_id",
             table_config=TABLE_CONFIG,
-            max_number=10000,
+            max_number=60000,
             severity=AMLAITestSeverity.ERROR,
             group_by=["party_id"],
             test_id="P015",
@@ -160,7 +160,7 @@ def test_timestamp_fields(connection, test, request):
         common.ColumnCardinalityTest(
             column="party_id",
             table_config=TABLE_CONFIG,
-            max_number=10000,
+            max_number=60000,
             severity=AMLAITestSeverity.ERROR,
             group_by=["account_id"],
             test_id="P017",
