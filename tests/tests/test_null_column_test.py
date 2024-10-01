@@ -55,9 +55,12 @@ def test_column_optional_parent_field_missing(
 ):
     schema = {"parent_id": Struct(nullable=True, fields={"id": String(nullable=True)})}
 
+    if test_connection.dialect == "snowflake":
+        pytest.xfail("Snowflake does not ingest a nested null ID")
+
     tbl = create_test_table(
         ibis.memtable(
-            data=[{"parent_id": None}, {"parent_id": {"id": None, "other": "hello"}}],
+            data=[{"parent_id": None}, {"parent_id": {"id": None}}],
             schema=schema,
         )
     )

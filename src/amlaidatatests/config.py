@@ -5,6 +5,7 @@ import datetime
 import importlib
 import typing
 from dataclasses import dataclass, field, fields
+from pathlib import Path
 from typing import Any, Optional, Union
 from urllib.parse import urlparse
 
@@ -51,6 +52,13 @@ def infer_database(connection_str: str) -> str | None:
         raise ImportError(
             "duckdb is not installed. To use duckdb, run "
             "`pip install amlaidatatests[duckdb]`"
+        )
+    if parsed_url.scheme == "snowflake":
+        if importlib.util.find_spec("snowflake"):
+            return None
+        raise ImportError(
+            "snowflake is not installed. To use snowflake, run "
+            "`pip install amlaidatatests[snowflake]`"
         )
     raise ValueError(
         f"Unsupported database or invalid connection string: {connection_str}"
