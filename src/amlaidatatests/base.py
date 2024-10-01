@@ -9,7 +9,7 @@ import pytest
 from google.api_core.exceptions import NotFound as GoogleTableNotFound
 from ibis import BaseBackend, Expr, IbisError, Table, _
 from ibis import selectors as s
-from ibis.common.exceptions import IbisTypeError
+from ibis.common.exceptions import IbisTypeError, TableNotFound
 
 from amlaidatatests.config import cfg
 from amlaidatatests.exceptions import (
@@ -195,6 +195,11 @@ class AbstractTableTest(AbstractBaseTest):
         except IbisError as e:
             if connection.name != "duckdb":
                 raise e
+        # The table not found operator was introduced
+        # in ibis 9.x, so we don't have to handle
+        # errors individually in the backends anymore
+        except TableNotFound:
+            pass
         if request:
             self._add_pytest_attribute(request, "table_missing", True)
         self._skip_test_if_optional_table(table_config=table_config)
