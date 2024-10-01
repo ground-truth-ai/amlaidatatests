@@ -1,0 +1,1 @@
+-- check no additional fields exist on the table

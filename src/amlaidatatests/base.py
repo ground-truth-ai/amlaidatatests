@@ -2,7 +2,9 @@ import copy
 import logging
 import warnings
 from abc import ABC
+from functools import partial
 from typing import Any, Callable, Optional
+from urllib.parse import parse_qsl, urlparse
 
 import ibis
 import pytest
@@ -261,6 +263,7 @@ class AbstractTableTest(AbstractBaseTest):
 
             # Dry run does not execute against the connection,
             # so patch in a skip/no-op
+            # so patch in a skip/no-op. We don't add to the patch list
             execute = __no_op
 
         # Configure sql logging
@@ -269,32 +272,30 @@ class AbstractTableTest(AbstractBaseTest):
             # The class uses a flavour name to class map to
             # identify the map, so we get the first map. This
             # gets the first match from the generator function
-            friendly_flavour_name = next(
-                (
-                    k
-                    for k, v in connection.dialect.classes.items()
-                    if v == connection.dialect
-                )
-            )
+            def __compile_sql(
+                execute: Callable[[ibis.Expr], Any], expr: ibis.Expr
+            ) -> str:
 
-            def __compile_sql(expr: ibis.Expr) -> str:
-                with open(
-                    path.joinpath(f"{self.test_id}-{friendly_flavour_name}.sql"), "wb"
-                ) as f:
+                with open(path.joinpath(f"{self.test_id}.sql"), "wb") as f:
+                    connection_string = cfg().get("connection_string")
+                    result = urlparse(connection_string)
+
                     # Write the test description to the top of the file as a comment
                     f.write(
                         f"-- {get_test_failure_descriptions(self.test_id)} \n".encode(
                             "utf-8"
                         )
                     )
-                    f.write(str(ibis.to_sql(expr, pretty=True)).encode("utf-8"))
+                    # Important to get the dialect here **from the connection string**
+                    # since the dryrun mode sets the internal configuration
+                    f.write(
+                        str(
+                            ibis.to_sql(expr, pretty=True, dialect=result.scheme)
+                        ).encode("utf-8")
+                    )
                     return execute(expr)
 
-            execute = __compile_sql(execute)
-
-        # Money patch connection.execute so we can
-        # capture the sql
-        connection.execute = execute
+            connection.execute = partial(__compile_sql, execute)
 
 
 class AbstractColumnTest(AbstractTableTest):
