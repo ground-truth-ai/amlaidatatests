@@ -51,6 +51,8 @@ P045,RiskCaseEvent,type,<=1 AML_PROCESS_START per risk_case_id and party_id
 P046,RiskCaseEvent,type,<=1 AML_PROCESS_END per risk_case_id and party_id
 P047,RiskCaseEvent,type,<=1 AML_EXIT per risk_case_id and party_id
 P048,RiskCaseEvent,type,All AML_EXIT events have AML_PROCESS_START for same risk_case_id and party_id
+P068,RiskCaseEvent,type,All AML_SAR events have AML_PROCESS_START for same risk_case_id and party_id
+P067,RiskCaseEvent,type,All AML_SAR and AML_EXIT events have AML_PROCESS_START for same risk_case_id and party_id
 P053,RiskCaseEvent,risk_case_event_id,Number of risk case events within risk case
 P054,RiskCaseEvent,risk_case_event_id,Number of risk case events within risk case
 P055,RiskCaseEvent,risk_case_event_id,Number of risk case events for party
