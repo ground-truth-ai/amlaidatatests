@@ -233,3 +233,41 @@ def test_collar_proportion_group_by_where(test_connection, create_test_table, re
         value="CREDIT",
     )
     t(test_connection, request)
+
+
+def test_overlapping_value_keys(test_connection, create_test_table, request):
+    # See https://github.com/ground-truth-ai/amlaidatatests/pull/38. Some
+    # datatests were failing because there was an edge case where certain group
+    # keys might be accidentally combined. This test tests that - a failure
+    # would identify only one group, whilst the bug fix is indicated with two
+    # tests
+    schema = {
+        "party_id": String(nullable=False),
+        "risk_case_id": String(nullable=False),
+        "type": String(nullable=False),
+    }
+
+    tbl = create_test_table(
+        ibis.memtable(
+            data=[
+                {"party_id": "10", "risk_case_id": "01", "type": "OTHER_EVENT"},
+                {"party_id": "100", "risk_case_id": "1", "type": "SAR"},
+            ],
+            schema=schema,
+        )
+    )
+    TABLE_CONFIG = ResolvedTableConfig(
+        name=tbl, table=ibis.table(name=tbl, schema=schema), table_type=TableType.EVENT
+    )
+
+    t = common.VerifyTypedValuePresence(
+        column="type",
+        table_config=TABLE_CONFIG,
+        min_proportion=0.49,
+        max_proportion=0.51,
+        group_by=["party_id", "risk_case_id"],
+        value="OTHER_EVENT",
+        severity=AMLAITestSeverity.ERROR,
+    )
+
+    t(test_connection, request)

@@ -435,9 +435,10 @@ class VerifyTypedValuePresence(AbstractColumnTest):
         where_group_kwargs = {"where": self.where(_)} if self.where else {}
 
         expr = (
-            # Concatenate the group by so we can count unique combinations
+            # Concatenate the group by so we can count unique combinations. We append
+            # column IDs because there might be overlapping individual IDs
             table.mutate(
-                concat=reduce(lambda x, y: x + y, [_[i] for i in self.group_by], "")
+                concat=reduce(lambda x, y: x + y, [i + _[i] for i in self.group_by], "")
             )
             .agg(
                 value_cnt=_["concat"].nunique(column == self.value),
