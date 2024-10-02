@@ -173,7 +173,7 @@ def test_column_values(connection, test, request):
         common.NullIfTest(
             column="occupation",
             table_config=TABLE_CONFIG,
-            expression=lambda t: t.type == "CONSUMER",
+            expression=lambda t: t.type == "COMPANY",
             test_id="V010",
         ),
     ],
