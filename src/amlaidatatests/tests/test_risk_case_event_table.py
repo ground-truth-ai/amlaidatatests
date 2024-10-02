@@ -345,9 +345,10 @@ class NoTransactionsWithinSuspiciousPeriod(AbstractTableTest):
             test_id="P044",
             value="AML_EXIT",
         ),
-        # TODO: This is not a precise test. We are comparing the number
-        # of values of party_id, risk_case_id which have an AML_PROCESS_START over
-        # the number which have an AML_EXIT. This could be a co-incidence
+        # TODO: This is not a precise test. We are comparing the number of
+        # values of party_id, risk_case_id which have an AML_PROCESS_START over
+        # the number which have an AML_EXIT. This could be a co-incidence, so we
+        # test this in a few different ways
         common.VerifyTypedValuePresence(
             column="type",
             table_config=TABLE_CONFIG,
@@ -356,6 +357,27 @@ class NoTransactionsWithinSuspiciousPeriod(AbstractTableTest):
             compare_group_by_where=lambda t: t.type == "AML_EXIT",
             test_id="P048",
             value="AML_PROCESS_START",
+        ),
+        common.VerifyTypedValuePresence(
+            column="type",
+            table_config=TABLE_CONFIG,
+            min_proportion=1,
+            group_by=["party_id", "risk_case_id"],
+            compare_group_by_where=lambda t: t.type == "AML_SAR",
+            test_id="P068",
+            value="AML_PROCESS_START",
+        ),
+        common.VerifyTypedValuePresence(
+            column="type",
+            table_config=TABLE_CONFIG,
+            min_proportion=1,
+            group_by=["party_id", "risk_case_id"],
+            compare_group_by_where=lambda t: (t.type == "AML_SAR")
+            | (t.type == "AML_EXIT"),
+            test_id="P067",
+            value="AML_PROCESS_START",
+            # This errors in the API
+            severity=AMLAITestSeverity.ERROR,
         ),
         common.CountFrequencyValues(
             column="type",
