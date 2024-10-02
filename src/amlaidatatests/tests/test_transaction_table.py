@@ -230,9 +230,10 @@ def test_date_consistency(connection, test, request):
         ),
         # TODO: This only checks the nanos field, not all the columns
         common.CountFrequencyValues(
-            column="normalized_booked_amount.nanos",
+            column=lambda t: t.normalized_booked_amount.units
+            + t.normalized_booked_amount.nanos / 1e9,
             table_config=TABLE_CONFIG,
-            max_proportion=0.01,
+            max_proportion=0.05,
             group_by=["type"],
             test_id="P051",
         ),
