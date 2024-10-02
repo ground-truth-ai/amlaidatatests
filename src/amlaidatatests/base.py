@@ -247,7 +247,7 @@ class AbstractColumnTest(AbstractTableTest):
     def __init__(
         self,
         table_config: ResolvedTableConfig,
-        column: str,
+        column: str | Callable[[Table], Expr],
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
         test_id: Optional[str] = None,
     ) -> None:
@@ -256,22 +256,36 @@ class AbstractColumnTest(AbstractTableTest):
         super().__init__(table_config=table_config, severity=severity, test_id=test_id)
 
     def set_extra_pytest_attributes(self, request):
-        self._add_pytest_attribute(request, "column", self.column)
+        # Callables do not parse the columns they're using
+        if isinstance(self.column, str):
+            self._add_pytest_attribute(request, "column", self.column)
 
     @property
     def id(self) -> Optional[str]:
         """Override to provide additional information about the
         test to pytest to identify the test"""
         if self.test_id:
-            return f"{self.test_id}-{self.__class__.__name__}-{self.column}"
+            id_ = f"{self.test_id}-{self.__class__.__name__}"
         else:
-            return f"{self.__class__.__name__}-{self.column}"
+            id_ = f"{self.__class__.__name__}"
+
+        if isinstance(self.column, str):
+            return f"{id_}-{self.column}"
+        else:
+            return id_
 
     @property
     def full_column_path(self):
-        return f"{self.table_config.table.get_name()}.{self.column}"
+        if isinstance(self.column, str):
+            return f"{self.table_config.table.get_name()}.{self.column}"
+        else:
+            return self.table_config.table.get_name()
 
     def _check_column_exists(self):
+        if isinstance(self.column, Callable):
+            self.column(self.table_config.table)
+            # TODO: We don't check optional columns here
+            return
         try:
             resolve_field_to_level(table=self.table, column=self.column, level=1)
         except IbisTypeError as e:
@@ -302,7 +316,6 @@ class AbstractColumnTest(AbstractTableTest):
             connection: ibis backend object to execute the tests against
             prefix: _description_. Defaults to None.
         """
-        self.process_test_request(request)
         # It's fine for the top level column to be missing if it's
         # an optional field. If it is, we can skip the whole test
         self.table = self._run_with_severity(
@@ -311,6 +324,7 @@ class AbstractColumnTest(AbstractTableTest):
             table_config=self.table_config,
             request=request,
         )
+        self.process_test_request(request)
         __prefix_revert = None
         if prefix:
             __prefix_revert = self.column

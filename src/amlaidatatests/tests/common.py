@@ -288,7 +288,7 @@ class CountFrequencyValues(AbstractColumnTest):
         self,
         *,
         table_config: ResolvedTableConfig,
-        column: str,
+        column: str | Expr,
         test_id: Optional[str] = None,
         max_proportion: Optional[float] = None,
         max_number: Optional[int] = None,
@@ -325,7 +325,11 @@ class CountFrequencyValues(AbstractColumnTest):
 
         if self.where is not None:
             table = table.filter(self.where)
-        table, column = resolve_field(table=table, column=self.column)
+
+        if isinstance(self.column, str):
+            table, column = resolve_field(table=table, column=self.column)
+        else:
+            column = self.column(table)
 
         if not self.keep_nulls:
             table = table.filter(column.notnull())
@@ -1186,7 +1190,6 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
 
 
     Args:
-        AbstractTableTest (_type_): _description_
         table_config            : The table to be validated. Columns in this
                                     dataset will be validated against the
                                     to_table to check the columns are not out of
