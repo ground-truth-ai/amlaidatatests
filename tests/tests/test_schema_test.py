@@ -128,6 +128,8 @@ def test_missing_optional_struct(
 def test_deeply_nested_struct_optional_1(
     test_connection, create_test_table, request, test_raise_on_skip
 ):
+    if test_connection.dialect == "bigquery":
+        pytest.xfail("Bigquery has a problem with creating nested structs")
     tbl = create_test_table(
         ibis.memtable(
             data=[{"c": "hello", "a": {"b": {"nanos": 1}}}],
@@ -177,6 +179,8 @@ def test_deeply_nested_struct_optional_1(
 def test_deeply_nested_struct_optional_2(
     test_connection, create_test_table, request, test_raise_on_skip
 ):
+    if test_connection.dialect == "bigquery":
+        pytest.xfail("Bigquery has a problem with creating nested structs")
     tbl = create_test_table(
         ibis.memtable(
             data=[{"c": "hello", "a": {"b": {"nanos": 1}}}],
@@ -217,6 +221,8 @@ def test_deeply_nested_struct_optional_2(
 def test_deeply_nested_struct_optional_3(
     test_connection, create_test_table, request, test_raise_on_skip
 ):
+    if test_connection.dialect == "bigquery":
+        pytest.xfail("Bigquery has a problem with creating nested structs")
     tbl = create_test_table(
         ibis.memtable(
             data=[{"c": "hello"}],
