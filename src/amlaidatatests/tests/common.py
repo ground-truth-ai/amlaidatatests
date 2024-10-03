@@ -613,40 +613,30 @@ class ColumnTypeTest(AbstractColumnTest):
         actual_type = actual_table.schema()[self.column]
         schema_data_type = self.table_config.schema[self.column]
 
-        # Check the child types
-        if self._strip_type_for_comparison(
-            actual_type
-        ) != self._strip_type_for_comparison(schema_data_type):
-            # First, check if the difference might just be due to excess fields
-            # in structs
-            try:
-                extra_fields = self._find_extra_struct_fields(
-                    schema_data_type, actual_type, self.column
-                )
+        try:
+            # We compare stripped schema types with actual types
+            # to find only essential fields
+            extra_fields = self._check_field_types(
+                schema_data_type, actual_type, self.column
+            )
+            if len(extra_fields) > 0:
                 warnings.warn(
                     message=DataTestWarning(
                         f"Additional fields found in struct"
                         f" Full path to the extra fields were: {extra_fields}"
                     )
                 )
-                return
-            except ColumnTypeTest._FieldComparisonInterrupt:
-                pass
-            if schema_data_type.nullable and not actual_type.nullable:
-                warnings.warn(
-                    message=DataTestWarning(
-                        "Schema is stricter than required: expected "
-                        f"{schema_data_type} found {actual_type}"
-                    )
-                )
-                return
-            raise DataTestFailure(
-                f"Column type mismatch: expected {schema_data_type},"
-                f" found {actual_type}",
-            )
+            return
+        except ColumnTypeTest._FieldComparisonInterrupt:
+            # An issue with the datatypes was encounter
+            pass
+        raise DataTestFailure(
+            f"Column type mismatch: expected {schema_data_type},"
+            f" found {actual_type}.",
+        )
 
     @classmethod
-    def _find_extra_struct_fields(
+    def _check_field_types(
         cls, expected_type: DataType, actual_type: DataType, path="", level=0
     ):
         """Attempt to determine if the schema mismatch is because of an extra
@@ -655,12 +645,19 @@ class ColumnTypeTest(AbstractColumnTest):
         FieldComparisonInterrupt().
         """
         level += 1
-        if level == 1 and (expected_type.nullable != actual_type.nullable):
-            # Don't get in the way of nullability checks for the top level fields
-            # so assume not nullable
-            raise ColumnTypeTest._FieldComparisonInterrupt()
         if expected_type.name != actual_type.name:
             raise ColumnTypeTest._FieldComparisonInterrupt()
+        if expected_type.nullable != actual_type.nullable:
+
+            if not actual_type.nullable:
+                warnings.warn(
+                    message=DataTestWarning(
+                        "Schema is stricter than required: expected "
+                        f"{expected_type} found {actual_type}"
+                    )
+                )
+            if not expected_type.nullable:
+                raise ColumnTypeTest._FieldComparisonInterrupt()
         extra_fields = []
         if expected_type.is_struct():
             expected_type = cast(Struct, expected_type)
@@ -671,7 +668,7 @@ class ColumnTypeTest(AbstractColumnTest):
                 ):  # actual struct field does not exist on the expected field
                     extra_fields.append(f"{path}.{name}")
                 else:
-                    fields = cls._find_extra_struct_fields(
+                    fields = cls._check_field_types(
                         expected_type=expected_dtype,
                         actual_type=actual_dtype,
                         path=f"{path}.{name}",
@@ -682,17 +679,20 @@ class ColumnTypeTest(AbstractColumnTest):
             # and the type
             for name, expected_dtype in expected_type.items():
                 actual_dtype = actual_type.get(name)
-                if (
-                    actual_dtype is None
-                ):  # actual struct field does not exist on the expected field
+                if actual_dtype is None:  # actual struct field does not exist
+                    if expected_dtype.nullable:
+                        # Ignore nullable fields, they
+                        # are not required
+                        continue
                     raise ColumnTypeTest._FieldComparisonInterrupt()
+                # This is the name of the type, not the name of the field
                 if expected_dtype.name != actual_dtype.name:
                     raise ColumnTypeTest._FieldComparisonInterrupt()
 
         if expected_type.is_array():
             expected_type = cast(Array, expected_type)
             extra_fields.append(
-                cls._find_extra_struct_fields(
+                cls._check_field_types(
                     expected_type=expected_type.value_type,
                     actual_type=actual_type.value_type,
                     path=f"{path}.",
@@ -701,39 +701,6 @@ class ColumnTypeTest(AbstractColumnTest):
             )
         # Otherwise, not a container so we don't need to check recursively
         return extra_fields
-
-    @classmethod
-    def _strip_type_for_comparison(cls, a: DataType, level=0) -> Struct:
-        """Recursively strip nulls for type comparison"""
-        level = level + 1
-        # We can't check lower level nullable columns because
-        # it's not possible to specify these fields as non-nullable
-        nullable = a.nullable if level == 1 else True
-        dct = {}
-        if a.is_struct():
-            a = cast(Struct, a)
-            for n, dtype in a.items():
-                dct[n] = cls._strip_type_for_comparison(dtype, level)
-            # Now normalize the keys so the order is consistent for comparison
-            dct = dict(sorted(dct.items()))
-            return Struct(nullable=nullable, fields=dct)
-        if a.is_array():
-            value = cls._strip_type_for_comparison(a.value_type, level)
-            return Array(nullable=nullable, value_type=value)
-        if a.is_timestamp():
-            a = cast(Timestamp, a)
-            # In bigquery, the timestamp datatype is always in UTC
-            # so this shouldn't happen, but it could happen in another
-            # database
-            if a.timezone and a.timezone != "UTC":
-                warnings.warn(
-                    f"Timezone of column {a.name} is not UTC. This "
-                    "could cause problems with bigquery, since the timezone "
-                    "is always UTC"
-                )
-            # Scale varies by database
-            return a.copy(nullable=nullable, scale=None, timezone=None)
-        return a.copy(nullable=nullable)
 
 
 class ColumnValuesTest(AbstractColumnTest):

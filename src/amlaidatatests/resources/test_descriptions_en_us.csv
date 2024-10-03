@@ -136,6 +136,7 @@ FMT001,All,*.currency_code,All entries are valid three-letter currency code defi
 FMT003,Party,residencies.region_code,Valid two-letter unicode format
 FMT004,Party,nationalities.region_code,Valid two-letter unicode format
 FMT005,Transaction,normalized_booked_amount.currency_code,All entries are valid three-letter currency code defined in ISO 4217
+FMT006,Transaction,counterparty_account.region_code,Valid two-letter unicode format
 PK001,Party,"party_id, validity_start_time",check columns defined are a primary key on the table
 PK002,AccountPartyLink,"account_id, party_id, validity_start_time",check columns defined are a primary key on the table
 PK003,Transaction,"transaction_id, validity_start_time",check columns defined are a primary key on the table
