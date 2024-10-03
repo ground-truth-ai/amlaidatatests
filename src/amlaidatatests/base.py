@@ -281,23 +281,44 @@ class AbstractColumnTest(AbstractTableTest):
         else:
             return self.table_config.table.get_name()
 
+    def _get_nested_field(self, schema, pth: str):
+        elements = pth.split(".")
+        e = elements.pop(0)
+        if len(elements) == 0:
+            # Top level element
+            if e == "":
+                return schema
+            if schema.is_struct():
+                return schema[e]
+            return schema
+        return self._get_nested_field(schema[e], ".".join(elements))
+
     def _check_column_exists(self):
         if isinstance(self.column, Callable):
             self.column(self.table_config.table)
             # TODO: We don't check optional columns here
             return
-        try:
-            resolve_field_to_level(table=self.table, column=self.column, level=1)
-        except IbisTypeError as e:
-            parent_column = self.column.split(".")[0]
-            if self.table_config.schema[parent_column].nullable:
-                raise SkipTest(
-                    "Skipping running test on non-existent (but not required) column"
-                    f" {self.column}"
+        # First, check the parent column.
+        # TODO: Check with multiple levels. This code doesn't check deeply nested structures
+        elements = self.column.split(".")
+        column_schema = self.table_config.schema[elements[0]]
+        for i, e in enumerate(elements):
+            try:
+                resolve_field_to_level(
+                    table=self.table, column=self.column, level=i + 1
+                )
+            except (IbisTypeError, KeyError, NotImplementedError) as e:
+                # Find out if the field was nullable in the schema definition
+                if self._get_nested_field(
+                    column_schema, ".".join(elements[1 : i + 1])
+                ).nullable:
+                    raise SkipTest(
+                        "Skipping running test on non-existent (but not required) column"
+                        f" {self.column}"
+                    ) from e
+                raise DataTestFailure(
+                    f"Required column {self.column} does not exist"
                 ) from e
-            # Deliberately do not error - the test should continue and will most
-            # likely fail
-            pass
 
     def __call__(
         self,

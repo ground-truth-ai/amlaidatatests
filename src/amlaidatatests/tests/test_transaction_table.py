@@ -5,6 +5,7 @@ import pytest
 from amlaidatatests.base import AbstractColumnTest
 from amlaidatatests.config import cfg
 from amlaidatatests.exceptions import AMLAITestSeverity
+from amlaidatatests.io import get_valid_region_codes
 from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.test_generators import (
     get_entities,
@@ -112,6 +113,12 @@ def test_entity_mutation_tests(connection, test, request):
             allowed_values=["DEBIT", "CREDIT"],
             table_config=TABLE_CONFIG,
             test_id="E006",
+        ),
+        common.ColumnValuesTest(
+            column="counterparty_account.region_code",
+            allowed_values=get_valid_region_codes(),
+            table_config=TABLE_CONFIG,
+            test_id="FMT006",
         ),
     ],
 )
