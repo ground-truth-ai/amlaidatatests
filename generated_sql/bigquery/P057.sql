@@ -1,4 +1,4 @@
--- Excessive validity start changes for other PK columns
+-- An entity has more than 500 validity_start_time changes. Warning.
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

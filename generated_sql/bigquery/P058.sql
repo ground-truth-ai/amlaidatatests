@@ -1,4 +1,4 @@
--- Excessive validity start changes for other PK columns
+-- An entity has more than 10000 validity_start_time changes. Error.
 SELECT
   COUNT(*) AS `CountStar`
 FROM (
@@ -40,6 +40,6 @@ FROM (
   ) AS `t4`
   WHERE
     (
-      `t4`.`value_cnt` > 1000
+      `t4`.`value_cnt` > 10000
     ) OR FALSE
 ) AS `t5`

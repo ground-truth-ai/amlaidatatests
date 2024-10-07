@@ -1,4 +1,4 @@
--- Check for party with many accounts
+-- Check for parties linked to a erroneously high number of accounts. The API will not ingest more than 60000 links per account.
 SELECT
   COUNT(*) AS `CountStar`
 FROM (
@@ -36,6 +36,6 @@ FROM (
   ) AS `t4`
   WHERE
     (
-      `t4`.`value_cnt` > 10000
+      `t4`.`value_cnt` > 60000
     ) OR FALSE
 ) AS `t5`

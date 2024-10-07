@@ -1,4 +1,4 @@
--- Check for parties with many nationalities
+-- Check for parties with more than 5 nationalities
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -69,16 +69,16 @@ FROM (
             GREATEST(
               ARRAY_SIZE(
                 SPLIT(
-                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), 'f4668cb1d005400ca8be94849553fb2d'),
-                  'f4668cb1d005400ca8be94849553fb2d'
+                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), '385a69779fa5417fab471d41e3b4da0c'),
+                  '385a69779fa5417fab471d41e3b4da0c'
                 )
               )
             ) - 1
           ) + 1
         ))) AS _u(seq, key, path, index, pos, this)
         CROSS JOIN TABLE(FLATTEN(INPUT => SPLIT(
-          ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), 'f4668cb1d005400ca8be94849553fb2d'),
-          'f4668cb1d005400ca8be94849553fb2d'
+          ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), '385a69779fa5417fab471d41e3b4da0c'),
+          '385a69779fa5417fab471d41e3b4da0c'
         ))) AS _u_2(seq, key, path, pos_2, "nationalities", this)
         WHERE
           _u.pos = _u_2.pos_2
@@ -86,16 +86,16 @@ FROM (
             _u.pos > (
               ARRAY_SIZE(
                 SPLIT(
-                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), 'f4668cb1d005400ca8be94849553fb2d'),
-                  'f4668cb1d005400ca8be94849553fb2d'
+                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), '385a69779fa5417fab471d41e3b4da0c'),
+                  '385a69779fa5417fab471d41e3b4da0c'
                 )
               ) - 1
             )
             AND _u_2.pos_2 = (
               ARRAY_SIZE(
                 SPLIT(
-                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), 'f4668cb1d005400ca8be94849553fb2d'),
-                  'f4668cb1d005400ca8be94849553fb2d'
+                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), '385a69779fa5417fab471d41e3b4da0c'),
+                  '385a69779fa5417fab471d41e3b4da0c'
                 )
               ) - 1
             )

@@ -1,4 +1,4 @@
--- Number of risk case events for party
+-- More than 5000 risk case events for a single party. Error.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

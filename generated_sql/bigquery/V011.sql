@@ -1,4 +1,4 @@
--- WHEN type='COMPANY', check all are null
+-- WHEN type='COMPANY', check no gender specified
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

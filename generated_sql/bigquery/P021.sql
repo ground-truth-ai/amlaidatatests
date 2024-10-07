@@ -1,4 +1,4 @@
--- Many values
+-- Excessive distinct values of source_system. Warns above 500.
 WITH `t3` AS (
   SELECT
     *

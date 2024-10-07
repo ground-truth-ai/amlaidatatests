@@ -1,4 +1,4 @@
--- WHEN type='CONSUMER', check for high frequency values
+-- WHEN type='CONSUMER', check for more than 10% of parties with the same occupation. Warning.
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

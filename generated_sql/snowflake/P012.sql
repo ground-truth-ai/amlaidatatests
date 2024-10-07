@@ -1,4 +1,4 @@
--- High frequency values
+-- Check for more than 75% of parties with the same civil_status_code. Warning.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

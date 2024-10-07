@@ -1,4 +1,4 @@
--- High number of accounts with no txns
+-- More than 20% of accounts in the dataset have no transactions at all.
 WITH "t3" AS (
   SELECT
     "t1"."account_id"

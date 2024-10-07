@@ -1,4 +1,4 @@
--- Account and Counterparty pairs have many txns
+-- A single account and counterparty combination have many transactions. Errors at 5 million.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -42,6 +42,6 @@ FROM (
   ) AS "t4"
   WHERE
     (
-      "t4"."value_cnt" > 10000000.0
+      "t4"."value_cnt" > 5000000.0
     ) OR FALSE
 ) AS "t5"

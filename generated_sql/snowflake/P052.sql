@@ -1,4 +1,4 @@
--- High frequency of values assigned to a "round hour or half hour" except 00:00:00
+-- More than 10% of transactions have book_time with a round hour or half hour except 00:00:00. Common indicator of a datetime mapping from a source system in a different timezone e.g. transactions book_time=23:30:00 could be assigned to the wrong day.
 SELECT
   "t4"."total_rows",
   "t4"."matching_rows",

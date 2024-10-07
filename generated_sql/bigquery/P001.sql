@@ -1,4 +1,4 @@
--- High frequency values
+-- More than 1% of the fields in this table have the same validity_start_time. Warning.
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

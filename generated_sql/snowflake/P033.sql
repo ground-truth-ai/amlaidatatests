@@ -1,4 +1,4 @@
--- >= 1 month contains txns less than X the monthly average
+-- >= 1 month has a transaction volume of less than 66% the monthly average by volume. Error.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -19,5 +19,5 @@ FROM (
     ) AS "t1"
   ) AS "t2"
   WHERE
-    "t2"."proportion" < 0.75
+    "t2"."proportion" < 0.33
 ) AS "t3"

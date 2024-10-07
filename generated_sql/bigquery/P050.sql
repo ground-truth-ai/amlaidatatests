@@ -1,4 +1,4 @@
--- high frequency of is_entity_deleted = TRUE
+-- More than 40% of entities have is_entity_deleted = TRUE. Warning.
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

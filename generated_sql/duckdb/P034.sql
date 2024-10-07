@@ -1,4 +1,4 @@
--- Many transactions have the same book_time
+-- More than 1% of transactions have the same book_time.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -46,6 +46,6 @@ FROM (
   ) AS "t5"
   WHERE
     (
-      "t5"."value_cnt" > 1000000.0
+      "t5"."proportion" >= 0.01
     ) OR CAST(NULL AS BOOLEAN)
 ) AS "t6"
