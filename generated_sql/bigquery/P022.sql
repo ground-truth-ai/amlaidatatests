@@ -1,4 +1,4 @@
--- Check for missing transaction types
+-- At least one transaction type is completely missing from the transactions. Checks for WIRE,  CASH, CHECK, CARD.
 SELECT
   `t4`.`total_rows`,
   `t4`.`matching_rows`,

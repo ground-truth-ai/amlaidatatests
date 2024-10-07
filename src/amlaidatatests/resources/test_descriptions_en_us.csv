@@ -57,8 +57,7 @@ P053,RiskCaseEvent,risk_case_event_id,More than 5000 risk case events for a sing
 P054,RiskCaseEvent,risk_case_event_id,More than 1000 risk case events for a single case. Warning.
 P055,RiskCaseEvent,risk_case_event_id,More than 1000 risk case events for a single party. Warning.
 P056,RiskCaseEvent,risk_case_event_id,More than 5000 risk case events for a single party. Error.
-P059,"Transaction, RiskCaseEvent","book_time,
-type",Positive examples with no transactions within SUSPICIOUS activity period or for X months prior to AML PROCESS START if suspicious activity period not defined
+P059,"Transaction, RiskCaseEvent","book_time,type",Positive examples with no transactions within SUSPICIOUS activity period or for 365 days prior to AML PROCESS START if suspicious activity period not defined
 P060,RiskCaseEvent,type,>1 suspicious activity period start for party in risk case
 P061,RiskCaseEvent,type,>1 suspicious activity period end for party in risk case
 P062,RiskCaseEvent,type,Suspicious activity period end but no start for party in risk case
@@ -82,7 +81,6 @@ V015,Transaction,normalized_booked_amount.units,Check all are positive or zero
 V016,Transaction,normalized_booked_amount.nanos,"All values between 0 and +999,999,999 inclusive"
 V017,Transaction,normalized_booked_amount.currency_code,All currency codes must be a single normalized currency across the entire dataset
 DT001,All,validity_start_time,All values are before the interval end date (if provided) and before today's date
-DT017,Party,validity_start_time,Earliest validity_start_time for party is after the join_date
 DT002,Party,birth_date,All values are before the interval end date (if provided) and before today's date
 DT003,Party,establishment_date,All values are before the interval end date (if provided) and before today's date
 DT004,Party,exit_date,All values are before the interval end date (if provided)
@@ -91,24 +89,11 @@ DT008,Transaction,book_time,All values are before the interval end date (if prov
 DT009,Transaction,book_time,All values >= earliest account validity start time
 DT010,Transaction,book_time,Sufficient date range of transactions (at least 24 months)
 DT011,RiskCaseEvent,event_time,All values are before the interval end date (if provided) and before today's date
-DT012,Party,join_date,Join date after birth / establishment date for each party
-DT013,Party,exit_date,Exit date after the first join date for each party
-DT014,RiskCaseEvent,event_time,"AML_EXIT after AML_START for risk_case_id, party_id"
-DT015,RiskCaseEvent,event_time,"AML_END after AML_START for risk_case_id, party_id"
-DT016,RiskCaseEvent,event_time,"AML_END after AML_EXIT for risk_case_id, party_id"
-DT001,All,validity_start_time,All values are before the interval end date (if provided) and before today's date
-DT017,Party,validity_start_time,Earliest validity_start_time for party is after the join_date
-DT002,Party,birth_date,All values are before the interval end date (if provided) and before today's date
-DT003,Party,establishment_date,All values are before the interval end date (if provided) and before today's date
-DT004,Party,exit_date,All values are before the interval end date (if provided)
-DT005,Party,join_date,All values are before the interval end date (if provided) and before today's date
-DT008,Transaction,book_time,All values are before the interval end date (if provided) and before today's date
-DT009,Transaction,book_time,All values >= earliest account validity start time
-DT010,Transaction,book_time,Sufficient date range of transactions (at least 24 months)
-DT011,RiskCaseEvent,event_time,All values are before the interval end date (if provided) and before today's date
-DT012,Party,join_date,Join date after birth / establishment date for each party
-DT013,Party,exit_date,Exit date after the first join date for each party
+DT012,Party,join_date,Join date after establishment date for party
+DT013,Party,exit_date,Exit date after birth date for party
 DT014,RiskCaseEvent,event_time,"Order of case events: AML_START, AML_END and AML_EXIT in correct order for each risk_case_id, party_id"
+DT017,Party,validity_start_time,Earliest validity_start_time for party is after the join_date
+DT018,Party,exit_date,Join date after exit date for party
 C001,All,All non-nullable,No nulls for non-nullable columns
 C002,All,All non-nullable strings,No empty strings in non-nullable fields
 RI001,AccountPartyLink,party_id,All party_id in AccountPartyLink exist in Party

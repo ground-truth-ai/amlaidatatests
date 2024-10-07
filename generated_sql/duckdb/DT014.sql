@@ -1,4 +1,4 @@
--- AML_EXIT after AML_START for risk_case_id, party_id
+-- Order of case events: AML_START, AML_END and AML_EXIT in correct order for each risk_case_id, party_id
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

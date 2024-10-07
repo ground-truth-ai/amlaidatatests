@@ -1,4 +1,4 @@
--- WHEN type='COMPANY', check for high frequency values
+-- WHEN type='COMPANY', check for more than 1% of parties with the same establishment_date. Warning
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

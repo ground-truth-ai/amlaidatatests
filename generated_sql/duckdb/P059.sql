@@ -1,4 +1,4 @@
--- Positive examples with no transactions within SUSPICIOUS activity period or for X months prior to AML PROCESS START if suspicious activity period not defined
+-- Positive examples with no transactions within SUSPICIOUS activity period or for 365 days prior to AML PROCESS START if suspicious activity period not defined
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

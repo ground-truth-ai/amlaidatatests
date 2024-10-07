@@ -1,4 +1,4 @@
--- Account with many txns
+-- One or more accounts have a very high number of transactions. Warn at 10 million.
 SELECT
   COUNT(*) AS `CountStar`
 FROM (
@@ -49,6 +49,6 @@ FROM (
   ) AS `t5`
   WHERE
     (
-      `t5`.`value_cnt` > 1000000000.0
+      `t5`.`value_cnt` > 10000000.0
     ) OR CAST(NULL AS BOOL)
 ) AS `t6`

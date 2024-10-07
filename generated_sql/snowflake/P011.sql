@@ -1,4 +1,4 @@
--- High frequency values
+-- Check for more than 5% of parties with the same join_date. Warning.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

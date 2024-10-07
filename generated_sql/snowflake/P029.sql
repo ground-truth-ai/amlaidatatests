@@ -1,4 +1,4 @@
--- Account and Counterparty pairs have many txns
+-- Account and Counterparty pairs have many transactions. Warns at 1 million.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -42,6 +42,6 @@ FROM (
   ) AS "t4"
   WHERE
     (
-      "t4"."value_cnt" > 5000000.0
+      "t4"."value_cnt" > 1000000.0
     ) OR FALSE
 ) AS "t5"

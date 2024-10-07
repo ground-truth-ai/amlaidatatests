@@ -1,4 +1,4 @@
--- WHEN type='COMPANY', check all are null
+-- WHEN type='COMPANY', check no birth_date specified
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

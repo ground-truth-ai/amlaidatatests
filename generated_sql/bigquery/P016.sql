@@ -1,4 +1,4 @@
--- Check for account with many parties
+-- Check for accounts linked to a erroneously high number of parties. Warning only.
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

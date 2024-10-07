@@ -1,4 +1,4 @@
--- Account with many txns
+-- One or more accounts have a very high number of transactions. Errors at 50 million.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -46,6 +46,6 @@ FROM (
   ) AS "t5"
   WHERE
     (
-      "t5"."value_cnt" > 5000000000.0
+      "t5"."value_cnt" > 50000000.0
     ) OR CAST(NULL AS BOOLEAN)
 ) AS "t6"

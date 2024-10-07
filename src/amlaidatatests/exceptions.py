@@ -9,17 +9,23 @@ import ibis
 import pandas as pd
 
 
-def get_test_failure_descriptions(test_id: str):
+def read_test_description_file() -> pd.DataFrame:
     template_res = importlib.resources.files("amlaidatatests.resources").joinpath(
         "test_descriptions_en_us.csv"
     )
     with importlib.resources.as_file(template_res) as template_file:
         # TODO: Implement a proper description loader
         df = pd.read_csv(template_file, na_values=[], keep_default_na=False)
-        value = df[df["id"] == test_id]
-        if len(value.index) > 0:
-            return value.iloc[0]["description"]
-        return None
+        return df
+
+
+def get_test_failure_descriptions(test_id: str):
+    df = read_test_description_file()
+    # TODO: Implement a proper description loader
+    value = df[df["id"] == test_id]
+    if len(value.index) > 0:
+        return value.iloc[0]["description"]
+    return None
 
 
 class AMLAITestSeverity(enum.Enum):

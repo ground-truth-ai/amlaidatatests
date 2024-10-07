@@ -1,4 +1,4 @@
--- Check for imbalanced vol types across dataset
+-- Check the overall ratio of CREDITs to DEBITs by count of transaction_id in this dataset. Warns if the ratio of one direction is more than 80%.
 SELECT
   `t4`.`value_cnt`,
   `t4`.`group_count`,
