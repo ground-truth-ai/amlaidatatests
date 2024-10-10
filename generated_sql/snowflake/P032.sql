@@ -13,7 +13,7 @@ FROM (
       SELECT
         TO_CHAR(CAST("t0"."book_time" AS TIMESTAMP), 'yyyy-mm') AS "mnth",
         COUNT(*) AS "cnt"
-      FROM "transaction" AS "t0"
+      FROM "PLACEHOLDER"."transaction" AS "t0"
       GROUP BY
         1
     ) AS "t1"

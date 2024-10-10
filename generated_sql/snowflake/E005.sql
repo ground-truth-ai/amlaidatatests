@@ -4,7 +4,7 @@ SELECT
 FROM (
   SELECT
     "t0"."type" AS "field"
-  FROM "transaction" AS "t0"
+  FROM "PLACEHOLDER"."transaction" AS "t0"
   WHERE
     NOT (
       "t0"."type" IN ('WIRE', 'CASH', 'CHECK', 'CARD', 'OTHER')

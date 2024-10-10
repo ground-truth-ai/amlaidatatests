@@ -10,7 +10,7 @@ FROM (
       "t0"."validity_start_time",
       COALESCE("t0"."is_entity_deleted", FALSE) AS "is_entity_deleted",
       LAG("t0"."validity_start_time") OVER (PARTITION BY "t0"."transaction_id" ORDER BY "t0"."validity_start_time" ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS "previous_row_validity_start_time"
-    FROM "transaction" AS "t0"
+    FROM "PLACEHOLDER"."transaction" AS "t0"
   ) AS "t1"
   WHERE
     "t1"."is_entity_deleted" AND "t1"."previous_row_validity_start_time" IS NULL

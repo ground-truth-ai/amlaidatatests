@@ -27,7 +27,7 @@ FROM (
         FROM (
           SELECT
             *
-          FROM `transaction` AS `t0`
+          FROM `PLACEHOLDER`.`transaction` AS `t0`
           WHERE
             `t0`.`is_entity_deleted` IN (FALSE, NULL)
         ) AS `t1`

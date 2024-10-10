@@ -16,7 +16,7 @@ FROM (
       "t0"."party_id",
       "t0"."risk_case_id",
       '' || 'party_id' || "t0"."party_id" AS "concat"
-    FROM "risk_case_event" AS "t0"
+    FROM "PLACEHOLDER"."risk_case_event" AS "t0"
     WHERE
       "t0"."type" IS NOT NULL
   ) AS "t1"

@@ -4,7 +4,7 @@ SELECT
 FROM (
   SELECT
     "t0"."type" AS "field"
-  FROM "party" AS "t0"
+  FROM "PLACEHOLDER"."party" AS "t0"
   WHERE
     NOT (
       "t0"."type" IN ('COMPANY', 'CONSUMER')

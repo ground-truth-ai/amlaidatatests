@@ -5,5 +5,5 @@ SELECT
 FROM (
   SELECT
     `t0`.`risk_case_event_id`
-  FROM `risk_case_event` AS `t0`
+  FROM `PLACEHOLDER`.`risk_case_event` AS `t0`
 ) AS `t1`

@@ -7,5 +7,5 @@ FROM (
   SELECT
     COUNT(*) AS `total_rows`,
     COUNTIF(`t0`.`type` = 'AML_PROCESS_END') AS `matching_rows`
-  FROM `risk_case_event` AS `t0`
+  FROM `PLACEHOLDER`.`risk_case_event` AS `t0`
 ) AS `t1`

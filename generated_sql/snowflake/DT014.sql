@@ -16,7 +16,7 @@ FROM (
       MAX(IFF("t0"."type" = 'AML_EXIT', "t0"."event_time", NULL)) AS "AML_EXIT_max",
       MIN(IFF("t0"."type" = 'AML_PROCESS_END', "t0"."event_time", NULL)) AS "AML_PROCESS_END_min",
       MAX(IFF("t0"."type" = 'AML_PROCESS_END', "t0"."event_time", NULL)) AS "AML_PROCESS_END_max"
-    FROM "risk_case_event" AS "t0"
+    FROM "PLACEHOLDER"."risk_case_event" AS "t0"
     GROUP BY
       1,
       2

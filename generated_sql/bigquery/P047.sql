@@ -23,7 +23,7 @@ FROM (
       FROM (
         SELECT
           *
-        FROM `risk_case_event` AS `t0`
+        FROM `PLACEHOLDER`.`risk_case_event` AS `t0`
         WHERE
           `t0`.`type` IS NOT NULL
       ) AS `t1`

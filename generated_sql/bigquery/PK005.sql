@@ -13,5 +13,5 @@ FROM (
     `t0`.`party_supplementary_data_id`,
     `t0`.`party_id`,
     `t0`.`validity_start_time`
-  FROM `party_supplementary_data` AS `t0`
+  FROM `PLACEHOLDER`.`party_supplementary_data` AS `t0`
 ) AS `t1`

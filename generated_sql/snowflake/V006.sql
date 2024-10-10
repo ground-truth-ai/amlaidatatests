@@ -4,7 +4,7 @@ SELECT
 FROM (
   SELECT
     *
-  FROM "transaction" AS "t0"
+  FROM "PLACEHOLDER"."transaction" AS "t0"
   WHERE
     (
       CAST(GET("t0"."normalized_booked_amount", 'units') AS BIGINT) < 0

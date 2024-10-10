@@ -8,5 +8,5 @@ FROM (
     COUNT(*) AS "total_rows",
     COUNT(*) FILTER(WHERE
       "t0"."type" = 'AML_EXIT') AS "matching_rows"
-  FROM "risk_case_event" AS "t0"
+  FROM "PLACEHOLDER"."risk_case_event" AS "t0"
 ) AS "t1"

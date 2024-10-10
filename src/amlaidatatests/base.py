@@ -179,13 +179,18 @@ class AbstractTableTest(AbstractBaseTest):
         self.resolved_table: Optional[Table] = None
         super().__init__(table_config=table_config, severity=severity, test_id=test_id)
 
-    def check_table_exists(
+    def get_table(
         self,
         connection: BaseBackend,
         table_config: ResolvedTableConfig,
         request: Optional[pytest.FixtureRequest] = None,
     ):
         try:
+            if connection.dialect == "duckdb":
+                return connection.table(
+                    name=table_config.table.get_name().split(".")[1],
+                    database=cfg().database,
+                )
             return connection.table(table_config.table.get_name())
         # Ibis has no consistent API around missing tables:
         # https://github.com/ibis-project/ibis/issues/9468
@@ -241,7 +246,7 @@ class AbstractTableTest(AbstractBaseTest):
         self._pre_test_hooks(connection)
         self.table = self._run_with_severity(
             connection=connection,
-            f=self.check_table_exists,
+            f=self.get_table,
             table_config=self.table_config,
             request=request,
         )
@@ -278,6 +283,7 @@ class AbstractTableTest(AbstractBaseTest):
             ) -> str:
 
                 with open(path.joinpath(f"{self.test_id}.sql"), "wb") as f:
+                    # We need to know which dialect to produce the sql for
                     connection_string = cfg().get("connection_string")
                     result = urlparse(connection_string)
 
@@ -414,7 +420,7 @@ class AbstractColumnTest(AbstractTableTest):
         # an optional field. If it is, we can skip the whole test
         self.table = self._run_with_severity(
             connection=connection,
-            f=self.check_table_exists,
+            f=self.get_table,
             table_config=self.table_config,
             request=request,
         )
