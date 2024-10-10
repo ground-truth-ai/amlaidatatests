@@ -292,7 +292,7 @@ class AbstractTableTest(AbstractBaseTest):
                     else f"{self.test_id}-{self.table_config.name}.sql"
                 )
 
-                with open(path.joinpath(f"{self.test_id}.sql"), "wb") as f:
+                with open(path.joinpath(file_name), "wb") as f:
                     # We need to know which dialect to produce the sql for
                     connection_string = cfg().get("connection_string")
                     result = urlparse(connection_string)

@@ -1,4 +1,4 @@
--- Valid two-letter unicode format 
+-- Valid two-letter unicode format
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -29,16 +29,16 @@ FROM (
         GREATEST(
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), 'dff17254839d44edb7fb9644ab7021e3'),
-              'dff17254839d44edb7fb9644ab7021e3'
+              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '0f02bba7f6db48469d248ff46ba45ad1'),
+              '0f02bba7f6db48469d248ff46ba45ad1'
             )
           )
         ) - 1
       ) + 1
     ))) AS _u(seq, key, path, index, pos, this)
     CROSS JOIN TABLE(FLATTEN(INPUT => SPLIT(
-      ARRAY_TO_STRING(NULLIF("t0"."residencies", []), 'dff17254839d44edb7fb9644ab7021e3'),
-      'dff17254839d44edb7fb9644ab7021e3'
+      ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '0f02bba7f6db48469d248ff46ba45ad1'),
+      '0f02bba7f6db48469d248ff46ba45ad1'
     ))) AS _u_2(seq, key, path, pos_2, "residencies", this)
     WHERE
       _u.pos = _u_2.pos_2
@@ -46,16 +46,16 @@ FROM (
         _u.pos > (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), 'dff17254839d44edb7fb9644ab7021e3'),
-              'dff17254839d44edb7fb9644ab7021e3'
+              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '0f02bba7f6db48469d248ff46ba45ad1'),
+              '0f02bba7f6db48469d248ff46ba45ad1'
             )
           ) - 1
         )
         AND _u_2.pos_2 = (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), 'dff17254839d44edb7fb9644ab7021e3'),
-              'dff17254839d44edb7fb9644ab7021e3'
+              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '0f02bba7f6db48469d248ff46ba45ad1'),
+              '0f02bba7f6db48469d248ff46ba45ad1'
             )
           ) - 1
         )

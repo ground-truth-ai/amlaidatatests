@@ -1,4 +1,4 @@
--- All party_id in Party exist in AccountPartyLink with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected 
+-- All party_id in Party exist in AccountPartyLink with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
 WITH "table" AS (
   SELECT
     "t6"."party_id",
@@ -6,8 +6,8 @@ WITH "table" AS (
     MAX("t6"."last_date") AS "last_date"
   FROM (
     SELECT
-      "t4"."party_id",
       "t4"."account_id",
+      "t4"."party_id",
       MIN("t4"."validity_start_time") AS "first_date",
       MAX(
         CASE
@@ -23,8 +23,8 @@ WITH "table" AS (
       ) AS "last_date"
     FROM (
       SELECT
-        "t2"."party_id",
         "t2"."account_id",
+        "t2"."party_id",
         "t2"."validity_start_time",
         "t2"."is_entity_deleted",
         "t2"."previous_entity_deleted",
@@ -39,13 +39,13 @@ WITH "table" AS (
         END AS "previous_row_validity_start_time"
       FROM (
         SELECT
-          "t0"."party_id",
           "t0"."account_id",
+          "t0"."party_id",
           "t0"."validity_start_time",
           COALESCE("t0"."is_entity_deleted", FALSE) AS "is_entity_deleted",
-          LAG(COALESCE("t0"."is_entity_deleted", FALSE)) OVER (PARTITION BY "t0"."party_id", "t0"."account_id" ORDER BY "t0"."validity_start_time" ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS "previous_entity_deleted",
-          LEAD("t0"."validity_start_time") OVER (PARTITION BY "t0"."party_id", "t0"."account_id" ORDER BY "t0"."validity_start_time" ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS "next_row_validity_start_time",
-          LAG("t0"."validity_start_time") OVER (PARTITION BY "t0"."party_id", "t0"."account_id" ORDER BY "t0"."validity_start_time" ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS "previous_row_validity_start_time"
+          LAG(COALESCE("t0"."is_entity_deleted", FALSE)) OVER (PARTITION BY "t0"."account_id", "t0"."party_id" ORDER BY "t0"."validity_start_time" ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS "previous_entity_deleted",
+          LEAD("t0"."validity_start_time") OVER (PARTITION BY "t0"."account_id", "t0"."party_id" ORDER BY "t0"."validity_start_time" ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS "next_row_validity_start_time",
+          LAG("t0"."validity_start_time") OVER (PARTITION BY "t0"."account_id", "t0"."party_id" ORDER BY "t0"."validity_start_time" ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS "previous_row_validity_start_time"
         FROM "PLACEHOLDER"."account_party_link" AS "t0"
       ) AS "t2"
       WHERE
