@@ -1,4 +1,4 @@
--- A party has more than 5 residencies. WARNING.
+-- A party has more than 5 residencies. WARNING. 
 SELECT
   COUNT(*) AS `CountStar`
 FROM (
@@ -55,7 +55,7 @@ FROM (
             FROM (
               SELECT
                 *
-              FROM `party` AS `t0`
+              FROM `PLACEHOLDER`.`party` AS `t0`
               WHERE
                 `t0`.`is_entity_deleted` IN (FALSE, NULL)
             ) AS `t1`

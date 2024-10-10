@@ -1,4 +1,4 @@
--- WHEN type='COMPANY', check for more than 1% of parties with the same establishment_date. Warning
+-- WHEN type='COMPANY', check for more than 1% of parties with the same establishment_date. Warning 
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -38,7 +38,7 @@ FROM (
           FROM (
             SELECT
               *
-            FROM "party" AS "t0"
+            FROM "PLACEHOLDER"."party" AS "t0"
             WHERE
               "t0"."is_entity_deleted" IN (FALSE, NULL)
           ) AS "t1"

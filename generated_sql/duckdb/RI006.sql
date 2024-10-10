@@ -1,4 +1,4 @@
--- All party_id in PartySupplementaryData (if supplied) exist in Party
+-- All party_id in PartySupplementaryData (if supplied) exist in Party 
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -7,8 +7,8 @@ FROM (
   FROM (
     SELECT
       "t0"."party_id"
-    FROM "party_supplementary_data" AS "t0"
+    FROM "PLACEHOLDER"."party_supplementary_data" AS "t0"
   ) AS "t4"
-  ANTI JOIN "party" AS "t2"
+  ANTI JOIN "PLACEHOLDER"."party" AS "t2"
     ON "t4"."party_id" = "t2"."party_id"
 ) AS "t5"

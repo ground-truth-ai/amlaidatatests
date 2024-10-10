@@ -1,4 +1,4 @@
--- Check the overall ratio of CREDITs to DEBITs by count of transaction_id in this dataset. Warns if the ratio of one direction is more than 80%.
+-- Check the overall ratio of CREDITs to DEBITs by count of transaction_id in this dataset. Warns if the ratio of one direction is more than 80%. 
 SELECT
   "t4"."value_cnt",
   "t4"."group_count",
@@ -37,7 +37,7 @@ FROM (
       FROM (
         SELECT
           *
-        FROM "transaction" AS "t0"
+        FROM "PLACEHOLDER"."transaction" AS "t0"
         WHERE
           "t0"."is_entity_deleted" IN (FALSE, NULL)
       ) AS "t1"

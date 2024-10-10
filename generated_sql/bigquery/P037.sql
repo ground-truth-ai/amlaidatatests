@@ -1,4 +1,4 @@
--- Check for many values
+-- Check for many values 
 WITH `t3` AS (
   SELECT
     *
@@ -14,7 +14,7 @@ WITH `t3` AS (
     FROM (
       SELECT
         *
-      FROM `party_supplementary_data` AS `t0`
+      FROM `PLACEHOLDER`.`party_supplementary_data` AS `t0`
       WHERE
         `t0`.`is_entity_deleted` IN (FALSE, NULL)
     ) AS `t1`

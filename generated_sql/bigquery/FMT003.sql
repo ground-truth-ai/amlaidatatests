@@ -1,4 +1,4 @@
--- Valid two-letter unicode format
+-- Valid two-letter unicode format 
 SELECT
   COUNT(*) AS `CountStar`
 FROM (
@@ -22,7 +22,7 @@ FROM (
       `t0`.`assets_value_range`,
       `t0`.`civil_status_code`,
       `t0`.`education_level_code`
-    FROM `party` AS `t0`
+    FROM `PLACEHOLDER`.`party` AS `t0`
     CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(`t0`.`residencies`)) - 1)) AS pos
     CROSS JOIN UNNEST(`t0`.`residencies`) AS `residencies` WITH OFFSET AS pos_2
     WHERE

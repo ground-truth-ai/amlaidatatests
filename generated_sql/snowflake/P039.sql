@@ -1,4 +1,4 @@
--- Check >=1 AML_PROCESS_START in table
+-- Check >=1 AML_PROCESS_START in table 
 SELECT
   "t1"."total_rows",
   "t1"."matching_rows",
@@ -7,5 +7,5 @@ FROM (
   SELECT
     COUNT(*) AS "total_rows",
     COUNT_IF("t0"."type" = 'AML_PROCESS_START') AS "matching_rows"
-  FROM "risk_case_event" AS "t0"
+  FROM "PLACEHOLDER"."risk_case_event" AS "t0"
 ) AS "t1"

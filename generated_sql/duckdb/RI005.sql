@@ -1,11 +1,11 @@
--- All party_id in RiskCaseEvent exist in Party
+-- All party_id in RiskCaseEvent exist in Party 
 WITH "table" AS (
   SELECT
     "t0"."party_id",
     "t0"."risk_case_event_id",
     "t0"."event_time" AS "first_date",
     "t0"."event_time" AS "last_date"
-  FROM "risk_case_event" AS "t0"
+  FROM "PLACEHOLDER"."risk_case_event" AS "t0"
 ), "validation_table" AS (
   SELECT
     "t7"."party_id",
@@ -50,7 +50,7 @@ WITH "table" AS (
           LAG(COALESCE("t1"."is_entity_deleted", FALSE)) OVER (PARTITION BY "t1"."party_id" ORDER BY "t1"."validity_start_time" ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS "previous_entity_deleted",
           LEAD("t1"."validity_start_time") OVER (PARTITION BY "t1"."party_id" ORDER BY "t1"."validity_start_time" ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS "next_row_validity_start_time",
           LAG("t1"."validity_start_time") OVER (PARTITION BY "t1"."party_id" ORDER BY "t1"."validity_start_time" ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS "previous_row_validity_start_time"
-        FROM "party" AS "t1"
+        FROM "PLACEHOLDER"."party" AS "t1"
       ) AS "t5"
       WHERE
         (

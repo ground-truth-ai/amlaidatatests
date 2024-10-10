@@ -1,4 +1,4 @@
--- Positive examples with no transactions within SUSPICIOUS activity period or for 365 days prior to AML PROCESS START if suspicious activity period not defined
+-- Positive examples with no transactions within SUSPICIOUS activity period or for 365 days prior to AML PROCESS START if suspicious activity period not defined 
 SELECT
   COUNT(*) AS `CountStar`
 FROM (
@@ -44,7 +44,7 @@ FROM (
         FROM (
           SELECT
             *
-          FROM `account_party_link` AS `t1`
+          FROM `PLACEHOLDER`.`account_party_link` AS `t1`
           WHERE
             `t1`.`is_entity_deleted` IN (FALSE, NULL)
         ) AS `t4`
@@ -64,7 +64,7 @@ FROM (
           MIN(IF(`t2`.`type` = 'AML_PROCESS_START', `t2`.`event_time`, NULL)) AS `aml_process_start_time`,
           MIN(IF(`t2`.`type` = 'AML_SUSPICIOUS_ACTIVITY_START', `t2`.`event_time`, NULL)) AS `aml_suspicious_activity_start_time`,
           MAX(IF(`t2`.`type` = 'AML_SUSPICIOUS_ACTIVITY_END', `t2`.`event_time`, NULL)) AS `aml_suspicious_activity_end_time`
-        FROM `risk_case_event` AS `t2`
+        FROM `PLACEHOLDER`.`risk_case_event` AS `t2`
         GROUP BY
           1,
           2
@@ -77,7 +77,7 @@ FROM (
         )
     ) AS `t8`
       ON `t10`.`party_id` = `t8`.`party_id`
-    LEFT OUTER JOIN `transaction` AS `t3`
+    LEFT OUTER JOIN `PLACEHOLDER`.`transaction` AS `t3`
       ON `t10`.`account_id` = `t3`.`account_id`
       AND IF(
         `t8`.`aml_suspicious_activity_start_time` IS NOT NULL,

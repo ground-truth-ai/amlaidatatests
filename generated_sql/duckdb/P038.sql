@@ -1,4 +1,4 @@
--- Many risk case events have the same event_time
+-- Many risk case events have the same event_time 
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -16,7 +16,7 @@ FROM (
       FROM (
         SELECT
           *
-        FROM "risk_case_event" AS "t0"
+        FROM "PLACEHOLDER"."risk_case_event" AS "t0"
         WHERE
           "t0"."event_time" IS NOT NULL
       ) AS "t1"

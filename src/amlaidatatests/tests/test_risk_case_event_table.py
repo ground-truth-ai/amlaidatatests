@@ -153,11 +153,11 @@ class NoTransactionsWithinSuspiciousPeriod(AbstractTableTest):
 
     def _test(self, connection):
         acc_lnk_config = resolve_table_config("account_party_link")
-        account_link_table = self.check_table_exists(
+        account_link_table = self.get_table(
             connection=connection, table_config=acc_lnk_config
         )
         transaction_config = resolve_table_config("transaction")
-        transaction_table = self.check_table_exists(
+        transaction_table = self.get_table(
             connection=connection, table_config=transaction_config
         )
 

@@ -1,10 +1,10 @@
--- All values between 0 and +999,999,999 inclusive
+-- All values between 0 and +999,999,999 inclusive 
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
   SELECT
     *
-  FROM "transaction" AS "t0"
+  FROM "PLACEHOLDER"."transaction" AS "t0"
   WHERE
     (
       "t0"."normalized_booked_amount"."nanos" < 0

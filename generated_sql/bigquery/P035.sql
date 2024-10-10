@@ -1,4 +1,4 @@
--- Same number of supplementary_data_id for each customer
+-- Same number of supplementary_data_id for each customer 
 SELECT
   COUNT(DISTINCT `t5`.`ids`) AS `CountDistinct_ids`
 FROM (
@@ -7,10 +7,10 @@ FROM (
     ARRAY_TO_STRING(
       ARRAY(
         SELECT
-          ibis_bq_arr_gpq4wh2pwrdbtmnruxslkpd3r4
-        FROM UNNEST(`t4`.`ids`) AS ibis_bq_arr_gpq4wh2pwrdbtmnruxslkpd3r4
+          ibis_bq_arr_f6h6xyjsanesnpmbih6mrksbwm
+        FROM UNNEST(`t4`.`ids`) AS ibis_bq_arr_f6h6xyjsanesnpmbih6mrksbwm
         ORDER BY
-          ibis_bq_arr_gpq4wh2pwrdbtmnruxslkpd3r4
+          ibis_bq_arr_f6h6xyjsanesnpmbih6mrksbwm
       ),
       '|'
     ) AS `ids`
@@ -33,7 +33,7 @@ FROM (
         FROM (
           SELECT
             *
-          FROM `party_supplementary_data` AS `t0`
+          FROM `PLACEHOLDER`.`party_supplementary_data` AS `t0`
           WHERE
             `t0`.`is_entity_deleted` IN (FALSE, NULL)
         ) AS `t1`

@@ -1,4 +1,4 @@
--- All account_id in Transaction exist in AccountPartyLink
+-- All account_id in Transaction exist in AccountPartyLink 
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -7,8 +7,8 @@ FROM (
   FROM (
     SELECT
       "t0"."account_id"
-    FROM "transaction" AS "t0"
+    FROM "PLACEHOLDER"."transaction" AS "t0"
   ) AS "t4"
-  ANTI JOIN "account_party_link" AS "t2"
+  ANTI JOIN "PLACEHOLDER"."account_party_link" AS "t2"
     ON "t4"."account_id" = "t2"."account_id"
 ) AS "t5"

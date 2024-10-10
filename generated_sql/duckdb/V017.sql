@@ -1,4 +1,4 @@
--- All currency codes must be a single normalized currency across the entire dataset
+-- All currency codes must be a single normalized currency across the entire dataset 
 WITH "t3" AS (
   SELECT
     *
@@ -18,7 +18,7 @@ WITH "t3" AS (
     FROM (
       SELECT
         *
-      FROM "transaction" AS "t0"
+      FROM "PLACEHOLDER"."transaction" AS "t0"
       WHERE
         "t0"."is_entity_deleted" IN (FALSE, NULL)
     ) AS "t1"

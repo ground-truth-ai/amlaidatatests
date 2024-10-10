@@ -1,4 +1,4 @@
--- Valid two-letter unicode format
+-- Valid two-letter unicode format 
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -22,23 +22,23 @@ FROM (
       "t0"."assets_value_range",
       "t0"."civil_status_code",
       "t0"."education_level_code"
-    FROM "party" AS "t0"
+    FROM "PLACEHOLDER"."party" AS "t0"
     CROSS JOIN TABLE(FLATTEN(INPUT => ARRAY_GENERATE_RANGE(
       0,
       (
         GREATEST(
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), 'eafadc37cd2e4a6e94ec5df338b16a63'),
-              'eafadc37cd2e4a6e94ec5df338b16a63'
+              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), 'c312231c0ca348528c44b64ba40183b9'),
+              'c312231c0ca348528c44b64ba40183b9'
             )
           )
         ) - 1
       ) + 1
     ))) AS _u(seq, key, path, index, pos, this)
     CROSS JOIN TABLE(FLATTEN(INPUT => SPLIT(
-      ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), 'eafadc37cd2e4a6e94ec5df338b16a63'),
-      'eafadc37cd2e4a6e94ec5df338b16a63'
+      ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), 'c312231c0ca348528c44b64ba40183b9'),
+      'c312231c0ca348528c44b64ba40183b9'
     ))) AS _u_2(seq, key, path, pos_2, "nationalities", this)
     WHERE
       _u.pos = _u_2.pos_2
@@ -46,16 +46,16 @@ FROM (
         _u.pos > (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), 'eafadc37cd2e4a6e94ec5df338b16a63'),
-              'eafadc37cd2e4a6e94ec5df338b16a63'
+              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), 'c312231c0ca348528c44b64ba40183b9'),
+              'c312231c0ca348528c44b64ba40183b9'
             )
           ) - 1
         )
         AND _u_2.pos_2 = (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), 'eafadc37cd2e4a6e94ec5df338b16a63'),
-              'eafadc37cd2e4a6e94ec5df338b16a63'
+              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), 'c312231c0ca348528c44b64ba40183b9'),
+              'c312231c0ca348528c44b64ba40183b9'
             )
           ) - 1
         )
