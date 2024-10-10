@@ -8,11 +8,13 @@ from functools import reduce
 from typing import Any, Callable, List, Literal, Optional, cast
 
 import ibis
+import pytest
 from ibis import BaseBackend, Expr, _
 from ibis.common.exceptions import IbisTypeError
 from ibis.expr.datatypes import Array, DataType, Struct, Timestamp
 
 from amlaidatatests.base import AbstractColumnTest, AbstractTableTest, resolve_field
+from amlaidatatests.config import cfg
 from amlaidatatests.exceptions import (
     AMLAITestSeverity,
     DataTestFailure,
@@ -43,7 +45,10 @@ class TableExcessColumnsTest(AbstractTableTest):
         super().__init__(table_config, test_id=test_id, severity=severity)
 
     def _test(self, *, connection: BaseBackend):
-        actual_columns = set(connection.table(name=self.table.get_name()).columns)
+        if cfg().dry_run:
+            pytest.skip("Refusing to run a schema test during a dry run")
+
+        actual_columns = set(self.table.columns)
         schema_columns = set(self.table_config.table.columns)
         excess_columns = actual_columns.difference(schema_columns)
         if len(excess_columns) > 0:
@@ -576,6 +581,8 @@ class ColumnPresenceTest(AbstractColumnTest):
     """
 
     def _test(self, *, connection: BaseBackend):
+        if cfg().dry_run:
+            pytest.skip("Refusing to run a schema test during a dry run")
         try:
             self.table[self.column]
         except IbisTypeError as e:
@@ -609,6 +616,9 @@ class ColumnTypeTest(AbstractColumnTest):
     def _test(self, *, connection: BaseBackend):
         # connection is not used because [self.column] is a direct table
         # reference
+        if cfg().dry_run:
+            pytest.skip("Refusing to run a schema test during a dry run")
+
         actual_table = self.table
         actual_type = actual_table.schema()[self.column]
         schema_data_type = self.table_config.schema[self.column]
@@ -1061,9 +1071,7 @@ class ReferentialIntegrityTest(AbstractTableTest):
     def _test(self, *, connection: BaseBackend):
         # The superclass does not skip the test if the to_table is optional,
         # which it may be. If it is, skip the test.
-        self.check_table_exists(
-            connection=connection, table_config=self.to_table_config
-        )
+        self.get_table(connection=connection, table_config=self.to_table_config)
         expr = self.table.select(*[self.keys]).anti_join(self.to_table, self.keys)
 
         key_columns = {" ".join(self.keys)}

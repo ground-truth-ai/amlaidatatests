@@ -43,18 +43,15 @@ def infer_database(connection_str: str) -> str | None:
     """
     parsed_url = urlparse(connection_str)
 
+    if cfg().dry_run:
+        return "PLACEHOLDER"
+
     if parsed_url.scheme == "bigquery":
-        # "/my_bq_input_dataset" -> "my_bq_input_dataset"
-        return "__PLACEHOLDER_DATASET__" if cfg().dry_run else parsed_url.path[1:]
+        return parsed_url.path[1:]
     if parsed_url.scheme == "duckdb":
-        if importlib.util.find_spec("duckdb"):
-            return None
-        raise ImportError(
-            "duckdb is not installed. To use duckdb, run "
-            "`pip install amlaidatatests[duckdb]`"
-        )
+        return None
     if parsed_url.scheme == "snowflake":
-        return "__PLACEHOLDER_DATABASE__" if cfg().dry_run else parsed_url.path[1:]
+        return parsed_url.path[1:]
     raise ValueError(
         f"Unsupported database or invalid connection string: {connection_str}"
     )

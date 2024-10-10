@@ -8,5 +8,5 @@ FROM (
   SELECT
     `t0`.`transaction_id`,
     `t0`.`validity_start_time`
-  FROM `transaction` AS `t0`
+  FROM `PLACEHOLDER`.`transaction` AS `t0`
 ) AS `t1`

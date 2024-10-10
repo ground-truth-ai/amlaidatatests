@@ -4,7 +4,7 @@ SELECT
 FROM (
   SELECT
     *
-  FROM "transaction" AS "t0"
+  FROM "PLACEHOLDER"."transaction" AS "t0"
   WHERE
     TRIM("t0"."normalized_booked_amount"."currency_code", '
 ') = ''

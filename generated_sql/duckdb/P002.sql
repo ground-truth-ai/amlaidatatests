@@ -24,7 +24,7 @@ WITH "t3" AS (
     FROM (
       SELECT
         *
-      FROM "party" AS "t0"
+      FROM "PLACEHOLDER"."party" AS "t0"
       WHERE
         "t0"."is_entity_deleted" IN (FALSE, NULL)
     ) AS "t1"

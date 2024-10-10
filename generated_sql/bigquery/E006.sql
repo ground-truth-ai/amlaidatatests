@@ -4,7 +4,7 @@ SELECT
 FROM (
   SELECT
     `t0`.`direction` AS `field`
-  FROM `transaction` AS `t0`
+  FROM `PLACEHOLDER`.`transaction` AS `t0`
   WHERE
     NOT (
       `t0`.`direction` IN ('DEBIT', 'CREDIT')

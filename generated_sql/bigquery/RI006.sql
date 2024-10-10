@@ -7,13 +7,13 @@ FROM (
   FROM (
     SELECT
       `t0`.`party_id`
-    FROM `party_supplementary_data` AS `t0`
+    FROM `PLACEHOLDER`.`party_supplementary_data` AS `t0`
   ) AS `t4`
   WHERE
     NOT EXISTS(
       SELECT
         1
-      FROM `party` AS `t2`
+      FROM `PLACEHOLDER`.`party` AS `t2`
       WHERE
         `t4`.`party_id` = `t2`.`party_id`
     )
