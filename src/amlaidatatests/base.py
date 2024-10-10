@@ -20,6 +20,7 @@ from amlaidatatests.exceptions import (
     DataTestFailure,
     DataTestWarning,
     SkipTest,
+    get_test_configuration_file,
     get_test_failure_descriptions,
 )
 from amlaidatatests.schema.base import ResolvedTableConfig, TableType
@@ -269,6 +270,8 @@ class AbstractTableTest(AbstractBaseTest):
 
         # Configure sql logging
 
+        test_configuration = get_test_configuration_file()[self.test_id]
+
         if path := _cfg.log_sql_path:
             # The class uses a flavour name to class map to
             # identify the map, so we get the first map. This
@@ -276,8 +279,13 @@ class AbstractTableTest(AbstractBaseTest):
             def __compile_sql(
                 execute: Callable[[ibis.Expr], Any], expr: ibis.Expr
             ) -> str:
+                file_name = (
+                    f"{self.test_id}.sql"
+                    if test_configuration.table != "All"
+                    else f"{self.test_id}-{self.table_config.name}.sql"
+                )
 
-                with open(path.joinpath(f"{self.test_id}.sql"), "wb") as f:
+                with open(path.joinpath(file_name), "wb") as f:
                     connection_string = cfg().get("connection_string")
                     result = urlparse(connection_string)
 

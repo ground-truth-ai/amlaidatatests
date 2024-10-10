@@ -1,12 +1,22 @@
 """Exceptions for amlaidatatests"""
 
 import enum
+import functools
 import importlib
+from dataclasses import dataclass
 from enum import auto
 from typing import Optional
 
 import ibis
 import pandas as pd
+
+
+@dataclass
+class TestConfiguration:
+    test_id: str
+    table: str
+    column: str
+    description: str
 
 
 def read_test_description_file() -> pd.DataFrame:
@@ -19,13 +29,26 @@ def read_test_description_file() -> pd.DataFrame:
         return df
 
 
+@functools.lru_cache()
+def get_test_configuration_file() -> dict[str, TestConfiguration]:
+    configs = {}
+    for _, row in read_test_description_file().iterrows():
+        test = TestConfiguration(
+            test_id=row["id"],
+            description=row["description"],
+            table=row["table"],
+            column=row["column"],
+        )
+        configs[test.test_id] = test
+    return configs
+
+
 def get_test_failure_descriptions(test_id: str):
-    df = read_test_description_file()
-    # TODO: Implement a proper description loader
-    value = df[df["id"] == test_id]
-    if len(value.index) > 0:
-        return value.iloc[0]["description"]
-    return None
+    try:
+        test = get_test_configuration_file()[test_id]
+        return test.description
+    except KeyError as e:
+        raise ValueError(f"Test configuration for test_id {test_id} not found") from e
 
 
 class AMLAITestSeverity(enum.Enum):
@@ -61,7 +84,9 @@ class DataTestFailure(Exception):
     @test_id.setter
     def test_id(self, value):
         self._test_id = value
-        self.description = get_test_failure_descriptions(value)
+        self.description = (
+            get_test_failure_descriptions(value) if value is not None else None
+        )
 
     def friendly_message(self) -> str:
         """Print a friendly message explaining why the test failed.
