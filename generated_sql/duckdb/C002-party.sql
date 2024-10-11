@@ -4,7 +4,7 @@ SELECT
 FROM (
   SELECT
     *
-  FROM "party" AS "t0"
+  FROM "PLACEHOLDER"."party" AS "t0"
   WHERE
     TRIM(
       (

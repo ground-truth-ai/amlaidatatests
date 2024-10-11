@@ -1,4 +1,4 @@
--- WHEN type='CONSUMER', more than 5% of parties have no nationality
+-- WHEN type='CONSUMER', more than 5% of parties have no nationality 
 SELECT
   "t4"."total_rows",
   "t4"."matching_rows",
@@ -36,7 +36,7 @@ FROM (
       FROM (
         SELECT
           *
-        FROM "party" AS "t0"
+        FROM "PLACEHOLDER"."party" AS "t0"
         WHERE
           "t0"."is_entity_deleted" IN (FALSE, NULL)
       ) AS "t1"

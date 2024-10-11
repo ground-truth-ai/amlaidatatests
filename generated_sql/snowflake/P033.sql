@@ -1,4 +1,4 @@
--- >= 1 month has a transaction volume of less than 66% the monthly average by volume. Error.
+-- >= 1 month has a transaction volume of less than 66% the monthly average by volume. Error. 
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -13,7 +13,7 @@ FROM (
       SELECT
         TO_CHAR(CAST("t0"."book_time" AS TIMESTAMP), 'yyyy-mm') AS "mnth",
         COUNT(*) AS "cnt"
-      FROM "transaction" AS "t0"
+      FROM "PLACEHOLDER"."transaction" AS "t0"
       GROUP BY
         1
     ) AS "t1"

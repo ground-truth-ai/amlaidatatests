@@ -4,7 +4,7 @@ SELECT
 FROM (
   SELECT
     *
-  FROM "account_party_link" AS "t0"
+  FROM "PLACEHOLDER"."account_party_link" AS "t0"
   WHERE
     "t0"."validity_start_time" IS NULL
 ) AS "t1"

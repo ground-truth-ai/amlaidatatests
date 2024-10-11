@@ -1,4 +1,4 @@
--- More than 1000 risk case events for a single party. Warning.
+-- More than 1000 risk case events for a single party. Warning. 
 SELECT
   COUNT(*) AS `CountStar`
 FROM (
@@ -11,7 +11,7 @@ FROM (
     FROM (
       SELECT
         *
-      FROM `risk_case_event` AS `t0`
+      FROM `PLACEHOLDER`.`risk_case_event` AS `t0`
       WHERE
         `t0`.`risk_case_event_id` IS NOT NULL
     ) AS `t1`

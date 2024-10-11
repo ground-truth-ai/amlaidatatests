@@ -1,4 +1,4 @@
--- Valid two-letter unicode format
+-- Valid two-letter unicode format 
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -22,7 +22,7 @@ FROM (
       "t0"."assets_value_range",
       "t0"."civil_status_code",
       "t0"."education_level_code"
-    FROM "party" AS "t0"
+    FROM "PLACEHOLDER"."party" AS "t0"
   ) AS "t1"
   WHERE
     NOT (

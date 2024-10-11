@@ -1,4 +1,4 @@
--- <=1 AML_EXIT per risk_case_id and party_id
+-- <=1 AML_EXIT per risk_case_id and party_id 
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -20,7 +20,7 @@ FROM (
       FROM (
         SELECT
           *
-        FROM "risk_case_event" AS "t0"
+        FROM "PLACEHOLDER"."risk_case_event" AS "t0"
         WHERE
           "t0"."type" IS NOT NULL
       ) AS "t1"

@@ -1,4 +1,4 @@
 -- Check all tables are present and not empty, and contains less rows than threshold
 SELECT
   COUNT(*) AS `CountStar_account_party_link`
-FROM `account_party_link` AS `t0`
+FROM `PLACEHOLDER`.`account_party_link` AS `t0`

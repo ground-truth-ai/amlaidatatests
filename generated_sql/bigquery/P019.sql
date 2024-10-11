@@ -1,4 +1,4 @@
--- Excessive distinct values of source_system. Warns above 500.
+-- Excessive distinct values of source_system. Warns above 500. 
 WITH `t3` AS (
   SELECT
     *
@@ -14,7 +14,7 @@ WITH `t3` AS (
     FROM (
       SELECT
         *
-      FROM `account_party_link` AS `t0`
+      FROM `PLACEHOLDER`.`account_party_link` AS `t0`
       WHERE
         `t0`.`is_entity_deleted` IN (FALSE, NULL)
     ) AS `t1`

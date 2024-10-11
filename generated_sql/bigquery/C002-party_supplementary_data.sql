@@ -4,7 +4,7 @@ SELECT
 FROM (
   SELECT
     *
-  FROM `party_supplementary_data` AS `t0`
+  FROM `PLACEHOLDER`.`party_supplementary_data` AS `t0`
   WHERE
     TRIM(`t0`.`party_id`, ' \t\n\r\v\f') = ''
 ) AS `t1`

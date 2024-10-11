@@ -24,7 +24,7 @@ FROM (
         FROM (
           SELECT
             *
-          FROM "account_party_link" AS "t0"
+          FROM "PLACEHOLDER"."account_party_link" AS "t0"
           WHERE
             "t0"."is_entity_deleted" IN (FALSE, NULL)
         ) AS "t1"

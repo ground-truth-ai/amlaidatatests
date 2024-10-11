@@ -1,4 +1,4 @@
--- Check for accounts linked to a erroneously high number of parties. Warning only.
+-- Check for accounts linked to a erroneously high number of parties. Warning only. 
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -23,7 +23,7 @@ FROM (
         FROM (
           SELECT
             *
-          FROM "account_party_link" AS "t0"
+          FROM "PLACEHOLDER"."account_party_link" AS "t0"
           WHERE
             "t0"."is_entity_deleted" IN (FALSE, NULL)
         ) AS "t1"

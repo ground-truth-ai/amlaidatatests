@@ -12,5 +12,5 @@ FROM (
         format_datetime('%H:%M:%S', `t0`.`event_time`) <> '00:00:00'
       )
     ) AS `matching_rows`
-  FROM `risk_case_event` AS `t0`
+  FROM `PLACEHOLDER`.`risk_case_event` AS `t0`
 ) AS `t1`

@@ -1,4 +1,4 @@
--- >= 1 month has a transaction volume of less than 40% of the monthly average by volume. Warning.
+-- >= 1 month has a transaction volume of less than 40% of the monthly average by volume. Warning. 
 SELECT
   COUNT(*) AS `CountStar`
 FROM (
@@ -16,7 +16,7 @@ FROM (
       SELECT
         format_datetime('%Y-%m', `t0`.`book_time`) AS `mnth`,
         COUNT(*) AS `cnt`
-      FROM `transaction` AS `t0`
+      FROM `PLACEHOLDER`.`transaction` AS `t0`
       GROUP BY
         1
     ) AS `t1`

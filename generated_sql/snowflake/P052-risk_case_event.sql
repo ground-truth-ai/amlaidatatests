@@ -12,5 +12,5 @@ FROM (
         TO_CHAR(CAST("t0"."event_time" AS TIMESTAMP), 'hh24:mi:ss') <> '00:00:00'
       )
     ) AS "matching_rows"
-  FROM "risk_case_event" AS "t0"
+  FROM "PLACEHOLDER"."risk_case_event" AS "t0"
 ) AS "t1"

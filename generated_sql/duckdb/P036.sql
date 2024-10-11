@@ -1,4 +1,4 @@
--- LTE 100 supplementary_data_id for each customer
+-- LTE 100 supplementary_data_id for each customer 
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -23,7 +23,7 @@ FROM (
         FROM (
           SELECT
             *
-          FROM "party_supplementary_data" AS "t0"
+          FROM "PLACEHOLDER"."party_supplementary_data" AS "t0"
           WHERE
             "t0"."is_entity_deleted" IN (FALSE, NULL)
         ) AS "t1"

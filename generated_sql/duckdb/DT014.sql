@@ -1,4 +1,4 @@
--- Order of case events: AML_START, AML_END and AML_EXIT in correct order for each risk_case_id, party_id
+-- Order of case events: AML_START, AML_END and AML_EXIT in correct order for each risk_case_id, party_id 
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -24,7 +24,7 @@ FROM (
         "t0"."type" = 'AML_PROCESS_END') AS "AML_PROCESS_END_min",
       MAX("t0"."event_time") FILTER(WHERE
         "t0"."type" = 'AML_PROCESS_END') AS "AML_PROCESS_END_max"
-    FROM "risk_case_event" AS "t0"
+    FROM "PLACEHOLDER"."risk_case_event" AS "t0"
     GROUP BY
       1,
       2

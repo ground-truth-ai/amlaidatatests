@@ -1,4 +1,4 @@
--- >1 suspicious activity period start for party in risk case
+-- >1 suspicious activity period start for party in risk case 
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -12,7 +12,7 @@ FROM (
     FROM (
       SELECT
         *
-      FROM "risk_case_event" AS "t0"
+      FROM "PLACEHOLDER"."risk_case_event" AS "t0"
       WHERE
         "t0"."type" IS NOT NULL AND "t0"."type" = 'AML_SUSPICIOUS_ACTIVITY_START'
     ) AS "t1"

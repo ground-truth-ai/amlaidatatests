@@ -1,4 +1,4 @@
--- check columns defined are a primary key on the table
+-- check columns defined are a primary key on the table 
 SELECT
   COUNT(
     DISTINCT CONCAT(
@@ -13,5 +13,5 @@ FROM (
     `t0`.`party_id`,
     `t0`.`account_id`,
     `t0`.`validity_start_time`
-  FROM `account_party_link` AS `t0`
+  FROM `PLACEHOLDER`.`account_party_link` AS `t0`
 ) AS `t1`

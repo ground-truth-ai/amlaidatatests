@@ -4,7 +4,7 @@ SELECT
 FROM (
   SELECT
     *
-  FROM `party_supplementary_data` AS `t0`
+  FROM `PLACEHOLDER`.`party_supplementary_data` AS `t0`
   WHERE
     (
       `t0`.`supplementary_data_payload`.`value`

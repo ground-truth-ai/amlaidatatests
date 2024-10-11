@@ -23,7 +23,7 @@ WITH `table` AS (
       FROM (
         SELECT
           *
-        FROM `transaction` AS `t0`
+        FROM `PLACEHOLDER`.`transaction` AS `t0`
         WHERE
           `t0`.`is_entity_deleted` IN (FALSE, NULL)
       ) AS `t2`
@@ -80,7 +80,7 @@ WITH `table` AS (
           LAG(COALESCE(`t1`.`is_entity_deleted`, FALSE)) OVER (PARTITION BY `t1`.`party_id`, `t1`.`account_id` ORDER BY `t1`.`validity_start_time` ASC) AS `previous_entity_deleted`,
           LEAD(`t1`.`validity_start_time`) OVER (PARTITION BY `t1`.`party_id`, `t1`.`account_id` ORDER BY `t1`.`validity_start_time` ASC) AS `next_row_validity_start_time`,
           LAG(`t1`.`validity_start_time`) OVER (PARTITION BY `t1`.`party_id`, `t1`.`account_id` ORDER BY `t1`.`validity_start_time` ASC) AS `previous_row_validity_start_time`
-        FROM `account_party_link` AS `t1`
+        FROM `PLACEHOLDER`.`account_party_link` AS `t1`
       ) AS `t3`
       WHERE
         (

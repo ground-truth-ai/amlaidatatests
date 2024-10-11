@@ -4,7 +4,7 @@ SELECT
 FROM (
   SELECT
     *
-  FROM `party` AS `t0`
+  FROM `PLACEHOLDER`.`party` AS `t0`
   WHERE
     TRIM(`t0`.`assets_value_range`.`end_amount`.`currency_code`, ' \t\n\r\v\f') = ''
     AND (

@@ -4,7 +4,7 @@ SELECT
 FROM (
   SELECT
     *
-  FROM "party" AS "t0"
+  FROM "PLACEHOLDER"."party" AS "t0"
   WHERE
     TRIM(
       CAST(GET(CAST(GET("t0"."assets_value_range", 'end_amount') AS OBJECT), 'currency_code') AS VARCHAR),

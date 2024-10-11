@@ -109,7 +109,7 @@ jobs:
 
       - name: Test with pytest
         run: |
-          pytest
+          pytest --connection_string=duckdb://
 
   integration-test-bq:
     needs:

@@ -46,7 +46,7 @@ WITH `table` AS (
           LAG(COALESCE(`t0`.`is_entity_deleted`, FALSE)) OVER (PARTITION BY `t0`.`party_id`, `t0`.`account_id` ORDER BY `t0`.`validity_start_time` ASC) AS `previous_entity_deleted`,
           LEAD(`t0`.`validity_start_time`) OVER (PARTITION BY `t0`.`party_id`, `t0`.`account_id` ORDER BY `t0`.`validity_start_time` ASC) AS `next_row_validity_start_time`,
           LAG(`t0`.`validity_start_time`) OVER (PARTITION BY `t0`.`party_id`, `t0`.`account_id` ORDER BY `t0`.`validity_start_time` ASC) AS `previous_row_validity_start_time`
-        FROM `account_party_link` AS `t0`
+        FROM `PLACEHOLDER`.`account_party_link` AS `t0`
       ) AS `t2`
       WHERE
         (
@@ -116,7 +116,7 @@ WITH `table` AS (
           LAG(COALESCE(`t1`.`is_entity_deleted`, FALSE)) OVER (PARTITION BY `t1`.`party_id` ORDER BY `t1`.`validity_start_time` ASC) AS `previous_entity_deleted`,
           LEAD(`t1`.`validity_start_time`) OVER (PARTITION BY `t1`.`party_id` ORDER BY `t1`.`validity_start_time` ASC) AS `next_row_validity_start_time`,
           LAG(`t1`.`validity_start_time`) OVER (PARTITION BY `t1`.`party_id` ORDER BY `t1`.`validity_start_time` ASC) AS `previous_row_validity_start_time`
-        FROM `party` AS `t1`
+        FROM `PLACEHOLDER`.`party` AS `t1`
       ) AS `t3`
       WHERE
         (

@@ -1,4 +1,4 @@
--- Check for more than 75% of parties with the same civil_status_code. Warning.
+-- Check for more than 75% of parties with the same civil_status_code. Warning. 
 SELECT
   COUNT(*) AS `CountStar`
 FROM (
@@ -41,7 +41,7 @@ FROM (
           FROM (
             SELECT
               *
-            FROM `party` AS `t0`
+            FROM `PLACEHOLDER`.`party` AS `t0`
             WHERE
               `t0`.`is_entity_deleted` IN (FALSE, NULL)
           ) AS `t1`

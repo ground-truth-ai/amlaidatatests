@@ -4,7 +4,7 @@ SELECT
 FROM (
   SELECT
     *
-  FROM "party_supplementary_data" AS "t0"
+  FROM "PLACEHOLDER"."party_supplementary_data" AS "t0"
   WHERE
     CAST(GET("t0"."supplementary_data_payload", 'value') AS DOUBLE) IS NULL
     AND "t0"."supplementary_data_payload" IS NOT NULL

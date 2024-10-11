@@ -1,8 +1,8 @@
--- High number of accounts with no transactions
+-- High number of accounts with no transactions 
 WITH "t3" AS (
   SELECT
     "t1"."account_id"
-  FROM "account_party_link" AS "t1"
+  FROM "PLACEHOLDER"."account_party_link" AS "t1"
 )
 SELECT
   "t8"."missing_key_count" / (
@@ -21,7 +21,7 @@ FROM (
       NOT EXISTS(
         SELECT
           1
-        FROM "transaction" AS "t2"
+        FROM "PLACEHOLDER"."transaction" AS "t2"
         WHERE
           "t5"."account_id" = "t2"."account_id"
       )
