@@ -1,1 +1,0 @@
--- check column exists on table and is the correct type
