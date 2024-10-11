@@ -3,26 +3,56 @@ from typing import Optional
 from urllib.parse import parse_qsl, urlparse
 
 import ibis
-import pytest
-from ibis import Table
 
-from amlaidatatests.config import ConfigSingleton, cfg
+from amlaidatatests.config import ConfigSingleton
 from amlaidatatests.schema.utils import get_table_name
 from amlaidatatests.schema.v1.tables import SchemaConfiguration
 
 
+# Replicated from ibis pyspark connector
+class Options(ibis.config.Config):
+    """PySpark options.
+
+    Attributes
+    ----------
+    treat_nan_as_null : bool
+        Treat NaNs in floating point expressions as NULL.
+
+    """
+
+    treat_nan_as_null: bool = False
+
+
 def _verify_required_packages(scheme):
+    # TODO: Consider if the package is actually required for a dryrun.
+    # For pyspark, it is
     if scheme == "duckdb" and not importlib.util.find_spec("duckdb"):
         raise ImportError(
             "duckdb is not installed. To use duckdb, run "
             "`pip install amlaidatatests[duckdb]`"
         )
+    if scheme == "pyspark":
+        if not importlib.util.find_spec("pyspark"):
+            raise ImportError(
+                "pyspark is not installed. To use pyspark, run "
+                "`pip install ibis-framework[pyspark]`"
+            )
+        ibis.options.pyspark = Options()
+        ibis.options.pyspark.treat_nan_as_null = True
 
 
 def connection_factory(default: Optional[str] = None):
     config = ConfigSingleton.get()
 
     is_real_execution = not config.dry_run
+
+    connection_string = config.get("connection_string", default)
+    # Workaround https://github.com/ibis-project/ibis/issues/9456,
+    # which means that connection details aren't properly parsed out
+    result = urlparse(connection_string)
+    kwargs = dict(parse_qsl(result.query))
+
+    _verify_required_packages(scheme=result.scheme)
 
     if config.dry_run:
         # For dry runs, create a duckdb database instead
@@ -51,13 +81,6 @@ def connection_factory(default: Optional[str] = None):
                 overwrite=True,
             )
         return connection
-
-    connection_string = config.get("connection_string", default)
-    # Workaround https://github.com/ibis-project/ibis/issues/9456,
-    # which means that connection details aren't properly parsed out
-    result = urlparse(connection_string)
-    kwargs = dict(parse_qsl(result.query))
-    _verify_required_packages(scheme=result.scheme)
 
     # Workaround the ibis library depending on pydata. TODO: Look into this
     # in more detail
