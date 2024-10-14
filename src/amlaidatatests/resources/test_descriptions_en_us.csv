@@ -1,5 +1,5 @@
 id,table,column,description
-P049,All,is_entity_deleted,"When is_entity_deleted = True, all non-key fields should be left unset or NULL"
+P049,All,is_entity_deleted,"When is_entity_deleted = True, all non-key fields should be left unset or NULL. Warning."
 P050,All,is_entity_deleted,More than 40% of entities have is_entity_deleted = TRUE. Warning.
 P052,All,All,More than 10% of transactions have book_time with a round hour or half hour except 00:00:00. Common indicator of a datetime mapping from a source system in a different timezone e.g. transactions book_time=23:30:00 could be assigned to the wrong day.
 P057,All,validity_start_time,An entity has more than 500 validity_start_time changes. Warning.
