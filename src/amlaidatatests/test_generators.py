@@ -2,10 +2,11 @@
 information or other parameterization"""
 
 import functools
+from functools import partial
 from typing import Callable, Optional, Union
 
 import ibis
-from ibis import Schema, Table, literal
+from ibis import Expr, Schema, Table, literal
 from ibis.expr.datatypes import Array, DataType, Struct, Timestamp
 
 from amlaidatatests.base import AbstractBaseTest, AbstractColumnTest
@@ -72,6 +73,26 @@ def get_entity_tests(
     raise ValueError(f"Unknown Entity {entity_name}")
 
 
+def all_nonnullable_columns_null(table_config: ResolvedTableConfig, t: Expr):
+    """Iterate through all columns in the schema and for nullable columns,
+    filter for values which are not null.
+
+    This is used for P049, where we test if fields other than the key
+    fields and is_entity_deleted are null
+    """
+    logic = []
+    for name, type_ in table_config.schema.items():
+        if name in t.columns and type_.nullable is True:
+            if name == "is_entity_deleted":
+                # Exclude is_entity_deleted as it is both
+                # nullable and used in the mutation test
+                # below
+                continue
+            logic.append(getattr(t, name) != ibis.null())
+    # We're looking for any of these fields being
+    return ibis.or_(*logic)
+
+
 def get_entity_mutation_tests(
     table_config: ResolvedTableConfig,
 ) -> list[AbstractColumnTest]:
@@ -79,7 +100,6 @@ def get_entity_mutation_tests(
 
     Args:
         table_config: Configuration for
-        entity_ids: _description_
 
     Returns:
         _description_
@@ -110,6 +130,14 @@ def get_entity_mutation_tests(
             table_config=table_config,
             entity_ids=table_config.entity_keys,
             test_id="F005",
+        ),
+        CountMatchingRows(
+            column="validity_start_time",
+            table_config=table_config,
+            max_number=0,
+            expression=partial(all_nonnullable_columns_null, table_config),
+            test_id="P049",
+            severity=AMLAITestSeverity.WARN,
         ),
     ]
 
