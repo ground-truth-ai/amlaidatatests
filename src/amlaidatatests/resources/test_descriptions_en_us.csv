@@ -57,7 +57,7 @@ P053,RiskCaseEvent,risk_case_event_id,More than 5000 risk case events for a sing
 P054,RiskCaseEvent,risk_case_event_id,More than 1000 risk case events for a single case. Warning.
 P055,RiskCaseEvent,risk_case_event_id,More than 1000 risk case events for a single party. Warning.
 P056,RiskCaseEvent,risk_case_event_id,More than 5000 risk case events for a single party. Error.
-P059,"Transaction, RiskCaseEvent","book_time,type",Positive examples with no transactions within SUSPICIOUS activity period or for 365 days prior to AML PROCESS START if suspicious activity period not defined
+P059,"Transaction, RiskCaseEvent","book_time,type",Finds parties with risk events (AML_EXIT or AML_SAR) with no transactions within the specified activity period or for 365 days prior to AML PROCESS START
 P060,RiskCaseEvent,type,>1 suspicious activity period start for party in risk case
 P061,RiskCaseEvent,type,>1 suspicious activity period end for party in risk case
 P062,RiskCaseEvent,type,Suspicious activity period end but no start for party in risk case
