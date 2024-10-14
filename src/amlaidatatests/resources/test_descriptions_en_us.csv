@@ -86,8 +86,6 @@ DT003,Party,establishment_date,All values are before the interval end date (if p
 DT004,Party,exit_date,All values are before the interval end date (if provided)
 DT005,Party,join_date,All values are before the interval end date (if provided) and before today's date
 DT008,Transaction,book_time,All values are before the interval end date (if provided) and before today's date
-DT009,Transaction,book_time,All values >= earliest account validity start time
-DT010,Transaction,book_time,Sufficient date range of transactions (at least 24 months)
 DT011,RiskCaseEvent,event_time,All values are before the interval end date (if provided) and before today's date
 DT012,Party,join_date,Join date after establishment date for party
 DT013,Party,exit_date,Exit date after birth date for party
@@ -103,9 +101,7 @@ RI004,Transaction,account_id,All account_id in Transaction exist in AccountParty
 RI005,RiskCaseEvent,party_id,All party_id in RiskCaseEvent exist in Party
 RI006,PartySupplementaryData,party_id,All party_id in PartySupplementaryData (if supplied) exist in Party
 RI007,Party,party_id,All party_id in Party exist in PartySupplementaryData (if supplied)
-RI008,AccountPartyLink,party_id,All party_id in AccountPartyLink exist in Party with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
 RI009,Party,party_id,All party_id in Party exist in AccountPartyLink with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
-RI010,AccountPartyLink,account_id,All account_id in AccountPartyLink exist in Transaction with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
 RI011,Transaction,account_id,All account_id in Transaction exist in AccountPartyLink with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
 RI012,RiskCaseEvent,party_id,All party_id in RiskCaseEvent exist in Party with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
 RI013,Party,party_id,All party_id in Party exist in PartySupplementaryData with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
@@ -120,7 +116,6 @@ E007,RiskCaseEvent,type,Field is constrained to permitted enumerations
 FMT001,All,*.currency_code,All entries are valid three-letter currency code defined in ISO 4217
 FMT003,Party,residencies.region_code,Valid two-letter unicode format
 FMT004,Party,nationalities.region_code,Valid two-letter unicode format
-FMT005,Transaction,normalized_booked_amount.currency_code,All entries are valid three-letter currency code defined in ISO 4217
 FMT006,Transaction,counterparty_account.region_code,Valid two-letter unicode format
 PK001,Party,"party_id, validity_start_time",check columns defined are a primary key on the table
 PK002,AccountPartyLink,"account_id, party_id, validity_start_time",check columns defined are a primary key on the table
