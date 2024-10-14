@@ -1,4 +1,4 @@
--- Check for many values 
+-- Check for many values
 WITH "t3" AS (
   SELECT
     *

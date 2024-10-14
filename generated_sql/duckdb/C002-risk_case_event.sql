@@ -6,6 +6,6 @@ FROM (
     *
   FROM "PLACEHOLDER"."risk_case_event" AS "t0"
   WHERE
-    TRIM("t0"."risk_case_id", '
+    TRIM("t0"."risk_case_id", ' 	
 ') = ''
 ) AS "t1"

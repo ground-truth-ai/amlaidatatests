@@ -1,4 +1,4 @@
--- check for consecutive is_entity_deleted values for the same PK 
+-- check for consecutive is_entity_deleted values for the same PK
 SELECT
   COUNT(*) FILTER(WHERE
     "t2"."count_per_pk" > 0) AS "CountStar(Greater(count_per_pk, 0))"

@@ -1,4 +1,4 @@
--- All AML_SAR and AML_EXIT events have AML_PROCESS_START for same risk_case_id and party_id 
+-- All AML_SAR and AML_EXIT events have AML_PROCESS_START for same risk_case_id and party_id
 SELECT
   `t2`.`value_cnt`,
   `t2`.`group_count`,

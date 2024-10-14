@@ -1,4 +1,4 @@
--- <=1 AML_EXIT per risk_case_id and party_id 
+-- <=1 AML_EXIT per risk_case_id and party_id
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

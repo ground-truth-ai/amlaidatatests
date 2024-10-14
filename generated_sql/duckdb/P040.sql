@@ -1,4 +1,4 @@
--- Check >=1 AML_PROCESS_END in table 
+-- Check >=1 AML_PROCESS_END in table
 SELECT
   "t1"."total_rows",
   "t1"."matching_rows",

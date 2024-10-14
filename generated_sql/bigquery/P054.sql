@@ -1,4 +1,4 @@
--- More than 1000 risk case events for a single case. Warning. 
+-- More than 1000 risk case events for a single case. Warning.
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

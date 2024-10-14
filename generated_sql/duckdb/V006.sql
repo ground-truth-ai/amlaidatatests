@@ -1,4 +1,4 @@
--- Check all are positive or zero 
+-- Check all are positive or zero
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

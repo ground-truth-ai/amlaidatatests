@@ -1,4 +1,4 @@
--- WHEN type='COMPANY', check no occupation specified 
+-- WHEN type='COMPANY', check no occupation specified
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

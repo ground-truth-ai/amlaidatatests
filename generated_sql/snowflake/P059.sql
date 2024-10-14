@@ -1,4 +1,4 @@
--- Positive examples with no transactions within SUSPICIOUS activity period or for 365 days prior to AML PROCESS START if suspicious activity period not defined 
+-- Positive examples with no transactions within SUSPICIOUS activity period or for 365 days prior to AML PROCESS START if suspicious activity period not defined
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -6,85 +6,143 @@ FROM (
     *
   FROM (
     SELECT
-      "t10"."account_id",
-      "t10"."party_id",
-      "t10"."validity_start_time",
-      "t10"."is_entity_deleted",
-      "t10"."role",
-      "t10"."source_system",
-      "t10"."row_num",
-      "t8"."risk_case_id",
-      "t8"."exits",
-      "t8"."sars",
-      "t8"."aml_process_start_time",
-      "t8"."aml_suspicious_activity_start_time",
-      "t8"."aml_suspicious_activity_end_time",
-      "t3"."transaction_id",
-      "t3"."validity_start_time" AS "validity_start_time_right",
-      "t3"."is_entity_deleted" AS "is_entity_deleted_right",
-      "t3"."source_system" AS "source_system_right",
-      "t3"."type",
-      "t3"."direction",
-      "t3"."account_id" AS "account_id_right",
-      "t3"."counterparty_account",
-      "t3"."book_time",
-      "t3"."normalized_booked_amount"
+      "t12"."party_id",
+      COUNT(IFF("t12"."transaction_id" IS NOT NULL, "t12"."transaction_id", NULL)) AS "txn_count"
     FROM (
       SELECT
-        *
+        "t11"."party_id",
+        "t11"."account_id",
+        "t11"."first_date",
+        "t11"."last_date",
+        "t7"."risk_case_id",
+        "t7"."exits",
+        "t7"."sars",
+        "t7"."aml_process_start_time",
+        "t7"."aml_suspicious_activity_start_time",
+        "t7"."aml_suspicious_activity_end_time",
+        "t3"."transaction_id",
+        "t3"."validity_start_time",
+        "t3"."is_entity_deleted",
+        "t3"."source_system",
+        "t3"."type",
+        "t3"."direction",
+        "t3"."account_id" AS "account_id_right",
+        "t3"."counterparty_account",
+        "t3"."book_time",
+        "t3"."normalized_booked_amount"
       FROM (
         SELECT
-          "t4"."account_id",
-          "t4"."party_id",
-          "t4"."validity_start_time",
-          "t4"."is_entity_deleted",
-          "t4"."role",
-          "t4"."source_system",
-          ROW_NUMBER() OVER (PARTITION BY "t4"."account_id", "t4"."party_id" ORDER BY "t4"."validity_start_time" DESC NULLS LAST) - 1 AS "row_num"
+          "t9"."party_id",
+          "t9"."account_id",
+          MIN("t9"."first_date") AS "first_date",
+          MAX("t9"."last_date") AS "last_date"
         FROM (
           SELECT
-            *
-          FROM "PLACEHOLDER"."account_party_link" AS "t1"
-          WHERE
-            "t1"."is_entity_deleted" IN (FALSE, NULL)
-        ) AS "t4"
-      ) AS "t6"
-      WHERE
-        "t6"."row_num" = 0
-    ) AS "t10"
-    INNER JOIN (
-      SELECT
-        *
-      FROM (
-        SELECT
-          "t2"."party_id",
-          "t2"."risk_case_id",
-          COUNT_IF("t2"."type" = 'AML_EXIT') AS "exits",
-          COUNT_IF("t2"."type" = 'AML_SAR') AS "sars",
-          MIN(IFF("t2"."type" = 'AML_PROCESS_START', "t2"."event_time", NULL)) AS "aml_process_start_time",
-          MIN(IFF("t2"."type" = 'AML_SUSPICIOUS_ACTIVITY_START', "t2"."event_time", NULL)) AS "aml_suspicious_activity_start_time",
-          MAX(IFF("t2"."type" = 'AML_SUSPICIOUS_ACTIVITY_END', "t2"."event_time", NULL)) AS "aml_suspicious_activity_end_time"
-        FROM "PLACEHOLDER"."risk_case_event" AS "t2"
+            "t8"."party_id",
+            "t8"."account_id",
+            MIN("t8"."validity_start_time") AS "first_date",
+            MAX(
+              IFF(
+                (
+                  "t8"."next_row_validity_start_time" IS NULL
+                )
+                AND NOT (
+                  "t8"."is_entity_deleted"
+                ),
+                TIMESTAMP_TZ_FROM_PARTS(9995, 1, 1, 0, 0, 0, 0, 'UTC'),
+                "t8"."validity_start_time"
+              )
+            ) AS "last_date"
+          FROM (
+            SELECT
+              "t5"."party_id",
+              "t5"."account_id",
+              "t5"."validity_start_time",
+              "t5"."is_entity_deleted",
+              "t5"."previous_entity_deleted",
+              "t5"."next_row_validity_start_time",
+              IFF(
+                (
+                  "t5"."previous_row_validity_start_time" IS NULL
+                )
+                AND "t5"."is_entity_deleted",
+                "t5"."validity_start_time",
+                "t5"."previous_row_validity_start_time"
+              ) AS "previous_row_validity_start_time"
+            FROM (
+              SELECT
+                "t2"."party_id",
+                "t2"."account_id",
+                "t2"."validity_start_time",
+                COALESCE("t2"."is_entity_deleted", FALSE) AS "is_entity_deleted",
+                LAG(COALESCE("t2"."is_entity_deleted", FALSE)) OVER (PARTITION BY "t2"."party_id", "t2"."account_id" ORDER BY "t2"."validity_start_time" ASC) AS "previous_entity_deleted",
+                LEAD("t2"."validity_start_time") OVER (PARTITION BY "t2"."party_id", "t2"."account_id" ORDER BY "t2"."validity_start_time" ASC) AS "next_row_validity_start_time",
+                LAG("t2"."validity_start_time") OVER (PARTITION BY "t2"."party_id", "t2"."account_id" ORDER BY "t2"."validity_start_time" ASC) AS "previous_row_validity_start_time"
+              FROM "PLACEHOLDER"."account_party_link" AS "t2"
+            ) AS "t5"
+            WHERE
+              (
+                IFF(
+                  (
+                    "t5"."previous_row_validity_start_time" IS NULL
+                  )
+                  AND "t5"."is_entity_deleted",
+                  "t5"."validity_start_time",
+                  "t5"."previous_row_validity_start_time"
+                ) IS NULL
+              )
+              OR (
+                "t5"."next_row_validity_start_time" IS NULL
+              )
+              OR (
+                "t5"."is_entity_deleted" <> "t5"."previous_entity_deleted"
+              )
+          ) AS "t8"
+          GROUP BY
+            1,
+            2
+        ) AS "t9"
         GROUP BY
           1,
           2
-      ) AS "t5"
-      WHERE
-        (
-          "t5"."exits" > 0
-        ) OR (
-          "t5"."sars" > 0
+      ) AS "t11"
+      INNER JOIN (
+        SELECT
+          *
+        FROM (
+          SELECT
+            "t1"."party_id",
+            "t1"."risk_case_id",
+            COUNT_IF("t1"."type" = 'AML_EXIT') AS "exits",
+            COUNT_IF("t1"."type" = 'AML_SAR') AS "sars",
+            MIN(IFF("t1"."type" = 'AML_PROCESS_START', "t1"."event_time", NULL)) AS "aml_process_start_time",
+            MIN(IFF("t1"."type" = 'AML_SUSPICIOUS_ACTIVITY_START', "t1"."event_time", NULL)) AS "aml_suspicious_activity_start_time",
+            MAX(IFF("t1"."type" = 'AML_SUSPICIOUS_ACTIVITY_END', "t1"."event_time", NULL)) AS "aml_suspicious_activity_end_time"
+          FROM "PLACEHOLDER"."risk_case_event" AS "t1"
+          GROUP BY
+            1,
+            2
+        ) AS "t4"
+        WHERE
+          (
+            "t4"."exits" > 0
+          ) OR (
+            "t4"."sars" > 0
+          )
+      ) AS "t7"
+        ON "t11"."party_id" = "t7"."party_id"
+      LEFT OUTER JOIN "PLACEHOLDER"."transaction" AS "t3"
+        ON "t11"."account_id" = "t3"."account_id"
+        AND "t3"."book_time" BETWEEN "t11"."first_date" AND "t11"."last_date"
+        AND IFF(
+          "t7"."aml_suspicious_activity_start_time" IS NULL,
+          "t3"."book_time" BETWEEN DATEADD(DAY, -'365', "t7"."aml_process_start_time") AND "t7"."aml_process_start_time",
+          "t3"."book_time" BETWEEN "t7"."aml_suspicious_activity_start_time" AND "t7"."aml_suspicious_activity_end_time"
         )
-    ) AS "t8"
-      ON "t10"."party_id" = "t8"."party_id"
-    LEFT OUTER JOIN "PLACEHOLDER"."transaction" AS "t3"
-      ON "t10"."account_id" = "t3"."account_id"
-      AND IFF(
-        "t8"."aml_suspicious_activity_start_time" IS NOT NULL,
-        "t3"."book_time" BETWEEN "t8"."aml_suspicious_activity_start_time" AND "t8"."aml_suspicious_activity_end_time",
-        "t3"."book_time" BETWEEN DATEADD(DAY, -'365', "t8"."aml_process_start_time") AND "t8"."aml_process_start_time"
-      )
-  ) AS "t11"
+    ) AS "t12"
+    GROUP BY
+      1
+  ) AS "t13"
   WHERE
-    "t11"."transaction_id" IS NULL
-) AS "t12"
+    "t13"."txn_count" = 0
+) AS "t14"

@@ -1,4 +1,4 @@
--- check columns defined are a primary key on the table 
+-- check columns defined are a primary key on the table
 SELECT
   COUNT(
     DISTINCT CONCAT(to_json_string(`transaction_id`), to_json_string(`validity_start_time`))

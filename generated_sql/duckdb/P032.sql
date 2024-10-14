@@ -1,4 +1,4 @@
--- >= 1 month has a transaction volume of less than 40% of the monthly average by volume. Warning. 
+-- >= 1 month has a transaction volume of less than 40% of the monthly average by volume. Warning.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

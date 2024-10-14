@@ -1,4 +1,4 @@
--- Large number of transactions have the same value across any transaction type 
+-- Large number of transactions have the same value across any transaction type
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

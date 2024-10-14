@@ -10,7 +10,7 @@ FROM (
       (
         "t0"."assets_value_range"."end_amount"
       )."currency_code",
-      '
+      ' 	
 '
     ) = ''
     AND (

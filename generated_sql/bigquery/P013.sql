@@ -1,4 +1,4 @@
--- Check for more than 75% of parties with the same education_level_code. Warning. 
+-- Check for more than 75% of parties with the same education_level_code. Warning.
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

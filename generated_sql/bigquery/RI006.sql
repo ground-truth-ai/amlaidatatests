@@ -1,4 +1,4 @@
--- All party_id in PartySupplementaryData (if supplied) exist in Party 
+-- All party_id in PartySupplementaryData (if supplied) exist in Party
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

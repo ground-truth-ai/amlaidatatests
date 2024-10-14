@@ -6,6 +6,6 @@ FROM (
     *
   FROM "PLACEHOLDER"."account_party_link" AS "t0"
   WHERE
-    TRIM("t0"."party_id", '
+    TRIM("t0"."party_id", ' 	
 ') = ''
 ) AS "t1"

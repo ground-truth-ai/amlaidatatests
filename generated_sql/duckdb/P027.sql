@@ -1,4 +1,4 @@
--- One or more accounts have a very high number of transactions. Warn at 10 million. 
+-- One or more accounts have a very high number of transactions. Warn at 10 million.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

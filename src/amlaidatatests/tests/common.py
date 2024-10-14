@@ -21,6 +21,8 @@ from amlaidatatests.exceptions import (
     DataTestWarning,
 )
 from amlaidatatests.schema.base import ResolvedTableConfig, TableType
+from amlaidatatests.schema.utils import resolve_table_config
+from amlaidatatests.tests import common
 
 
 class TableExcessColumnsTest(AbstractTableTest):
@@ -1221,103 +1223,6 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
         self.tolerance = tolerance
         self.key = key
 
-    def get_entity_state_windows(self, table_config: ResolvedTableConfig):
-        # For a table with flipping is_entity_deleted:
-        #
-        # | party_id | validity_start_time | is_entity_deleted |
-        # |    1     |      00:00:00       |       False       |
-        # |    1     |      00:30:00       |       False       | <--- no flip
-        # |    1     |      01:00:00       |       True        |
-        # |    1     |      02:00:00       |       False       |
-        #
-        # |party_id|window_id| window_start_time|window_end_time|is_entity_deleted
-        # |   1    |    0    |      00:00:00    |     null      |     False
-        table = table_config.table
-
-        # Select potentially overlapping keys between these two entity tables
-        keys = set([self.key, *table_config.entity_keys])
-
-        if table_config.table_type == TableType.EVENT:
-            return table.select(first_date=_.event_time, last_date=_.event_time, *keys)
-
-        w = ibis.window(group_by=keys, order_by="validity_start_time")
-
-        # is_entity_deleted is a nullable field, so we assume if it is null, we
-        # mean False
-        cte0 = ibis.coalesce(table.is_entity_deleted, False)
-        # First, find the changes in entity_deleted switching in order to
-        # determine the rows which lead to the table switching. do this by
-        # finding the previous values of "is_entity_deleted" and determining if.
-
-        cte1 = table.select(
-            *keys,
-            "validity_start_time",
-            is_entity_deleted=cte0,
-            previous_entity_deleted=cte0.lag().over(w),
-            next_row_validity_start_time=_.validity_start_time.lead().over(w),
-            previous_row_validity_start_time=_.validity_start_time.lag().over(w),
-        )
-
-        # Handle the entity being immediately deleted by assuming it only
-        # existed for a fraction of a second. This isn't valid data, but it
-        # should be picked up by the entity mutation tests
-        cte2 = cte1.mutate(
-            previous_row_validity_start_time=ibis.ifelse(
-                (_.previous_row_validity_start_time.isnull()) & (_.is_entity_deleted),
-                _.validity_start_time,
-                _.previous_row_validity_start_time,
-            )
-        )
-
-        # Only return useful rows, not ones where the entities deletion state
-        # didn't change
-        cte3 = cte2.filter(
-            (_.previous_row_validity_start_time == ibis.literal(None))  # first row
-            | (_.next_row_validity_start_time == ibis.literal(None))  # last row
-            | (_.is_entity_deleted != _.previous_entity_deleted)  # state flips
-        ).group_by(keys)
-
-        if table_config.table_type == TableType.CLOSED_ENDED_ENTITY:
-            # For closed ended entities, e.g. parties, we need to assume the
-            # entity persists until it is deleted. This means that the maximum
-            # validity date time
-            res = (
-                cte3
-                # At the moment, we only pay attention to the first/last dates,
-                # not where there are multiple flips if the only row and the row
-                # isn't yet deleted, we need to make the validity end time far
-                # into the future
-                .agg(
-                    # null handling not required as validity_start_time is a
-                    # non-nullable field
-                    first_date=_.validity_start_time.min(),
-                    last_date=ibis.ifelse(
-                        condition=_.next_row_validity_start_time.isnull()
-                        & ~_.is_entity_deleted,
-                        true_expr=TemporalReferentialIntegrityTest.MAX_DATETIME_VALUE,
-                        false_expr=_.validity_start_time,
-                    ).max(),
-                )
-            )
-        else:
-            # The entity's validity is counted only as of the last datetime provided
-            res = (
-                cte3
-                # At the moment, we only pay attention to the first/last dates,
-                # not where there are multiple flips
-                .agg(
-                    first_date=_.validity_start_time.min(),
-                    last_date=_.validity_start_time.max(),
-                )
-            )
-        # There may be multiple group_by keys, which doesn't correspond
-        # to the referential integrity test testing a single key. This is because
-        # we need to handle the case where there are multiple entity keys,
-        # e.g. a party_link table where we are validating the account_id
-        return res.group_by(self.key).agg(
-            first_date=_.first_date.min(), last_date=_.last_date.max()
-        )
-
     def _test(self, *, connection: BaseBackend):
         # Table 1
         # |party_id|window_id|window_start_time|window_end_time|is_entity_deleted
@@ -1342,8 +1247,12 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
                 last_date=_[self.validate_datetime_column].max(),
             )
         else:
-            tbl = self.get_entity_state_windows(self.table_config)
-        totbl = self.get_entity_state_windows(self.to_table_config)
+            tbl = self.get_entity_state_windows(
+                table_config=self.table_config, key=[self.key]
+            )
+        totbl = self.get_entity_state_windows(
+            table_config=self.to_table_config, key=[self.key]
+        )
         # First, associate keys by joining
         # We want to find items where the
         # tbl=party_id ---
@@ -1509,3 +1418,123 @@ class ConsistentIDsPerColumn(AbstractColumnTest):
                 f"Expected all {self.column} to have the same same set of IDs",
                 expr=expr,
             )
+
+
+class NoTransactionsWithinSuspiciousPeriod(AbstractTableTest):
+    """Look for cases with no transactions despite a specified suspicious time
+    period, or no transactions 365 before a case opened.
+
+    Bigquery timestamps only support date subtraction with a time period
+    up to days, so the best lookback period to specify is measured in days
+
+    Args:
+        table_config: Table configuration object
+        severity: The error level. Defaults to AMLAITestSeverity.ERROR.
+        test_id: Unique identifier for this category of tests.
+        lookback_period: The period to look back over. Defaults to 365.
+    """
+
+    def __init__(
+        self,
+        table_config: common.ResolvedTableConfig,
+        severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
+        test_id: Optional[str] = None,
+        lookback_period: int = 365,
+        account_party_link_table_config: ResolvedTableConfig = resolve_table_config(
+            "account_party_link"
+        ),
+        transaction_table_config: ResolvedTableConfig = resolve_table_config(
+            "transaction"
+        ),
+    ) -> None:
+        super().__init__(table_config=table_config, severity=severity, test_id=test_id)
+        self.lookback_period = lookback_period
+        self.account_party_link_table_config = account_party_link_table_config
+        self.transaction_table_config = transaction_table_config
+
+    def _test(self, connection):
+        transaction_table = self.get_table(
+            connection=connection, table_config=self.transaction_table_config
+        )
+
+        # First, get customers which have suspicious activity and profile that activity
+        exited_or_sard_customers = (
+            self.table.group_by([_.party_id, _.risk_case_id])
+            .agg(
+                exits=_.count(where=_["type"] == "AML_EXIT"),
+                sars=_.count(_["type"] == "AML_SAR"),
+                aml_process_start_time=_["event_time"].min(
+                    where=_["type"] == "AML_PROCESS_START"
+                ),
+                aml_suspicious_activity_start_time=_["event_time"].min(
+                    where=_["type"] == "AML_SUSPICIOUS_ACTIVITY_START"
+                ),
+                aml_suspicious_activity_end_time=_["event_time"].max(
+                    where=_["type"] == "AML_SUSPICIOUS_ACTIVITY_END"
+                ),
+            )
+            .filter((_.exits > 0) | (_.sars > 0))
+        )
+
+        entity_state_windows = self.get_entity_state_windows(
+            self.account_party_link_table_config
+        )
+
+        # Get associated accounts only
+        risky_customers_accounts = entity_state_windows.join(
+            exited_or_sard_customers,
+            how="inner",
+            predicates=((_.party_id == exited_or_sard_customers.party_id)),
+        )
+
+        # Positive examples with no transactions within suspicious activity
+        # period or for X months prior to AML PROCESS START if suspicious
+        # activity period not defined
+        expr = risky_customers_accounts.join(
+            right=transaction_table,
+            how="left",
+            predicates=(
+                (risky_customers_accounts.account_id == transaction_table.account_id)
+                &
+                # Party was linked to an account between the dates
+                (
+                    transaction_table["book_time"].between(
+                        risky_customers_accounts.first_date,
+                        risky_customers_accounts.last_date,
+                    )
+                )
+                & (
+                    ibis.ifelse(
+                        condition=_.aml_suspicious_activity_start_time == ibis.null(),
+                        true_expr=transaction_table["book_time"].between(
+                            risky_customers_accounts.aml_process_start_time.sub(
+                                # Months aren't supported for BQ
+                                ibis.interval(value=self.lookback_period, unit="DAY")
+                            ),
+                            risky_customers_accounts.aml_process_start_time,
+                        ),
+                        false_expr=transaction_table["book_time"].between(
+                            risky_customers_accounts.aml_suspicious_activity_start_time,
+                            risky_customers_accounts.aml_suspicious_activity_end_time,
+                        ),
+                    )
+                )
+            ),
+        )
+
+        # Any completely missing
+
+        result = expr.group_by("party_id").agg(
+            txn_count=_.transaction_id.count(where=_.transaction_id.notnull())
+        )
+
+        result = connection.execute(result.filter(_.txn_count == 0).count())
+
+        if result > 0:
+            msg = (
+                f"{result} positive examples (AML_EXIT or AML_SAR) with no "
+                "transactions within suspicious activity period or for "
+                f"{self.lookback_period} months prior to AML_PROCESS_START "
+                "if suspicious activity period is not defined"
+            )
+            raise DataTestFailure(msg, expr=expr)

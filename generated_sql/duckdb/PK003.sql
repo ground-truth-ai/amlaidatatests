@@ -1,4 +1,4 @@
--- check columns defined are a primary key on the table 
+-- check columns defined are a primary key on the table
 SELECT
   COUNT(DISTINCT ("transaction_id", "validity_start_time")) AS "unique_rows",
   COUNT(*) AS "count"

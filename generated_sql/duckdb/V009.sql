@@ -1,4 +1,4 @@
--- WHEN type='CONSUMER', check no establishment_date specified 
+-- WHEN type='CONSUMER', check no establishment_date specified
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

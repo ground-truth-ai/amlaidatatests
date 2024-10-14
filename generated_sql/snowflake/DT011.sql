@@ -1,4 +1,4 @@
--- All values are before the interval end date (if provided) and before today's date 
+-- All values are before the interval end date (if provided) and before today's date
 SELECT
   "t1"."total_rows",
   "t1"."matching_rows",

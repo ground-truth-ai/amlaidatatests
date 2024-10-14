@@ -1,4 +1,4 @@
--- High number of accounts with no transactions 
+-- High number of accounts with no transactions
 WITH `t3` AS (
   SELECT
     `t1`.`account_id`

@@ -1,4 +1,4 @@
--- All account_id in Transaction exist in AccountPartyLink 
+-- All account_id in Transaction exist in AccountPartyLink
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

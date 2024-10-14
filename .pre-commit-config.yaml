@@ -5,6 +5,7 @@ repos:
     -   id: check-yaml
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
+        files: "!^generated_sql/"
     -   id: check-added-large-files
     -   id: check-ast
     -   id: check-case-conflict
