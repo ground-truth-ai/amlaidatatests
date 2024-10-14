@@ -47,6 +47,10 @@ def get_entity_tests(
     Returns:
         _description_
     """
+    table_name = table_config.name
+    # TODO: Handle test_ids more elegantly. Essentially we're forcing
+    # a lookup because we're trying to specify the same test name. It
+    # might just be easier to unroll this loop.
     if entity_name == "CurrencyValue":
         return [
             AcceptedRangeTest(
@@ -54,14 +58,14 @@ def get_entity_tests(
                 column="nanos",
                 min_value=0,
                 max_value=1e9,
-                test_id="V005",
+                test_id="V005" if table_name == "party" else "V015",
             ),
             AcceptedRangeTest(
                 table_config=table_config,
                 column="units",
                 min_value=0,
                 max_value=None,
-                test_id="V006",
+                test_id="V006" if table_name == "party" else "V016",
             ),
             ColumnValuesTest(
                 table_config=table_config,
@@ -99,10 +103,10 @@ def get_entity_mutation_tests(
     """Retrieve all generic tests for detection of entity mutation.
 
     Args:
-        table_config: Configuration for
+        table_config: Configuration for the table
 
     Returns:
-        _description_
+        A list of tests to execute
     """
     return [
         ColumnCardinalityTest(
