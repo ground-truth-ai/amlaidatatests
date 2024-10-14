@@ -6,9 +6,8 @@ import ibis
 import pytest
 from ibis import _
 
-from amlaidatatests.base import AbstractTableTest
 from amlaidatatests.config import cfg
-from amlaidatatests.exceptions import AMLAITestSeverity, DataTestFailure
+from amlaidatatests.exceptions import AMLAITestSeverity
 from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.test_generators import (
     get_generic_table_tests,
@@ -16,6 +15,7 @@ from amlaidatatests.test_generators import (
     timestamp_field_tests,
 )
 from amlaidatatests.tests import common
+from amlaidatatests.tests.common import NoTransactionsWithinSuspiciousPeriod
 
 TABLE_CONFIG = resolve_table_config("risk_case_event")
 TABLE = TABLE_CONFIG.table
@@ -125,111 +125,6 @@ def test_DT014_event_order(connection, request):
         group_by=["risk_case_id", "party_id"],
     )
     t(connection, request)
-
-
-class NoTransactionsWithinSuspiciousPeriod(AbstractTableTest):
-    """Look for cases with no transactions despite a specified suspicious time
-    period, or no transactions 365 before a case opened.
-
-    Bigquery timestamps only support date subtraction with a time period
-    up to days, so the best lookback period to specify is measured in days
-
-    Args:
-        table_config: Table configuration object
-        severity: The error level. Defaults to AMLAITestSeverity.ERROR.
-        test_id: Unique identifier for this category of tests.
-        lookback_period: The period to look back over. Defaults to 365.
-    """
-
-    def __init__(
-        self,
-        table_config: common.ResolvedTableConfig,
-        severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
-        test_id: Optional[str] = None,
-        lookback_period: int = 365,
-    ) -> None:
-        super().__init__(table_config=table_config, severity=severity, test_id=test_id)
-        self.lookback_period = lookback_period
-
-    def _test(self, connection):
-        acc_lnk_config = resolve_table_config("account_party_link")
-        account_link_table = self.get_table(
-            connection=connection, table_config=acc_lnk_config
-        )
-        transaction_config = resolve_table_config("transaction")
-        transaction_table = self.get_table(
-            connection=connection, table_config=transaction_config
-        )
-
-        # First, get customers which have suspicious activity and profile that activity
-        exited_or_sard_customers = (
-            self.table.group_by([_.party_id, _.risk_case_id])
-            .agg(
-                exits=_.count(where=_["type"] == "AML_EXIT"),
-                sars=_.count(_["type"] == "AML_SAR"),
-                aml_process_start_time=_["event_time"].min(
-                    where=_["type"] == "AML_PROCESS_START"
-                ),
-                aml_suspicious_activity_start_time=_["event_time"].min(
-                    where=_["type"] == "AML_SUSPICIOUS_ACTIVITY_START"
-                ),
-                aml_suspicious_activity_end_time=_["event_time"].max(
-                    where=_["type"] == "AML_SUSPICIOUS_ACTIVITY_END"
-                ),
-            )
-            .filter((_.exits > 0) | (_.sars > 0))
-        )
-
-        acc_lnk_latest = self.get_latest_rows(
-            table=account_link_table, table_config=acc_lnk_config
-        )
-
-        # Get associated accounts only
-        expr = acc_lnk_latest.join(
-            exited_or_sard_customers,
-            how="inner",
-            predicates=((_.party_id == exited_or_sard_customers.party_id)),
-        )
-
-        # Positive examples with no transactions within suspicious activity
-        # period or for X months prior to AML PROCESS START if suspicious
-        # activity period not defined
-        expr = expr.join(
-            transaction_table,
-            how="left",
-            predicates=(
-                (_.account_id == transaction_table.account_id)
-                & (
-                    ibis.ifelse(
-                        condition=_.aml_suspicious_activity_start_time != ibis.null(),
-                        true_expr=transaction_table["book_time"].between(
-                            expr.aml_suspicious_activity_start_time,
-                            expr.aml_suspicious_activity_end_time,
-                        ),
-                        false_expr=transaction_table["book_time"].between(
-                            expr.aml_process_start_time.sub(
-                                # Months aren't supported for BQ
-                                ibis.interval(value=self.lookback_period, unit="DAY")
-                            ),
-                            expr.aml_process_start_time,
-                        ),
-                    )
-                )
-            ),
-            # left join on transaction_id means missing items in the join which
-            # don't meet the criteria will have null values
-        ).filter(_.transaction_id == ibis.null())
-
-        result = connection.execute(expr.count())
-
-        if result > 0:
-            msg = (
-                f"{result} positive examples (AML_EXIT or AML_SAR) with no "
-                "transactions within suspicious activity period or for "
-                f"{self.lookback_period} months prior to AML_PROCESS_START "
-                "if suspicious activity period is not defined"
-            )
-            raise DataTestFailure(msg, expr=expr)
 
 
 @pytest.mark.parametrize(

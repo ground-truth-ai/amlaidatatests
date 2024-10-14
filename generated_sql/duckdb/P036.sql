@@ -1,4 +1,4 @@
--- LTE 100 supplementary_data_id for each customer 
+-- LTE 100 supplementary_data_id for each customer
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

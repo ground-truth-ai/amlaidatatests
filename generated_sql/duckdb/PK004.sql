@@ -1,4 +1,4 @@
--- check columns defined are a primary key on the table 
+-- check columns defined are a primary key on the table
 SELECT
   COUNT(DISTINCT ("risk_case_event_id")) AS "unique_rows",
   COUNT(*) AS "count"

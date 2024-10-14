@@ -1,4 +1,4 @@
--- Valid two-letter unicode format 
+-- Valid two-letter unicode format
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

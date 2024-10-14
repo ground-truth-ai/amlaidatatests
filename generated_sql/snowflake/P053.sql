@@ -1,4 +1,4 @@
--- More than 5000 risk case events for a single case. Error 
+-- More than 5000 risk case events for a single case. Error
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

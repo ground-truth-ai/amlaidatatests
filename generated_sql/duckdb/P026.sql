@@ -1,4 +1,4 @@
--- One or more accounts have a very high number of transactions. Errors at 50 million. 
+-- One or more accounts have a very high number of transactions. Errors at 50 million.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

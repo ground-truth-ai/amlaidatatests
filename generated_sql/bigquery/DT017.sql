@@ -1,4 +1,4 @@
--- Earliest validity_start_time for party is after the join_date 
+-- Earliest validity_start_time for party is after the join_date
 SELECT
   `t4`.`total_rows`,
   `t4`.`matching_rows`,

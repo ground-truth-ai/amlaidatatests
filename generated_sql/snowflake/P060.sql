@@ -1,4 +1,4 @@
--- >1 suspicious activity period start for party in risk case 
+-- >1 suspicious activity period start for party in risk case
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

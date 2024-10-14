@@ -1,4 +1,4 @@
--- A party has more than 5 residencies. WARNING. 
+-- A party has more than 5 residencies. WARNING.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

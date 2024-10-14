@@ -1,4 +1,4 @@
--- Party with multiple AML_EXIT events 
+-- Party with multiple AML_EXIT events
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

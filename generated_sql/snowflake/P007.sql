@@ -69,16 +69,16 @@ FROM (
             GREATEST(
               ARRAY_SIZE(
                 SPLIT(
-                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), '61ef3bd7b86649869eab80fb5e3fa493'),
-                  '61ef3bd7b86649869eab80fb5e3fa493'
+                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), '76cc1112e38a4ccd9477819258c6c3b5'),
+                  '76cc1112e38a4ccd9477819258c6c3b5'
                 )
               )
             ) - 1
           ) + 1
         ))) AS _u(seq, key, path, index, pos, this)
         CROSS JOIN TABLE(FLATTEN(INPUT => SPLIT(
-          ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), '61ef3bd7b86649869eab80fb5e3fa493'),
-          '61ef3bd7b86649869eab80fb5e3fa493'
+          ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), '76cc1112e38a4ccd9477819258c6c3b5'),
+          '76cc1112e38a4ccd9477819258c6c3b5'
         ))) AS _u_2(seq, key, path, pos_2, "nationalities", this)
         WHERE
           _u.pos = _u_2.pos_2
@@ -86,16 +86,16 @@ FROM (
             _u.pos > (
               ARRAY_SIZE(
                 SPLIT(
-                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), '61ef3bd7b86649869eab80fb5e3fa493'),
-                  '61ef3bd7b86649869eab80fb5e3fa493'
+                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), '76cc1112e38a4ccd9477819258c6c3b5'),
+                  '76cc1112e38a4ccd9477819258c6c3b5'
                 )
               ) - 1
             )
             AND _u_2.pos_2 = (
               ARRAY_SIZE(
                 SPLIT(
-                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), '61ef3bd7b86649869eab80fb5e3fa493'),
-                  '61ef3bd7b86649869eab80fb5e3fa493'
+                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), '76cc1112e38a4ccd9477819258c6c3b5'),
+                  '76cc1112e38a4ccd9477819258c6c3b5'
                 )
               ) - 1
             )

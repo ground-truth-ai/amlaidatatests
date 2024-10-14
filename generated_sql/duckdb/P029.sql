@@ -1,4 +1,4 @@
--- Account and Counterparty pairs have many transactions. Warns at 1 million. 
+-- Account and Counterparty pairs have many transactions. Warns at 1 million.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

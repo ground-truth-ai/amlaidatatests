@@ -1,4 +1,4 @@
--- Same number of supplementary_data_id for each customer 
+-- Same number of supplementary_data_id for each customer
 SELECT
   COUNT(DISTINCT "t5"."ids") AS "CountDistinct(ids)"
 FROM (

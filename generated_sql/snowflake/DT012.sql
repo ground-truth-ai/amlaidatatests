@@ -1,4 +1,4 @@
--- Join date after establishment date for party 
+-- Join date after establishment date for party
 SELECT
   "t4"."total_rows",
   "t4"."matching_rows",

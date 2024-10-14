@@ -1,4 +1,4 @@
--- Check for parties with more than 5 nationalities 
+-- Check for parties with more than 5 nationalities
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

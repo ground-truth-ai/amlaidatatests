@@ -1,4 +1,4 @@
--- Check not all parties have an AML_SAR 
+-- Check not all parties have an AML_SAR
 SELECT
   "t2"."value_cnt",
   "t2"."group_count",

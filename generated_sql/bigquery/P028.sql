@@ -1,4 +1,4 @@
--- A single account and counterparty combination have many transactions. Errors at 5 million. 
+-- A single account and counterparty combination have many transactions. Errors at 5 million.
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

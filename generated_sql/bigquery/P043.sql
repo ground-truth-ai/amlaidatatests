@@ -1,4 +1,4 @@
--- Check >=1 party with AML_SAR 
+-- Check >=1 party with AML_SAR
 SELECT
   `t1`.`total_rows`,
   `t1`.`matching_rows`,

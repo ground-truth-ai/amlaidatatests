@@ -1,4 +1,4 @@
--- Check for missing direction across the entire dataset. Expect at least one credit and one debit. 
+-- Check for missing direction across the entire dataset. Expect at least one credit and one debit.
 SELECT
   "t4"."total_rows",
   "t4"."matching_rows",

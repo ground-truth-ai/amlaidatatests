@@ -1,4 +1,4 @@
--- Exit date after birth date for party 
+-- Exit date after birth date for party
 SELECT
   `t4`.`total_rows`,
   `t4`.`matching_rows`,

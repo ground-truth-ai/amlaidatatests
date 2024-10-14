@@ -1,4 +1,4 @@
--- All currency codes must be a single normalized currency across the entire dataset 
+-- All currency codes must be a single normalized currency across the entire dataset
 WITH "t3" AS (
   SELECT
     *

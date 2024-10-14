@@ -6,6 +6,6 @@ FROM (
     *
   FROM "PLACEHOLDER"."party_supplementary_data" AS "t0"
   WHERE
-    TRIM("t0"."party_id", '
+    TRIM("t0"."party_id", ' 	
 ') = ''
 ) AS "t1"

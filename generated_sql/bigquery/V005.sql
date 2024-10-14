@@ -1,4 +1,4 @@
--- All values between 0 and +999,999,999 inclusive 
+-- All values between 0 and +999,999,999 inclusive
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

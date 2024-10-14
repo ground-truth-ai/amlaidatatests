@@ -1,4 +1,4 @@
--- WHEN type='CONSUMER', more than 5% of parties have no nationality 
+-- WHEN type='CONSUMER', more than 5% of parties have no nationality
 SELECT
   `t4`.`total_rows`,
   `t4`.`matching_rows`,

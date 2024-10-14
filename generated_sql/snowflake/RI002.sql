@@ -1,4 +1,4 @@
--- All party_id in Party exist in AccountPartyLink 
+-- All party_id in Party exist in AccountPartyLink
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

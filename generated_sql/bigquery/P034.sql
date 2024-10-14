@@ -1,4 +1,4 @@
--- More than 1% of transactions have the same book_time. 
+-- More than 1% of transactions have the same book_time.
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

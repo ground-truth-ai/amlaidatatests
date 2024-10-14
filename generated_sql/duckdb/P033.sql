@@ -1,4 +1,4 @@
--- >= 1 month has a transaction volume of less than 66% the monthly average by volume. Error. 
+-- >= 1 month has a transaction volume of less than 66% the monthly average by volume. Error.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

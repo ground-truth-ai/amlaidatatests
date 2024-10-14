@@ -7,10 +7,10 @@ FROM (
     ARRAY_TO_STRING(
       ARRAY(
         SELECT
-          ibis_bq_arr_vhpycqxmdnfdjoi5bjcfoulre4
-        FROM UNNEST(`t4`.`ids`) AS ibis_bq_arr_vhpycqxmdnfdjoi5bjcfoulre4
+          ibis_bq_arr_lwi6fvulsbefxb4l7sg4yu77ou
+        FROM UNNEST(`t4`.`ids`) AS ibis_bq_arr_lwi6fvulsbefxb4l7sg4yu77ou
         ORDER BY
-          ibis_bq_arr_vhpycqxmdnfdjoi5bjcfoulre4
+          ibis_bq_arr_lwi6fvulsbefxb4l7sg4yu77ou
       ),
       '|'
     ) AS `ids`

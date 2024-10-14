@@ -1,4 +1,4 @@
--- Many risk case events have the same event_time 
+-- Many risk case events have the same event_time
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

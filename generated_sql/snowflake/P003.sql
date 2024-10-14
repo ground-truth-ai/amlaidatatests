@@ -1,4 +1,4 @@
--- WHEN type='CONSUMER', check for more than 1% of parties with the same birth_date. Warning. 
+-- WHEN type='CONSUMER', check for more than 1% of parties with the same birth_date. Warning.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

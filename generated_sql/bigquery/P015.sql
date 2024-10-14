@@ -1,4 +1,4 @@
--- Check for accounts linked to a erroneously high number of parties. The API will not ingest more than 60000 links per account. 
+-- Check for accounts linked to a erroneously high number of parties. The API will not ingest more than 60000 links per account.
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

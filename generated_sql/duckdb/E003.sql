@@ -1,4 +1,4 @@
--- Field is constrained to permitted enumerations 
+-- Field is constrained to permitted enumerations
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
