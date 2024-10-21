@@ -703,15 +703,13 @@ class ColumnTypeTest(AbstractColumnTest):
 
         if expected_type.is_array():
             expected_type = cast(Array, expected_type)
-            extra_fields.append(
-                cls._check_field_types(
-                    expected_type=expected_type.value_type,
-                    actual_type=actual_type.value_type,
-                    path=f"{path}.",
-                    level=level,
-                )
+            extra_fields += cls._check_field_types(
+                expected_type=expected_type.value_type,
+                actual_type=actual_type.value_type,
+                path=f"{path}.",
+                level=level,
             )
-        # Otherwise, not a container so we don't need to check recursively
+        # Finally,
         return extra_fields
 
 
