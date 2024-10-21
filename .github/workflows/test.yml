@@ -69,6 +69,7 @@ jobs:
         run: |
           pip install -e .
           pip install -e .[duckdb]
+          pip install pytest-xdist        
 
       - id: 'auth'
         name: 'Authenticate to Google Cloud'
@@ -80,8 +81,9 @@ jobs:
           service_account: '${{ secrets.CI_SERVICE_ACCOUNT }}'
 
       - name: Test with pytest
-        run: |
-          pytest --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}/aml_ai_input_dataset?location=US --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset -x
+        run: >
+          pytest --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}/aml_ai_input_dataset?location=US 
+          --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset -x -n=4
 
   unit-test-duckdb:
     needs:
@@ -137,6 +139,10 @@ jobs:
         run: |
           pip install dist/*.whl
 
+      - name: Install Testing Dependencies
+        run: |
+          pip install pytest-xdist
+
       - id: 'auth'
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v2'
@@ -146,9 +152,12 @@ jobs:
           workload_identity_provider: '${{ secrets.CI_WORKLOAD_IDENTITY_PROVIDER }}'
           service_account: '${{ secrets.CI_SERVICE_ACCOUNT }}'
 
+      # Skip F043 (SAR test, has no SARs in our test dataset)
       - name: Test against bigquery
-        run: |
-          amlaidatatests --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}?location=US --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset -x -k primary_keys
+        run: >
+          amlaidatatests --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}?location=US
+          -k "not P043"
+          --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset -x -n=4 -W error
 
 
   integration-test-duckdb:
@@ -177,17 +186,20 @@ jobs:
         with:
           python-version: 3.12
 
+      - name: Install Testing Dependencies
+        run: |
+          pip install pytest-xdist
+          pip install duckdb
+
       - name: Install
         if: ${{ matrix.os-version != 'windows-latest' }}
         run: |
           pip install dist/*.whl
-          pip install duckdb
 
       - name: Install
         if: ${{ matrix.os-version == 'windows-latest' }}
         run: |
           Get-ChildItem -Path .\dist\*.whl -File | ForEach-Object { pip install $_.FullName }
-          pip install duckdb
 
       - name: Cache duckdb
         id: cache-duckdb
@@ -216,5 +228,10 @@ jobs:
           gcloud storage cp gs://amlai-datatest-ci-bucket/duckdb.ddb ./
 
       - name: Integration test
-        run: |
-          amlaidatatests --connection_string=duckdb://duckdb.ddb --id=1234 -x -k primary_keys
+        # access_mode allows parallelism in duckdb - default cores available for public
+        # runners in github is 4.
+        # Skip F004 (schema tests - TODO, these should probably work in duckdb)
+        # Skip F043 (SAR test, has no SARs in our test dataset)
+        run: >
+          amlaidatatests --connection_string=duckdb://duckdb.ddb?access_mode=READ_ONLY 
+          --id=1234 -x -n=4 -k "not F004 and not P043" -W error

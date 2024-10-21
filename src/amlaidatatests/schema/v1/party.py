@@ -34,10 +34,14 @@ party_schema = ibis.Schema(
         "occupation": String(),
         "gender": String(),
         "nationalities": Array(
-            value_type=Struct(fields={"region_code": String(nullable=False)})
+            value_type=Struct(
+                fields={"region_code": String(nullable=False)}, nullable=False
+            )
         ),
         "residencies": Array(
-            value_type=Struct(fields={"region_code": String(nullable=False)})
+            value_type=Struct(
+                fields={"region_code": String(nullable=False)}, nullable=False
+            )
         ),
         "exit_date": Date(),
         "join_date": Date(),
