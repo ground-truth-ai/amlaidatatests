@@ -101,7 +101,7 @@ class AbstractBaseTest(ABC):
         warnings.warn(warning)
 
     def _add_pytest_attribute(self, request, key, value):
-        """Add a user attribute for pytest to use"""
+        """Add a user attribute for pytest to use in reporting"""
         request.node.user_properties.append((key, value))
 
     def _run_with_severity(self, f: Callable, **kwargs) -> Any | None:
@@ -406,13 +406,11 @@ class AbstractTableTest(AbstractBaseTest):
             def __compile_sql(
                 execute: Callable[[ibis.Expr], Any], expr: ibis.Expr
             ) -> str:
-                file_name = (
-                    f"{self.test_id}.sql"
-                    if test_configuration.table != "All"
-                    else f"{self.test_id}-{self.table_config.name}.sql"
-                )
+                file_name = f"{self.id}_{self.table_config.name}"
 
-                with open(path.joinpath(file_name), "wb") as f:
+                file_name += ".sql"
+
+                with open(path.joinpath(file_name), "xb") as f:
                     # We need to know which dialect to produce the sql for
                     connection_string = cfg().get("connection_string")
                     result = urlparse(connection_string)
