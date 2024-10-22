@@ -23,8 +23,12 @@ P017,AccountPartyLink,"account_id, party_id",Check for parties linked to a erron
 P018,AccountPartyLink,"account_id, party_id",Check for parties linked to a erroneously high number of accounts. Warning only.
 P019,AccountPartyLink,source_system,Excessive distinct values of source_system. Warns above 500.
 P021,Transaction,source_system,Excessive distinct values of source_system. Warns above 500.
-P022,Transaction,type,"At least one transaction type is completely missing from the transactions. Checks for WIRE,  CASH, CHECK, CARD."
-P023,Transaction,direction,Check for missing direction across the entire dataset. Expect at least one credit and one debit.
+P022-CASH,Transaction,type,"CASH type is completely missing from the transactions."
+P022-WIRE,Transaction,type,"WIRE type is completely missing from the transactions."
+P022-CARD,Transaction,type,"CARD type is completely missing from the transactions."
+P022-CHECK,Transaction,type,"CHECK type is completely missing from the transactions."
+P023-CREDIT,Transaction,direction,CREDIT transaction direction is completely missing across the entire dataset.
+P023-DEBIT,Transaction,direction,DEBIT transaction direction is completely missing across the entire dataset.
 P024,Transaction,direction,Check the overall ratio of CREDITs to DEBITs by count of transaction_id in this dataset. Warns if the ratio of one direction is more than 80%.
 P025,Transaction,direction,Check the overall ratio of CREDITs to DEBITs by count of transaction_id in this dataset. ERRORs if the ratio of one direction is more than 95%.
 P026,Transaction,account_id,One or more accounts have a very high number of transactions. Errors at 50 million.
