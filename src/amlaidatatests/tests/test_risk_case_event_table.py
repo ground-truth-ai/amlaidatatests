@@ -104,7 +104,7 @@ w = ibis.window(
             column="event_time",
             table_config=TABLE_CONFIG,
             max_number=0,
-            expression=lambda t: t.event_time >= ibis.today(),
+            expression=lambda t: t.event_time >= ibis.now(),
             severity=AMLAITestSeverity.ERROR,
             test_id="DT011",
         ),

@@ -361,7 +361,7 @@ def get_generic_table_tests(
             CountMatchingRows(
                 table_config=table_config,
                 column="validity_start_time",
-                expression=lambda t: t.validity_start_time.date() > ibis.today(),
+                expression=lambda t: t.validity_start_time > ibis.now(),
                 test_id="DT001",
             ),
             CountFrequencyValues(

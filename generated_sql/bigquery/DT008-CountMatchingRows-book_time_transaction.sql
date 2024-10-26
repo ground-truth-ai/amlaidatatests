@@ -6,7 +6,7 @@ SELECT
 FROM (
   SELECT
     COUNT(*) AS `total_rows`,
-    COUNTIF(`t3`.`book_time` >= CURRENT_DATE) AS `matching_rows`
+    COUNTIF(`t3`.`book_time` >= CURRENT_TIMESTAMP()) AS `matching_rows`
   FROM (
     SELECT
       *

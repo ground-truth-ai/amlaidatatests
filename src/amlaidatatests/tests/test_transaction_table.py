@@ -145,7 +145,7 @@ def test_currency_value_entity(connection, column, test: AbstractColumnTest, req
             column="book_time",
             table_config=TABLE_CONFIG,
             max_number=0,
-            expression=lambda t: t.book_time >= ibis.today(),
+            expression=lambda t: t.book_time >= ibis.now(),
             severity=AMLAITestSeverity.WARN,
             test_id="DT008",
         )

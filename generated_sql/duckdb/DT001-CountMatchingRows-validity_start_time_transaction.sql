@@ -7,7 +7,7 @@ FROM (
   SELECT
     COUNT(*) AS "total_rows",
     COUNT(*) FILTER(WHERE
-      CAST("t3"."validity_start_time" AS DATE) > CURRENT_DATE) AS "matching_rows"
+      "t3"."validity_start_time" > CAST(CURRENT_TIMESTAMP AS TIMESTAMP)) AS "matching_rows"
   FROM (
     SELECT
       *
