@@ -7,6 +7,6 @@ FROM (
   SELECT
     COUNT(*) AS "total_rows",
     COUNT(*) FILTER(WHERE
-      "t0"."event_time" >= CURRENT_DATE) AS "matching_rows"
+      "t0"."event_time" >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP)) AS "matching_rows"
   FROM "PLACEHOLDER"."risk_case_event" AS "t0"
 ) AS "t1"

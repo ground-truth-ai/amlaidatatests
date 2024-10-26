@@ -7,7 +7,7 @@ FROM (
   SELECT
     COUNT(*) AS "total_rows",
     COUNT(*) FILTER(WHERE
-      "t3"."book_time" >= CURRENT_DATE) AS "matching_rows"
+      "t3"."book_time" >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP)) AS "matching_rows"
   FROM (
     SELECT
       *

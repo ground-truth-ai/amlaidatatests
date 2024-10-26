@@ -156,8 +156,8 @@ jobs:
       - name: Test against bigquery
         run: >
           amlaidatatests --connection_string=bigquery://${{ secrets.CI_PROJECT_NAME }}?location=US
-          -k "not P043"
-          --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset -x -n=4 -W error
+          -k "not P043" -W error
+          --database=${{ secrets.CI_PROJECT_NAME }}.aml_ai_input_dataset --id=v2 -x -n=4
 
 
   integration-test-duckdb:

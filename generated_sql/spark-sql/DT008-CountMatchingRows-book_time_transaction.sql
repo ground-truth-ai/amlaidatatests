@@ -6,7 +6,7 @@ SELECT
 FROM (
   SELECT
     COUNT(*) AS `total_rows`,
-    SUM(CAST(`t3`.`book_time` >= CURRENT_DATE AS BIGINT)) AS `matching_rows`
+    SUM(CAST(`t3`.`book_time` >= CURRENT_TIMESTAMP() AS BIGINT)) AS `matching_rows`
   FROM (
     SELECT
       *
