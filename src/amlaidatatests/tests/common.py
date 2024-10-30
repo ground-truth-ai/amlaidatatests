@@ -540,10 +540,9 @@ class VerifyEntitySubset(AbstractColumnTest):
             group_concat[self.column] == self.superset_value
         )
 
-        joined = subset_table.left_join(
+        anti_joined = subset_table.anti_join(
             superset_table, predicates=[(subset_table.concat, superset_table.concat)]
         )
-        anti_joined = joined.filter(joined.concat_right == None)
 
         expr = anti_joined.aggregate(count=anti_joined.count())
 
