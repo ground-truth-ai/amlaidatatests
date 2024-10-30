@@ -490,7 +490,7 @@ class VerifyEntitySubset(AbstractColumnTest):
         column: str,
         superset_value: str,
         subset_value: str,
-        concat: list[str],
+        group_by: list[str],
         test_id: Optional[str] = None,
         severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
     ) -> None:
@@ -499,16 +499,16 @@ class VerifyEntitySubset(AbstractColumnTest):
         subset record.
 
         Args:
-            table_config: The resolved table config to test
-            severity: The error type to emit on test failure
-                        Defaults to AMLAITestSeverity.ERROR
-            test_id: A unique identifier for the test
-            column: The column being tested
-            superset_value: the column value used to indicate a superset record
-            subset_value: the column value used to indicate a superset record
-            concat: list of column_ids to concat into a unique entity identifier
-            test_id: A unique identifier for the test. Defaults to None.
-            severity: The error type to emit on test failure
+            table_config:   The resolved table config to test
+            severity:       The error type to emit on test failure
+                            Defaults to AMLAITestSeverity.ERROR
+            test_id:        A unique identifier for the test
+            column:         The column being tested
+            superset_value: The column value used to indicate a superset record
+            subset_value:   The column value used to indicate a superset record
+            group_by:       List of column_ids to concat into a unique entity identifier
+            test_id:        A unique identifier for the test. Defaults to None.
+            severity:       The error type to emit on test failure
                             Defaults to AMLAITestSeverity.WARN.
         """
         super().__init__(
@@ -516,7 +516,7 @@ class VerifyEntitySubset(AbstractColumnTest):
         )
         self.superset_value = superset_value
         self.subset_value = subset_value
-        self.concat = concat
+        self.group_by = group_by
 
     def _test(self, *, connection: BaseBackend) -> None:
         table = self.table
@@ -529,7 +529,7 @@ class VerifyEntitySubset(AbstractColumnTest):
         table, column = resolve_field(table=table, column=self.column)
 
         group_concat = table.mutate(
-            concat=reduce(lambda x, y: x + y, [i + _[i] for i in self.concat], "")
+            concat=reduce(lambda x, y: x + y, [i + _[i] for i in self.group_by], "")
         )
 
         subset_table = group_concat.filter(
