@@ -26,7 +26,7 @@ def test_verify_subset_succeeds(test_connection, create_test_table, request):
     t = common.VerifyEntitySubset(
         table_config=table_config,
         column="type",
-        concat=["id_0", "id_1"],
+        group_by=["id_0", "id_1"],
         subset_value="exit",
         superset_value="start",
     )
@@ -51,7 +51,7 @@ def test_verify_subset_fails(test_connection, create_test_table, request):
     t = common.VerifyEntitySubset(
         table_config=table_config,
         column="type",
-        concat=["id_0", "id_1"],
+        group_by=["id_0", "id_1"],
         subset_value="exit",
         superset_value="start",
     )

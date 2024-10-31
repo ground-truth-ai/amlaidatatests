@@ -551,7 +551,7 @@ class VerifyEntitySubset(AbstractColumnTest):
 
         if count > 0:
             raise DataTestFailure(
-                message=f"Found entities ({', '.join(self.concat)}) with "
+                message=f"Found entities ({', '.join(self.group_by)}) with "
                 f"{self.column}='{self.subset_value}' records but without "
                 f"{self.column}='{self.superset_value}' records. This is invalid because "
                 f"{self.column}='{self.superset_value}' is a prerequisite for "
