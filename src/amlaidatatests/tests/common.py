@@ -482,6 +482,80 @@ class VerifyTypedValuePresence(AbstractColumnTest):
             )
 
 
+class VerifyEntitySubset(AbstractColumnTest):
+    def __init__(
+        self,
+        *,
+        table_config: ResolvedTableConfig,
+        column: str,
+        superset_value: str,
+        subset_value: str,
+        group_by: list[str],
+        test_id: Optional[str] = None,
+        severity: AMLAITestSeverity = AMLAITestSeverity.ERROR,
+    ) -> None:
+        """Checks for subset entity records without a corresponding superset record,
+        for cases where a superset record is a prerequisite for the existence of a
+        subset record.
+
+        Args:
+            table_config:   The resolved table config to test
+            severity:       The error type to emit on test failure
+                            Defaults to AMLAITestSeverity.ERROR
+            test_id:        A unique identifier for the test
+            column:         The column being tested
+            superset_value: The column value used to indicate a superset record
+            subset_value:   The column value used to indicate a superset record
+            group_by:       List of column_ids to concat into a unique entity identifier
+            test_id:        A unique identifier for the test. Defaults to None.
+            severity:       The error type to emit on test failure
+                            Defaults to AMLAITestSeverity.WARN.
+        """
+        super().__init__(
+            table_config=table_config, column=column, severity=severity, test_id=test_id
+        )
+        self.superset_value = superset_value
+        self.subset_value = subset_value
+        self.group_by = group_by
+
+    def _test(self, *, connection: BaseBackend) -> None:
+        table = self.table
+        if self.table_config.table_type in (
+            TableType.CLOSED_ENDED_ENTITY,
+            TableType.OPEN_ENDED_ENTITY,
+        ):
+            # For these tables, we need to identify the latest row
+            table = self.get_latest_rows(table)
+        table, column = resolve_field(table=table, column=self.column)
+
+        subset_table = table.filter(table[self.column] == self.subset_value)
+
+        superset_table = table.filter(table[self.column] == self.superset_value)
+
+        anti_joined = subset_table.anti_join(
+            superset_table,
+            predicates=[
+                (subset_table[group_by_col], superset_table[group_by_col])
+                for group_by_col in self.group_by
+            ],
+        )
+
+        expr = anti_joined.aggregate(count=anti_joined.count())
+
+        results = connection.execute(expr).iloc[0]
+        count = results["count"]
+
+        if count > 0:
+            raise DataTestFailure(
+                message=f"Found entities ({', '.join(self.group_by)}) with "
+                f"{self.column}='{self.subset_value}' records but without "
+                f"{self.column}='{self.superset_value}' records. This is invalid because "
+                f"{self.column}='{self.superset_value}' is a prerequisite for "
+                f"{self.column}='{self.subset_value}'",
+                expr=expr,
+            )
+
+
 class ConsecutiveEntityDeletionsTest(AbstractTableTest):
     """Check for the proportion or number of rows containing any
     particular value in column

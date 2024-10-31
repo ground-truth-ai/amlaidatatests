@@ -240,27 +240,21 @@ def test_DT014_event_order(connection, request):
             test_id="P044",
             value="AML_EXIT",
         ),
-        # TODO: This is not a precise test. We are comparing the number of
-        # values of party_id, risk_case_id which have an AML_PROCESS_START over
-        # the number which have an AML_EXIT. This could be a co-incidence, so we
-        # test this in a few different ways
-        common.VerifyTypedValuePresence(
+        common.VerifyEntitySubset(
             column="type",
             table_config=TABLE_CONFIG,
-            min_proportion=1,
-            group_by=["party_id", "risk_case_id"],
-            compare_group_by_where=lambda t: t.type == "AML_EXIT",
             test_id="P048",
-            value="AML_PROCESS_START",
+            group_by=["party_id", "risk_case_id"],
+            superset_value="AML_PROCESS_START",
+            subset_value="AML_EXIT",
         ),
-        common.VerifyTypedValuePresence(
+        common.VerifyEntitySubset(
             column="type",
             table_config=TABLE_CONFIG,
-            min_proportion=1,
-            group_by=["party_id", "risk_case_id"],
-            compare_group_by_where=lambda t: t.type == "AML_SAR",
             test_id="P068",
-            value="AML_PROCESS_START",
+            group_by=["party_id", "risk_case_id"],
+            superset_value="AML_PROCESS_START",
+            subset_value="AML_SAR",
         ),
         common.VerifyTypedValuePresence(
             column="type",
