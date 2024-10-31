@@ -528,20 +528,16 @@ class VerifyEntitySubset(AbstractColumnTest):
             table = self.get_latest_rows(table)
         table, column = resolve_field(table=table, column=self.column)
 
-        group_concat = table.mutate(
-            concat=reduce(lambda x, y: x + y, [i + _[i] for i in self.group_by], "")
-        )
+        subset_table = table.filter(table[self.column] == self.subset_value)
 
-        subset_table = group_concat.filter(
-            group_concat[self.column] == self.subset_value
-        )
-
-        superset_table = group_concat.filter(
-            group_concat[self.column] == self.superset_value
-        )
+        superset_table = table.filter(table[self.column] == self.superset_value)
 
         anti_joined = subset_table.anti_join(
-            superset_table, predicates=[(subset_table.concat, superset_table.concat)]
+            superset_table,
+            predicates=[
+                (subset_table[group_by_col], superset_table[group_by_col])
+                for group_by_col in self.group_by
+            ],
         )
 
         expr = anti_joined.aggregate(count=anti_joined.count())
