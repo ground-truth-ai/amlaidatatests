@@ -258,7 +258,7 @@ def render_test_summary(
 
 
 def test_report_to_payload(
-    test_reports: list[pytest.TestReport],
+    test_reports: list[pytest.TestReport | pytest.CollectReport],
 ) -> list[AMLAITestReport]:
     """For each provided test report, convert into an
     AMLAITestReport object so we can standardize the
@@ -275,6 +275,11 @@ def test_report_to_payload(
             message = longrepr.reprcrash.message
         if isinstance(longrepr, str):
             message = longrepr
+        if isinstance(rpt, pytest.CollectReport):
+            arr.append(
+                AMLAITestReport(message=message, nodeid=rpt.nodeid, user_properties={})
+            )
+            continue
         arr.append(
             AMLAITestReport(
                 message=message,
