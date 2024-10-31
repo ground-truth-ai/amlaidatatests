@@ -1,4 +1,4 @@
--- All AML_EXIT events have AML_PROCESS_START for same risk_case_id and party_id
+-- All AML_SAR events have AML_PROCESS_START for same risk_case_id and party_id
 SELECT
   COUNT(*) AS "count"
 FROM (
@@ -13,7 +13,7 @@ FROM (
       *
     FROM "PLACEHOLDER"."risk_case_event" AS "t0"
     WHERE
-      "t0"."type" = 'AML_EXIT'
+      "t0"."type" = 'AML_SAR'
   ) AS "t3"
   WHERE
     NOT EXISTS(
