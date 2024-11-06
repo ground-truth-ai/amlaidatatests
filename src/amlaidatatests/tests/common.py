@@ -9,9 +9,9 @@ from typing import Any, Callable, List, Literal, Optional, cast
 
 import ibis
 import pytest
-from ibis import BaseBackend, Expr, _
+from ibis import BaseBackend, Expr, Table, _
 from ibis.common.exceptions import IbisTypeError
-from ibis.expr.datatypes import Array, DataType, Struct, Timestamp
+from ibis.expr.datatypes import Array, DataType, Struct
 
 from amlaidatatests.base import AbstractColumnTest, AbstractTableTest, resolve_field
 from amlaidatatests.config import cfg
@@ -926,17 +926,19 @@ class CountMatchingRows(AbstractColumnTest):
     If multiple tests fail, only one will be raised
 
     Args:
-        table_config:   The resolved table config to test
-        severity:       The error type to emit on test failure
-                        Defaults to AMLAITestSeverity.ERROR
-        test_id:        A unique identifier for the test
-        expression:     The functor returning an expression to test
-        column:         The column under test which contains event ids
-        max_number:     The maximum absolute number of matching rows. Inclusive.
-        min_number:     The minimum absolute number of matching rows. Inclusive.
-        max_proportion: The maximum proportion of matching rows over all rows
-        min_proportion: The minimum proportion of matching rows over all rows
-        explanation:    A human readable explanation of the criteria
+        table_config:      The resolved table config to test
+        severity:          The error type to emit on test failure
+                           Defaults to AMLAITestSeverity.ERROR
+        test_id:           A unique identifier for the test
+        expression:        The functor returning an expression to test
+        column:            The column under test which contains event ids
+        max_number:        The maximum absolute number of matching rows. Inclusive.
+        min_number:        The minimum absolute number of matching rows. Inclusive.
+        max_proportion:    The maximum proportion of matching rows over all rows
+        min_proportion:    The minimum proportion of matching rows over all rows
+        explanation:       A human readable explanation of the criteria
+        table_expression:  Optional callable to filter the table. Can be unset
+                           (pass None). Defaults to getting the latest rows.
     """
 
     def __init__(
@@ -952,6 +954,9 @@ class CountMatchingRows(AbstractColumnTest):
         max_proportion: Optional[float] = None,
         min_proportion: Optional[int] = None,
         explanation: Optional[str] = None,
+        table_expression: Optional[
+            Callable[[Table], Table]
+        ] = AbstractColumnTest.get_latest_rows,
     ) -> None:
         super().__init__(
             table_config=table_config, column=column, severity=severity, test_id=test_id
@@ -962,9 +967,14 @@ class CountMatchingRows(AbstractColumnTest):
         self.max_proportion = max_proportion
         self.min_proportion = min_proportion
         self.explanation = explanation
+        self.table_expression = table_expression
+        if table_expression == AbstractColumnTest.get_latest_rows:
+            self.table_expression = self.get_latest_rows
 
     def _test(self, *, connection: BaseBackend):
-        table = self.get_latest_rows(self.table)
+        table = self.table
+        if self.table_expression:
+            table = self.table_expression(table)
         expr = table.agg(
             total_rows=table.count(), matching_rows=table.count(where=self.expression)
         ).mutate(proportion=_.matching_rows / _.total_rows)

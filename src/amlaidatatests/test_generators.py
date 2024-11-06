@@ -142,6 +142,7 @@ def get_entity_mutation_tests(
             expression=partial(all_nonnullable_columns_null, table_config),
             test_id="P049",
             severity=AMLAITestSeverity.WARN,
+            table_expression=lambda t: t.filter(t.is_entity_deleted),
         ),
     ]
 
