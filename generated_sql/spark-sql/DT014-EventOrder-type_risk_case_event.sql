@@ -1,4 +1,7 @@
--- Order of case events: AML_START, AML_END and AML_EXIT in correct order for each risk_case_id, party_id
+-- Tests: risk_case_event.type
+-- Severity: ERROR
+-- Description: Validates order of risk case events: AML_PROCESS_START, AML_EXIT, AML_PROCESS_END occur in exactly this order for each risk_case_id, party_id
+-- Interpretation: if matching_rows > 0, review matching cases. The API expects events to exactly match AML_PROCESS_START, AML_EXIT, AML_PROCESS_END. There must be an AML_PROCESS_START/END, but AML_EXIT is not required, but must happen before or at the same time as AML_PROCESS_END
 SELECT
   COUNT(*) AS `CountStar()`
 FROM (

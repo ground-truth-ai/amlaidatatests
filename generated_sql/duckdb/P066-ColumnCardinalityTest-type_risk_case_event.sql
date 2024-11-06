@@ -1,4 +1,6 @@
--- Party with multiple AML_EXIT events
+-- Tests: risk_case_event.type
+-- Severity: WARN
+-- Description: Party with multiple AML_EXIT events
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

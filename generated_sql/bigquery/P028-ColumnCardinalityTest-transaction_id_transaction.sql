@@ -1,4 +1,7 @@
--- A single account and counterparty combination have many transactions. Errors at 5 million.
+-- Tests: transaction.transaction_id
+-- Severity: WARN
+-- Description: A single account and counterparty combination have many transactions. Errors at 5 million.
+-- Interpretation: When count > 0, verify the transaction mapping. Why does a single account-counterparty pair have so many transactions?
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

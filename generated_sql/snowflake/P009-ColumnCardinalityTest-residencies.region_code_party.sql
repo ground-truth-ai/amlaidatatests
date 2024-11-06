@@ -1,4 +1,7 @@
--- A party has more than 5 residencies. WARNING.
+-- Tests: party.residencies.region_code
+-- Severity: WARN
+-- Description: A party has more than 5 residencies.
+-- Interpretation: When count >= 5, verify residencies are populated as intended. More than 5 residencies for a single party is unusual.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -69,16 +72,16 @@ FROM (
             GREATEST(
               ARRAY_SIZE(
                 SPLIT(
-                  ARRAY_TO_STRING(NULLIF("t3"."residencies", []), 'f7cd627624314ab6b291510b796d90b3'),
-                  'f7cd627624314ab6b291510b796d90b3'
+                  ARRAY_TO_STRING(NULLIF("t3"."residencies", []), '7281bbbf1b7f4b03b668b9c769b036b0'),
+                  '7281bbbf1b7f4b03b668b9c769b036b0'
                 )
               )
             ) - 1
           ) + 1
         ))) AS _u(seq, key, path, index, pos, this)
         CROSS JOIN TABLE(FLATTEN(INPUT => SPLIT(
-          ARRAY_TO_STRING(NULLIF("t3"."residencies", []), 'f7cd627624314ab6b291510b796d90b3'),
-          'f7cd627624314ab6b291510b796d90b3'
+          ARRAY_TO_STRING(NULLIF("t3"."residencies", []), '7281bbbf1b7f4b03b668b9c769b036b0'),
+          '7281bbbf1b7f4b03b668b9c769b036b0'
         ))) AS _u_2(seq, key, path, pos_2, "residencies", this)
         WHERE
           _u.pos = _u_2.pos_2
@@ -86,16 +89,16 @@ FROM (
             _u.pos > (
               ARRAY_SIZE(
                 SPLIT(
-                  ARRAY_TO_STRING(NULLIF("t3"."residencies", []), 'f7cd627624314ab6b291510b796d90b3'),
-                  'f7cd627624314ab6b291510b796d90b3'
+                  ARRAY_TO_STRING(NULLIF("t3"."residencies", []), '7281bbbf1b7f4b03b668b9c769b036b0'),
+                  '7281bbbf1b7f4b03b668b9c769b036b0'
                 )
               ) - 1
             )
             AND _u_2.pos_2 = (
               ARRAY_SIZE(
                 SPLIT(
-                  ARRAY_TO_STRING(NULLIF("t3"."residencies", []), 'f7cd627624314ab6b291510b796d90b3'),
-                  'f7cd627624314ab6b291510b796d90b3'
+                  ARRAY_TO_STRING(NULLIF("t3"."residencies", []), '7281bbbf1b7f4b03b668b9c769b036b0'),
+                  '7281bbbf1b7f4b03b668b9c769b036b0'
                 )
               ) - 1
             )

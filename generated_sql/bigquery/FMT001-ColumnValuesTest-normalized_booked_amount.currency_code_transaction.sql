@@ -1,4 +1,6 @@
--- All entries are valid three-letter currency code defined in ISO 4217
+-- Tests: transaction.normalized_booked_amount.currency_code
+-- Severity: ERROR
+-- Description: All entries are valid three-letter currency code defined in ISO 4217
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

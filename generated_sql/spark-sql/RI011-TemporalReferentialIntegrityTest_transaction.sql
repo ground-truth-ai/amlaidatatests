@@ -1,4 +1,6 @@
--- All account_id in Transaction exist in AccountPartyLink with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
+-- Tests: transaction
+-- Severity: ERROR
+-- Description: All account_id in Transaction exist in AccountPartyLink with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
 WITH `table` AS (
   SELECT
     `t5`.`account_id`,

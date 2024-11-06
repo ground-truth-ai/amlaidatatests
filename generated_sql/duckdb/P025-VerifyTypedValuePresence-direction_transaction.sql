@@ -1,4 +1,7 @@
--- Check the overall ratio of CREDITs to DEBITs by count of transaction_id in this dataset. ERRORs if the ratio of one direction is more than 95%.
+-- Tests: transaction.direction
+-- Severity: WARN
+-- Description: Check the overall ratio of CREDITs to DEBITs by count of transaction_id in this dataset. ERRORs if the ratio of one direction is more than 95%.
+-- Interpretation: When proportion > 0.95 or proportion < 0.05, verify the the imbalanced ratio. Why is there a significant imbalance?
 SELECT
   "t4"."value_cnt",
   "t4"."group_count",

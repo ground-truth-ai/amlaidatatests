@@ -1,4 +1,7 @@
--- One or more accounts have a very high number of transactions. Warn at 10 million.
+-- Tests: transaction.account_id
+-- Severity: INFO
+-- Description: One or more accounts have a very high number of transactions. Warn at 10 million.
+-- Interpretation: When count > 0, verify the account mapping. Why does a single account have so many transactions?
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

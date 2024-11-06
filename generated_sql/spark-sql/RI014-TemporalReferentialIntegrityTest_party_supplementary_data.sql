@@ -1,4 +1,6 @@
--- All party_id in PartySupplementaryData exist in Party with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
+-- Tests: party_supplementary_data
+-- Severity: ERROR
+-- Description: All party_id in PartySupplementaryData exist in Party with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
 WITH `table` AS (
   SELECT
     `t6`.`party_id`,

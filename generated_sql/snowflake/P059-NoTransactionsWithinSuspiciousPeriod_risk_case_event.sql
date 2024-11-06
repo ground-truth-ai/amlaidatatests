@@ -1,4 +1,5 @@
--- Finds parties with risk events (AML_EXIT or AML_SAR) with no transactions within the specified activity period or for 365 days prior to AML PROCESS START
+-- Tests: risk_case_event
+-- Description: Finds parties with risk events (AML_EXIT or AML_SAR) with no transactions within the specified activity period or for 365 days prior to AML PROCESS START
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

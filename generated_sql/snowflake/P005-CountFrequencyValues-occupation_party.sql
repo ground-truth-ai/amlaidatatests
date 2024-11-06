@@ -1,4 +1,7 @@
--- WHEN type='CONSUMER', check for more than 10% of parties with the same occupation. Warning.
+-- Tests: party.occupation
+-- Severity: WARN
+-- Description: WHEN type='CONSUMER', check for more than 10% of parties with the same occupation.
+-- Interpretation: When count > 0, verify birth_date is correctly mapped. Why are there so many consumer parties with the same value of occupation?
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

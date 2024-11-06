@@ -1,4 +1,6 @@
--- All values between 0 and +999,999,999 inclusive
+-- Tests: party.assets_value_range.start_amount.nanos
+-- Severity: ERROR
+-- Description: All values between 0 and +999,999,999 inclusive
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

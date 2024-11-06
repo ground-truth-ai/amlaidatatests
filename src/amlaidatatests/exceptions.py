@@ -17,6 +17,8 @@ class TestConfiguration:
     table: str
     column: str
     description: str
+    severity: Optional[str]
+    interpretation: Optional[str]
 
 
 def read_test_description_file() -> pd.DataFrame:
@@ -38,6 +40,10 @@ def get_test_configuration_file() -> dict[str, TestConfiguration]:
             description=row["description"],
             table=row["table"],
             column=row["column"],
+            severity=row["severity"] if row["severity"] != "" else None,
+            interpretation=(
+                row["interpretation"] if row["interpretation"] != "" else None
+            ),
         )
         configs[test.test_id] = test
     return configs

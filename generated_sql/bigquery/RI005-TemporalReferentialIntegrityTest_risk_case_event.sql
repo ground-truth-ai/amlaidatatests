@@ -1,8 +1,10 @@
--- All party_id in RiskCaseEvent exist in Party
+-- Tests: risk_case_event
+-- Severity: ERROR
+-- Description: All party_id in RiskCaseEvent exist in Party
 WITH `table` AS (
   SELECT
-    `t0`.`party_id`,
     `t0`.`risk_case_event_id`,
+    `t0`.`party_id`,
     `t0`.`event_time` AS `first_date`,
     `t0`.`event_time` AS `last_date`
   FROM `PLACEHOLDER`.`risk_case_event` AS `t0`
@@ -80,8 +82,8 @@ SELECT
   COUNT(*) AS `CountStar`
 FROM (
   SELECT
-    `t11`.`party_id`,
     `t11`.`risk_case_event_id`,
+    `t11`.`party_id`,
     `t11`.`first_date` AS `first_date_risk_case_event`,
     IF(`t11`.`last_date` = TIMESTAMP('9995-01-01T00:00:00+00:00'), NULL, `t11`.`last_date`) AS `last_date_risk_case_event`,
     `t11`.`party_id_right`,
@@ -93,8 +95,8 @@ FROM (
     ) AS `last_date_party`
   FROM (
     SELECT
-      `t4`.`party_id`,
       `t4`.`risk_case_event_id`,
+      `t4`.`party_id`,
       `t4`.`first_date`,
       `t4`.`last_date`,
       `t10`.`party_id` AS `party_id_right`,

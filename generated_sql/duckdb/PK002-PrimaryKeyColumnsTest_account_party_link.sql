@@ -1,4 +1,6 @@
--- check columns defined are a primary key on the table
+-- Tests: account_party_link
+-- Severity: ERROR
+-- Description: check columns defined are a primary key on the table
 SELECT
   COUNT(DISTINCT ("party_id", "account_id", "validity_start_time")) AS "unique_rows",
   COUNT(*) AS "count"

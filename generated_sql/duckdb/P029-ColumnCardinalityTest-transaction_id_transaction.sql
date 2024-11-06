@@ -1,4 +1,7 @@
--- Account and Counterparty pairs have many transactions. Warns at 1 million.
+-- Tests: transaction.transaction_id
+-- Severity: WARN
+-- Description: Account and Counterparty pairs have many transactions. Warns at 1 million.
+-- Interpretation: When count > 0, verify the transaction mapping. Why does a single account-counterparty pair have so many transactions?
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

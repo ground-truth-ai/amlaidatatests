@@ -1,4 +1,7 @@
--- Join date after establishment date for party
+-- Tests: party.join_date
+-- Severity: WARN
+-- Description: Join date before establishment date for party
+-- Interpretation: If matching_rows > 0, review matching parties. Why are there parties who joined the bank prior to their establishment?
 SELECT
   "t4"."total_rows",
   "t4"."matching_rows",

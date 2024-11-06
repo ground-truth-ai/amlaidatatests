@@ -1,4 +1,7 @@
--- WHEN type='CONSUMER', check for more than 1% of parties with the same birth_date. Warning.
+-- Tests: party.birth_date
+-- Severity: WARN
+-- Description: WHEN type='CONSUMER', check for more than 1% of parties with the same birth_date.
+-- Interpretation: When count > 0, verify birth_date is correctly mapped. Why are there so many consumer parties with the same value of birth_date?
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

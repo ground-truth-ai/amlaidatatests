@@ -1,4 +1,7 @@
--- Check not all parties have an AML_SAR
+-- Tests: risk_case_event.type
+-- Severity: ERROR
+-- Description: Check not all parties have an AML_SAR
+-- Interpretation: If proportion = 1, why do all parties have an AML_SAR?
 SELECT
   `t2`.`value_cnt`,
   `t2`.`group_count`,

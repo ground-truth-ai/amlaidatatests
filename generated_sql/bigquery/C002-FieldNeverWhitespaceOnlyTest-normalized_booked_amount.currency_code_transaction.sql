@@ -1,4 +1,6 @@
--- No empty strings in non-nullable fields
+-- Tests: transaction.normalized_booked_amount.currency_code
+-- Severity: WARN
+-- Description: No empty strings in non-nullable fields
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

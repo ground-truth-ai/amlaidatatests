@@ -1,4 +1,6 @@
--- No empty strings in non-nullable fields
+-- Tests: risk_case_event.risk_case_event_id
+-- Severity: WARN
+-- Description: No empty strings in non-nullable fields
 SELECT
   COUNT(*) AS `CountStar()`
 FROM (

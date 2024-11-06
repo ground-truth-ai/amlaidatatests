@@ -1,4 +1,7 @@
--- More than 1000 risk case events for a single party. Warning.
+-- Tests: risk_case_event.risk_case_event_id
+-- Severity: INFO
+-- Description: More than 1000 risk case events for a single party.
+-- Interpretation: When count > 1000, why are there so many risk case events for a single case?
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

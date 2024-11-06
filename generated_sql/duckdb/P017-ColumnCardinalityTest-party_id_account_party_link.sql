@@ -1,4 +1,7 @@
--- Check for parties linked to a erroneously high number of accounts. The API will not ingest more than 60000 links per account.
+-- Tests: account_party_link.party_id
+-- Severity: ERROR
+-- Description: Check for parties linked to a erroneously high number of accounts. The API will not ingest more than 60000 links per account.
+-- Interpretation: When count >= 1, check the account_party_link table. Why are there so many links for a single party?
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

@@ -1,4 +1,6 @@
--- All party_id in Party exist in AccountPartyLink
+-- Tests: party
+-- Severity: ERROR
+-- Description: All party_id in Party exist in AccountPartyLink
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

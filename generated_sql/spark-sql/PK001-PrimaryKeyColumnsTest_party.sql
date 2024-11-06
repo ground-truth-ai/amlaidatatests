@@ -1,4 +1,6 @@
--- check columns defined are a primary key on the table
+-- Tests: party
+-- Severity: ERROR
+-- Description: check columns defined are a primary key on the table
 SELECT
   COUNT(DISTINCT *) AS `unique_rows`,
   COUNT(*) AS `count`

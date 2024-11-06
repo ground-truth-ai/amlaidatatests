@@ -1,4 +1,7 @@
--- More than 40% of entities have is_entity_deleted = TRUE. Warning.
+-- Tests: account_party_link.is_entity_deleted
+-- Severity: WARN
+-- Description: More than 40% of entities have is_entity_deleted = TRUE.
+-- Interpretation: When count > 0, you should verify is_entity_deleted is correctly mapped. More than 40% of entities being deleted is a high number.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

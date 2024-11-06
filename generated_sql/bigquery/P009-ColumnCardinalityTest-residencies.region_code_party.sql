@@ -1,4 +1,7 @@
--- A party has more than 5 residencies. WARNING.
+-- Tests: party.residencies.region_code
+-- Severity: WARN
+-- Description: A party has more than 5 residencies.
+-- Interpretation: When count >= 5, verify residencies are populated as intended. More than 5 residencies for a single party is unusual.
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

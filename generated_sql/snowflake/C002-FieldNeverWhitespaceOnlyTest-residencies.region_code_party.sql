@@ -1,4 +1,6 @@
--- No empty strings in non-nullable fields
+-- Tests: party.residencies.region_code
+-- Severity: WARN
+-- Description: No empty strings in non-nullable fields
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -29,16 +31,16 @@ FROM (
         GREATEST(
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '7cfa040864b54188ba72b3b0050d1c76'),
-              '7cfa040864b54188ba72b3b0050d1c76'
+              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '9be4171a3342480689012fe9ec780c28'),
+              '9be4171a3342480689012fe9ec780c28'
             )
           )
         ) - 1
       ) + 1
     ))) AS _u(seq, key, path, index, pos, this)
     CROSS JOIN TABLE(FLATTEN(INPUT => SPLIT(
-      ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '7cfa040864b54188ba72b3b0050d1c76'),
-      '7cfa040864b54188ba72b3b0050d1c76'
+      ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '9be4171a3342480689012fe9ec780c28'),
+      '9be4171a3342480689012fe9ec780c28'
     ))) AS _u_2(seq, key, path, pos_2, "residencies", this)
     WHERE
       _u.pos = _u_2.pos_2
@@ -46,16 +48,16 @@ FROM (
         _u.pos > (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '7cfa040864b54188ba72b3b0050d1c76'),
-              '7cfa040864b54188ba72b3b0050d1c76'
+              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '9be4171a3342480689012fe9ec780c28'),
+              '9be4171a3342480689012fe9ec780c28'
             )
           ) - 1
         )
         AND _u_2.pos_2 = (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '7cfa040864b54188ba72b3b0050d1c76'),
-              '7cfa040864b54188ba72b3b0050d1c76'
+              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '9be4171a3342480689012fe9ec780c28'),
+              '9be4171a3342480689012fe9ec780c28'
             )
           ) - 1
         )
