@@ -1,5 +1,7 @@
 -- Tests: risk_case_event
+-- Severity: ERROR
 -- Description: Finds parties with risk events (AML_EXIT or AML_SAR) with no transactions within the specified activity period or for 365 days prior to AML PROCESS START
+-- Interpretation: When count > 0, why are there AML_EXIT or AML_SAR events without any associated transactional activity prior to the event for the party?
 SELECT
   COUNT(*) AS `CountStar`
 FROM (
@@ -11,8 +13,8 @@ FROM (
       COUNT(IF(`t12`.`transaction_id` IS NOT NULL, `t12`.`transaction_id`, NULL)) AS `txn_count`
     FROM (
       SELECT
-        `t11`.`account_id`,
         `t11`.`party_id`,
+        `t11`.`account_id`,
         `t11`.`first_date`,
         `t11`.`last_date`,
         `t7`.`risk_case_id`,
@@ -33,14 +35,14 @@ FROM (
         `t3`.`normalized_booked_amount`
       FROM (
         SELECT
-          `t9`.`account_id`,
           `t9`.`party_id`,
+          `t9`.`account_id`,
           MIN(`t9`.`first_date`) AS `first_date`,
           MAX(`t9`.`last_date`) AS `last_date`
         FROM (
           SELECT
-            `t8`.`account_id`,
             `t8`.`party_id`,
+            `t8`.`account_id`,
             MIN(`t8`.`validity_start_time`) AS `first_date`,
             MAX(
               IF(
@@ -56,8 +58,8 @@ FROM (
             ) AS `last_date`
           FROM (
             SELECT
-              `t5`.`account_id`,
               `t5`.`party_id`,
+              `t5`.`account_id`,
               `t5`.`validity_start_time`,
               `t5`.`is_entity_deleted`,
               `t5`.`previous_entity_deleted`,
@@ -72,13 +74,13 @@ FROM (
               ) AS `previous_row_validity_start_time`
             FROM (
               SELECT
-                `t2`.`account_id`,
                 `t2`.`party_id`,
+                `t2`.`account_id`,
                 `t2`.`validity_start_time`,
                 COALESCE(`t2`.`is_entity_deleted`, FALSE) AS `is_entity_deleted`,
-                LAG(COALESCE(`t2`.`is_entity_deleted`, FALSE)) OVER (PARTITION BY `t2`.`account_id`, `t2`.`party_id` ORDER BY `t2`.`validity_start_time` ASC) AS `previous_entity_deleted`,
-                LEAD(`t2`.`validity_start_time`) OVER (PARTITION BY `t2`.`account_id`, `t2`.`party_id` ORDER BY `t2`.`validity_start_time` ASC) AS `next_row_validity_start_time`,
-                LAG(`t2`.`validity_start_time`) OVER (PARTITION BY `t2`.`account_id`, `t2`.`party_id` ORDER BY `t2`.`validity_start_time` ASC) AS `previous_row_validity_start_time`
+                LAG(COALESCE(`t2`.`is_entity_deleted`, FALSE)) OVER (PARTITION BY `t2`.`party_id`, `t2`.`account_id` ORDER BY `t2`.`validity_start_time` ASC) AS `previous_entity_deleted`,
+                LEAD(`t2`.`validity_start_time`) OVER (PARTITION BY `t2`.`party_id`, `t2`.`account_id` ORDER BY `t2`.`validity_start_time` ASC) AS `next_row_validity_start_time`,
+                LAG(`t2`.`validity_start_time`) OVER (PARTITION BY `t2`.`party_id`, `t2`.`account_id` ORDER BY `t2`.`validity_start_time` ASC) AS `previous_row_validity_start_time`
               FROM `PLACEHOLDER`.`account_party_link` AS `t2`
             ) AS `t5`
             WHERE

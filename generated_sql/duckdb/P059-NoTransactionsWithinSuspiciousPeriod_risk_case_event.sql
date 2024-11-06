@@ -1,5 +1,7 @@
 -- Tests: risk_case_event
+-- Severity: ERROR
 -- Description: Finds parties with risk events (AML_EXIT or AML_SAR) with no transactions within the specified activity period or for 365 days prior to AML PROCESS START
+-- Interpretation: When count > 0, why are there AML_EXIT or AML_SAR events without any associated transactional activity prior to the event for the party?
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
