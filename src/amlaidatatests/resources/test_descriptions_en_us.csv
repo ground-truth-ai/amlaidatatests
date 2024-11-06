@@ -61,7 +61,7 @@ P053,RiskCaseEvent,risk_case_event_id,More than 5000 risk case events for a sing
 P054,RiskCaseEvent,risk_case_event_id,More than 1000 risk case events for a single case.,INFO,"When count > 1000, why are there so many risk case events for a single case?"
 P055,RiskCaseEvent,risk_case_event_id,More than 1000 risk case events for a single party.,INFO,"When count > 1000, why are there so many risk case events for a single case?"
 P056,RiskCaseEvent,risk_case_event_id,More than 5000 risk case events for a single party.,WARN,"When count > 5000, why are there so many risk case events for a single case?"
-P059,"Transaction, RiskCaseEvent","book_time,type",Finds parties with risk events (AML_EXIT or AML_SAR) with no transactions within the specified activity period or for 365 days prior to AML PROCESS START,,
+P059,"Transaction, RiskCaseEvent","book_time,type",Finds parties with risk events (AML_EXIT or AML_SAR) with no transactions within the specified activity period or for 365 days prior to AML PROCESS START,ERROR,"When count > 0, why are there risk exits or SARs with no transactions for a long time prior to the risk exit or SAR?"
 P060,RiskCaseEvent,type,>1 suspicious activity period start for party in risk case,ERROR,"When count > 1, fix for only one suspicious activity period start per case"
 P061,RiskCaseEvent,type,>1 suspicious activity period end for party in risk case,ERROR,"When count > 1, fix for only one suspicious activity period end per case"
 P062,RiskCaseEvent,type,Suspicious activity period end but no start for party in risk case,WARN,
