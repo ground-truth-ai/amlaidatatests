@@ -1,4 +1,7 @@
--- WHEN type='COMPANY', check for more than 1% of parties with the same establishment_date. Warning
+-- Tests: party.establishment_date
+-- Severity: WARN
+-- Description: WHEN type='COMPANY', check for more than 1% of parties with the same establishment_date.
+-- Interpretation: When count > 0, verify birth_date is correctly mapped. Why are there so many company parties with the same value of establishment_date?
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

@@ -1,4 +1,7 @@
--- WIRE type is completely missing from the transactions.
+-- Tests: transaction.type
+-- Severity: WARN
+-- Description: WIRE type is completely missing from the transactions.
+-- Interpretation: When matching_rows = 0, verify the lack of WIRE transactions. Why are there no WIRE transactions?
 SELECT
   `t4`.`total_rows`,
   `t4`.`matching_rows`,

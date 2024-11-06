@@ -1,4 +1,7 @@
--- WHEN type='CONSUMER', more than 5% of parties have no nationality
+-- Tests: party.nationalities
+-- Severity: WARN
+-- Description: WHEN type='CONSUMER', more than 5% of parties have no nationality
+-- Interpretation: When proportion >= 0.05, verify the intention not to populate nationality. Why do so many parties have no nationality?
 SELECT
   `t4`.`total_rows`,
   `t4`.`matching_rows`,

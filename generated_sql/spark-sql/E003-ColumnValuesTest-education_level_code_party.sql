@@ -1,4 +1,6 @@
--- Field is constrained to permitted enumerations
+-- Tests: party.education_level_code
+-- Severity: ERROR
+-- Description: Field is constrained to permitted enumerations
 SELECT
   COUNT(*) AS `CountStar()`
 FROM (

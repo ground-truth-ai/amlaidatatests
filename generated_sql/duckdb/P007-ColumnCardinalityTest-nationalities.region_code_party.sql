@@ -1,4 +1,7 @@
--- Check for parties with more than 5 nationalities
+-- Tests: party.nationalities.region_code
+-- Severity: WARN
+-- Description: Check for parties with more than 5 nationalities
+-- Interpretation: When count >= 5, verify nationalities are populated as intended. More than 5 nationalities for a single party is unusual.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

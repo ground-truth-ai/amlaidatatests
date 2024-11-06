@@ -1,4 +1,7 @@
--- Excessive distinct values of source_system. Warns above 500.
+-- Tests: transaction.source_system
+-- Severity: WARN
+-- Description: Excessive distinct values of source_system. Warns above 500.
+-- Interpretation: When count >= 500, check source system is not populated using party data. Why are there so many distinct values of source_system?
 WITH "t3" AS (
   SELECT
     *

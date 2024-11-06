@@ -1,4 +1,6 @@
--- No empty strings in non-nullable fields
+-- Tests: transaction.transaction_id
+-- Severity: WARN
+-- Description: No empty strings in non-nullable fields
 SELECT
   COUNT(*) AS `CountStar()`
 FROM (

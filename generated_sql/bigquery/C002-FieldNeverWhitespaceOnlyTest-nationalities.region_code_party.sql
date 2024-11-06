@@ -1,4 +1,6 @@
--- No empty strings in non-nullable fields
+-- Tests: party.nationalities.region_code
+-- Severity: WARN
+-- Description: No empty strings in non-nullable fields
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

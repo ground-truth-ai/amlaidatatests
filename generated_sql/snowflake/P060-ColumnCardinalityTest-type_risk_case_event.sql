@@ -1,4 +1,7 @@
--- >1 suspicious activity period start for party in risk case
+-- Tests: risk_case_event.type
+-- Severity: ERROR
+-- Description: >1 suspicious activity period start for party in risk case
+-- Interpretation: When count > 1, fix for only one suspicious activity period start per case
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

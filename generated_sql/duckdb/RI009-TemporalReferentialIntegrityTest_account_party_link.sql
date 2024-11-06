@@ -1,4 +1,6 @@
--- All party_id in Party exist in AccountPartyLink with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
+-- Tests: account_party_link
+-- Severity: ERROR
+-- Description: All party_id in Party exist in AccountPartyLink with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
 WITH "table" AS (
   SELECT
     "t6"."party_id",

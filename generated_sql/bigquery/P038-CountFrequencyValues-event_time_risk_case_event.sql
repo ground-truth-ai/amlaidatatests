@@ -1,4 +1,7 @@
--- Many risk case events have the same event_time
+-- Tests: risk_case_event.event_time
+-- Severity: WARN
+-- Description: Many risk case events have the same event_time
+-- Interpretation: When count > 0, why are there so many risk_case_events with the same event_time?
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

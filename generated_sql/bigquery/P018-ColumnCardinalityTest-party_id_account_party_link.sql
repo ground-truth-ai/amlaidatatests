@@ -1,4 +1,7 @@
--- Check for parties linked to a erroneously high number of accounts. Warning only.
+-- Tests: account_party_link.party_id
+-- Severity: WARN
+-- Description: Check for parties linked to a erroneously high number of accounts. Warning only.
+-- Interpretation: When count >= 1, check the account_party_link table. Why are there so many links for a single party?
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

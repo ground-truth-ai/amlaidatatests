@@ -1,4 +1,7 @@
--- More than 20% of accounts in the dataset have no transactions at all.
+-- Tests: account_party_link
+-- Severity: WARN
+-- Description: More than 50% of accounts in the dataset have no transactions at all.
+-- Interpretation: When proportion > 0.5, verify the accounts have all their transactions. Why are there so many accounts with no transactions?
 WITH `t3` AS (
   SELECT
     `t1`.`account_id`

@@ -1,4 +1,7 @@
--- More than 1% of transactions have the same book_time.
+-- Tests: transaction.book_time
+-- Severity: INFO
+-- Description: More than 1% of transactions have the same book_time.
+-- Interpretation: When count > 0, verify book_time mapping. Why do so many transactions have the same book_time?
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

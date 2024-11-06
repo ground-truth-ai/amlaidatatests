@@ -1,4 +1,7 @@
--- WHEN type='COMPANY', check no occupation specified
+-- Tests: party.occupation
+-- Severity: ERROR
+-- Description: WHEN type='COMPANY', check no occupation specified
+-- Interpretation: If count > 0, why are there companies with an occupation specified?
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

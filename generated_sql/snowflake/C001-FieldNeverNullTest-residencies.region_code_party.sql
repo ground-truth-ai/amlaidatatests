@@ -1,4 +1,6 @@
--- No nulls for non-nullable columns
+-- Tests: party.residencies.region_code
+-- Severity: ERROR
+-- Description: No nulls for non-nullable columns
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -29,16 +31,16 @@ FROM (
         GREATEST(
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), 'd9eef68dbaf94e7f982a3bd8a9a6008c'),
-              'd9eef68dbaf94e7f982a3bd8a9a6008c'
+              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '23a5d74bb6a14500896dbcd7068b57ad'),
+              '23a5d74bb6a14500896dbcd7068b57ad'
             )
           )
         ) - 1
       ) + 1
     ))) AS _u(seq, key, path, index, pos, this)
     CROSS JOIN TABLE(FLATTEN(INPUT => SPLIT(
-      ARRAY_TO_STRING(NULLIF("t0"."residencies", []), 'd9eef68dbaf94e7f982a3bd8a9a6008c'),
-      'd9eef68dbaf94e7f982a3bd8a9a6008c'
+      ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '23a5d74bb6a14500896dbcd7068b57ad'),
+      '23a5d74bb6a14500896dbcd7068b57ad'
     ))) AS _u_2(seq, key, path, pos_2, "residencies", this)
     WHERE
       _u.pos = _u_2.pos_2
@@ -46,16 +48,16 @@ FROM (
         _u.pos > (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), 'd9eef68dbaf94e7f982a3bd8a9a6008c'),
-              'd9eef68dbaf94e7f982a3bd8a9a6008c'
+              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '23a5d74bb6a14500896dbcd7068b57ad'),
+              '23a5d74bb6a14500896dbcd7068b57ad'
             )
           ) - 1
         )
         AND _u_2.pos_2 = (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), 'd9eef68dbaf94e7f982a3bd8a9a6008c'),
-              'd9eef68dbaf94e7f982a3bd8a9a6008c'
+              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '23a5d74bb6a14500896dbcd7068b57ad'),
+              '23a5d74bb6a14500896dbcd7068b57ad'
             )
           ) - 1
         )

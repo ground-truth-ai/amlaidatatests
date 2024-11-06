@@ -1,4 +1,6 @@
--- All party_id in RiskCaseEvent exist in Party with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
+-- Tests: risk_case_event
+-- Severity: ERROR
+-- Description: All party_id in RiskCaseEvent exist in Party with valid time ranges. No inconsistencies with validity_start_time or is_entity_deleted detected
 WITH "table" AS (
   SELECT
     "t0"."risk_case_event_id",

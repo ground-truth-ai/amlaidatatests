@@ -1,4 +1,6 @@
--- Same number of supplementary_data_id for each customer
+-- Tests: party_supplementary_data.party_id
+-- Severity: ERROR
+-- Description: Same number of party_supplementary_data_id for each customer
 SELECT
   COUNT(DISTINCT "t5"."ids") AS "CountDistinct(ids)"
 FROM (
@@ -8,7 +10,8 @@ FROM (
   FROM (
     SELECT
       "t3"."party_id" AS "by",
-      ARRAY_AGG("t3"."party_supplementary_data_id") AS "ids"
+      ARRAY_AGG("t3"."party_supplementary_data_id") FILTER(WHERE
+        "t3"."party_supplementary_data_id" IS NOT NULL) AS "ids"
     FROM (
       SELECT
         *
@@ -20,7 +23,7 @@ FROM (
           "t1"."source_system",
           "t1"."party_id",
           "t1"."supplementary_data_payload",
-          ROW_NUMBER() OVER (PARTITION BY "t1"."party_id", "t1"."party_supplementary_data_id" ORDER BY "t1"."validity_start_time" DESC NULLS LAST) - 1 AS "row_num"
+          ROW_NUMBER() OVER (PARTITION BY "t1"."party_id", "t1"."party_supplementary_data_id" ORDER BY "t1"."validity_start_time" DESC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) - 1 AS "row_num"
         FROM (
           SELECT
             *

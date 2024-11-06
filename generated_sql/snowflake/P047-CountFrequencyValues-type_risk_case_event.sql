@@ -1,4 +1,7 @@
--- <=1 AML_EXIT per risk_case_id and party_id
+-- Tests: risk_case_event.type
+-- Severity: ERROR
+-- Description: <=1 AML_EXIT per risk_case_id and party_id
+-- Interpretation: If count > 0, there should only at most 1 AML_EXIT for each risk_case_id and party_id
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

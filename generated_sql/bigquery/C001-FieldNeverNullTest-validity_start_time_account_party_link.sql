@@ -1,4 +1,6 @@
--- No nulls for non-nullable columns
+-- Tests: account_party_link.validity_start_time
+-- Severity: ERROR
+-- Description: No nulls for non-nullable columns
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

@@ -1,4 +1,7 @@
--- >= 1 month has a transaction volume of less than 40% of the monthly average by volume. Warning.
+-- Tests: transaction.book_time
+-- Severity: INFO
+-- Description: >= 1 month has a transaction volume of less than 40% of the monthly average by volume.
+-- Interpretation: When count > 0, verify transactions are complete for all months. Why is there a substantial difference in transaction volumes across months?
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

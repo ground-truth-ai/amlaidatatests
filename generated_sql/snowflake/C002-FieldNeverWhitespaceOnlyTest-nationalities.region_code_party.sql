@@ -1,4 +1,6 @@
--- No empty strings in non-nullable fields
+-- Tests: party.nationalities.region_code
+-- Severity: WARN
+-- Description: No empty strings in non-nullable fields
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -29,16 +31,16 @@ FROM (
         GREATEST(
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), '393fcd2ba113490b98fbc7a24800a7bd'),
-              '393fcd2ba113490b98fbc7a24800a7bd'
+              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), '5e38d5997876453bae8beedf61eca016'),
+              '5e38d5997876453bae8beedf61eca016'
             )
           )
         ) - 1
       ) + 1
     ))) AS _u(seq, key, path, index, pos, this)
     CROSS JOIN TABLE(FLATTEN(INPUT => SPLIT(
-      ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), '393fcd2ba113490b98fbc7a24800a7bd'),
-      '393fcd2ba113490b98fbc7a24800a7bd'
+      ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), '5e38d5997876453bae8beedf61eca016'),
+      '5e38d5997876453bae8beedf61eca016'
     ))) AS _u_2(seq, key, path, pos_2, "nationalities", this)
     WHERE
       _u.pos = _u_2.pos_2
@@ -46,16 +48,16 @@ FROM (
         _u.pos > (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), '393fcd2ba113490b98fbc7a24800a7bd'),
-              '393fcd2ba113490b98fbc7a24800a7bd'
+              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), '5e38d5997876453bae8beedf61eca016'),
+              '5e38d5997876453bae8beedf61eca016'
             )
           ) - 1
         )
         AND _u_2.pos_2 = (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), '393fcd2ba113490b98fbc7a24800a7bd'),
-              '393fcd2ba113490b98fbc7a24800a7bd'
+              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), '5e38d5997876453bae8beedf61eca016'),
+              '5e38d5997876453bae8beedf61eca016'
             )
           ) - 1
         )

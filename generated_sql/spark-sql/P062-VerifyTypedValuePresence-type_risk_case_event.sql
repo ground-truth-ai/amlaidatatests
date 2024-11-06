@@ -1,4 +1,6 @@
--- Suspicious activity period end but no start for party in risk case
+-- Tests: risk_case_event.type
+-- Severity: WARN
+-- Description: Suspicious activity period end but no start for party in risk case
 SELECT
   `t2`.`value_cnt`,
   `t2`.`group_count`,

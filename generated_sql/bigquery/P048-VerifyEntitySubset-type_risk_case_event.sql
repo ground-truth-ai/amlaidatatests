@@ -1,4 +1,7 @@
--- All AML_EXIT events have AML_PROCESS_START for same risk_case_id and party_id
+-- Tests: risk_case_event.type
+-- Severity: ERROR
+-- Description: All AML_EXIT events have AML_PROCESS_START for same risk_case_id and party_id
+-- Interpretation: If count > 0, ensure all cases with an AML_EXIT have an AML_PROCESS_START record for the same party_id and risk_case_id.
 SELECT
   COUNT(*) AS `count`
 FROM (

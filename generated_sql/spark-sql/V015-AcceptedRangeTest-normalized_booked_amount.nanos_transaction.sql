@@ -1,4 +1,7 @@
--- Check all are positive or zero
+-- Tests: transaction.normalized_booked_amount.nanos
+-- Severity: ERROR
+-- Description: Check all are positive or zero
+-- Interpretation: Both nanos and units must be positive or zero
 SELECT
   COUNT(*) AS `CountStar()`
 FROM (

@@ -1,4 +1,6 @@
--- Field is constrained to permitted enumerations
+-- Tests: account_party_link.role
+-- Severity: ERROR
+-- Description: Field is constrained to permitted enumerations
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

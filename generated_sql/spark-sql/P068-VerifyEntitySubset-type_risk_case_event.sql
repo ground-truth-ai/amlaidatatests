@@ -1,4 +1,7 @@
--- All AML_SAR events have AML_PROCESS_START for same risk_case_id and party_id
+-- Tests: risk_case_event.type
+-- Severity: ERROR
+-- Description: All AML_SAR events have AML_PROCESS_START for same risk_case_id and party_id
+-- Interpretation: If count > 0, ensure all cases with an AML_SAR have an AML_PROCESS_START record
 SELECT
   COUNT(*) AS `count`
 FROM (

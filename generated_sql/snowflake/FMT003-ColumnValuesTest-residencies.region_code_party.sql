@@ -1,4 +1,6 @@
--- Valid two-letter unicode format
+-- Tests: party.residencies.region_code
+-- Severity: ERROR
+-- Description: Valid two-letter unicode CIDR format
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -29,16 +31,16 @@ FROM (
         GREATEST(
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), 'a789ed43da0e4755a42fd315bae35c0e'),
-              'a789ed43da0e4755a42fd315bae35c0e'
+              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), 'a09bf88eca0840f397af5487885eff2e'),
+              'a09bf88eca0840f397af5487885eff2e'
             )
           )
         ) - 1
       ) + 1
     ))) AS _u(seq, key, path, index, pos, this)
     CROSS JOIN TABLE(FLATTEN(INPUT => SPLIT(
-      ARRAY_TO_STRING(NULLIF("t0"."residencies", []), 'a789ed43da0e4755a42fd315bae35c0e'),
-      'a789ed43da0e4755a42fd315bae35c0e'
+      ARRAY_TO_STRING(NULLIF("t0"."residencies", []), 'a09bf88eca0840f397af5487885eff2e'),
+      'a09bf88eca0840f397af5487885eff2e'
     ))) AS _u_2(seq, key, path, pos_2, "residencies", this)
     WHERE
       _u.pos = _u_2.pos_2
@@ -46,16 +48,16 @@ FROM (
         _u.pos > (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), 'a789ed43da0e4755a42fd315bae35c0e'),
-              'a789ed43da0e4755a42fd315bae35c0e'
+              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), 'a09bf88eca0840f397af5487885eff2e'),
+              'a09bf88eca0840f397af5487885eff2e'
             )
           ) - 1
         )
         AND _u_2.pos_2 = (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), 'a789ed43da0e4755a42fd315bae35c0e'),
-              'a789ed43da0e4755a42fd315bae35c0e'
+              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), 'a09bf88eca0840f397af5487885eff2e'),
+              'a09bf88eca0840f397af5487885eff2e'
             )
           ) - 1
         )

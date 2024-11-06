@@ -1,4 +1,6 @@
--- Valid two-letter unicode format
+-- Tests: party.nationalities.region_code
+-- Severity: ERROR
+-- Description: Valid two-letter unicode CIDR format
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -29,16 +31,16 @@ FROM (
         GREATEST(
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), '788446756d714075a8832188d53bda4e'),
-              '788446756d714075a8832188d53bda4e'
+              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), 'c1e3b998c80c4c6a840e42eaf36b33e7'),
+              'c1e3b998c80c4c6a840e42eaf36b33e7'
             )
           )
         ) - 1
       ) + 1
     ))) AS _u(seq, key, path, index, pos, this)
     CROSS JOIN TABLE(FLATTEN(INPUT => SPLIT(
-      ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), '788446756d714075a8832188d53bda4e'),
-      '788446756d714075a8832188d53bda4e'
+      ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), 'c1e3b998c80c4c6a840e42eaf36b33e7'),
+      'c1e3b998c80c4c6a840e42eaf36b33e7'
     ))) AS _u_2(seq, key, path, pos_2, "nationalities", this)
     WHERE
       _u.pos = _u_2.pos_2
@@ -46,16 +48,16 @@ FROM (
         _u.pos > (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), '788446756d714075a8832188d53bda4e'),
-              '788446756d714075a8832188d53bda4e'
+              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), 'c1e3b998c80c4c6a840e42eaf36b33e7'),
+              'c1e3b998c80c4c6a840e42eaf36b33e7'
             )
           ) - 1
         )
         AND _u_2.pos_2 = (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), '788446756d714075a8832188d53bda4e'),
-              '788446756d714075a8832188d53bda4e'
+              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), 'c1e3b998c80c4c6a840e42eaf36b33e7'),
+              'c1e3b998c80c4c6a840e42eaf36b33e7'
             )
           ) - 1
         )

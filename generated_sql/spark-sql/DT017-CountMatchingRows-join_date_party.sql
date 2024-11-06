@@ -1,4 +1,7 @@
--- Earliest validity_start_time for party is after the join_date
+-- Tests: party.join_date
+-- Severity: WARN
+-- Description: Earliest validity_start_time for party is after the join_date
+-- Interpretation: If matching_rows > 0, review matching parties. Why are there parties with a validity_start_time before they joined the bank?
 SELECT
   `t4`.`total_rows`,
   `t4`.`matching_rows`,

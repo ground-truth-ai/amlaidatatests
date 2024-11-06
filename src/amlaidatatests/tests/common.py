@@ -1044,10 +1044,6 @@ class EventOrder(AbstractColumnTest):
         self.events = events
         self.group_by = group_by
 
-    @property
-    def id(self):
-        return self.column
-
     def _test(self, *, connection: BaseBackend):
         # Allow callable to be passed in for expressions which cannot be generated at
         # runtime
@@ -1473,10 +1469,6 @@ class ConsistentIDsPerColumn(AbstractColumnTest):
             table_config=table_config, column=column, severity=severity, test_id=test_id
         )
         self.id_to_verify = id_to_verify
-
-    @property
-    def id(self):
-        return self.column
 
     def _test(self, *, connection: BaseBackend):
         # Allow callable to be passed in for expressions which cannot be generated at

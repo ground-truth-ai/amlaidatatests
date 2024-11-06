@@ -1,4 +1,7 @@
--- More than 1% of the fields in this table have the same validity_start_time. Warning.
+-- Tests: account_party_link.validity_start_time
+-- Severity: WARN
+-- Description: More than 1% of the fields in this table have the same validity_start_time.
+-- Interpretation: When count > 0, you should verify the validity_start_time is correctly mapped. why is there a very common value?
 SELECT
   COUNT(*) AS `CountStar()`
 FROM (

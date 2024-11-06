@@ -1,4 +1,6 @@
--- Valid two-letter unicode format
+-- Tests: party.nationalities.region_code
+-- Severity: ERROR
+-- Description: Valid two-letter unicode CIDR format
 SELECT
   COUNT(*) AS `CountStar()`
 FROM (

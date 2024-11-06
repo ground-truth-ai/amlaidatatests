@@ -1,4 +1,6 @@
--- All party_id in RiskCaseEvent exist in Party
+-- Tests: risk_case_event
+-- Severity: ERROR
+-- Description: All party_id in RiskCaseEvent exist in Party
 WITH "table" AS (
   SELECT
     "t0"."risk_case_event_id",

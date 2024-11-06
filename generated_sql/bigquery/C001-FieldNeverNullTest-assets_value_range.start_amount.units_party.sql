@@ -1,4 +1,6 @@
--- No nulls for non-nullable columns
+-- Tests: party.assets_value_range.start_amount.units
+-- Severity: ERROR
+-- Description: No nulls for non-nullable columns
 SELECT
   COUNT(*) AS `CountStar`
 FROM (
