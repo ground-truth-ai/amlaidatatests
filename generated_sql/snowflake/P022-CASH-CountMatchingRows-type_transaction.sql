@@ -1,4 +1,7 @@
--- CASH type is completely missing from the transactions.
+-- Tests: transaction.type
+-- Severity: WARN
+-- Description: CASH type is completely missing from the transactions.
+-- Interpretation: When matching_rows = 0, verify the lack of CASH transactions. Why are there no CASH transactions?
 SELECT
   "t4"."total_rows",
   "t4"."matching_rows",

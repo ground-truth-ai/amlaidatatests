@@ -1,4 +1,6 @@
--- check for consecutive is_entity_deleted values for the same PK
+-- Tests: transaction
+-- Severity: WARN
+-- Description: check for consecutive is_entity_deleted values for the same PK
 SELECT
   COUNT_IF("t2"."count_per_pk" > 0) AS "CountStar(Greater(count_per_pk, 0))"
 FROM (

@@ -1,4 +1,7 @@
--- All AML_SAR and AML_EXIT events have AML_PROCESS_START for same risk_case_id and party_id
+-- Tests: risk_case_event.type
+-- Severity: ERROR
+-- Description: All AML_SAR and AML_EXIT events have AML_PROCESS_START for same risk_case_id and party_id
+-- Interpretation: If proportion < 1, ensure that all AML_SAR and AML_EXITS have a  AML_PROCESS_START for the model to learn from
 SELECT
   `t2`.`value_cnt`,
   `t2`.`group_count`,

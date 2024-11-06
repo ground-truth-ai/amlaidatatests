@@ -1,4 +1,6 @@
--- No nulls for non-nullable columns
+-- Tests: transaction.normalized_booked_amount.nanos
+-- Severity: ERROR
+-- Description: No nulls for non-nullable columns
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

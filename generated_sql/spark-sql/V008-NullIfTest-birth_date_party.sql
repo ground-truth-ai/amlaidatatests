@@ -1,4 +1,7 @@
--- WHEN type='COMPANY', check no birth_date specified
+-- Tests: party.birth_date
+-- Severity: ERROR
+-- Description: WHEN type='COMPANY', check no birth_date specified
+-- Interpretation: If count > 0, why are the companies with a birth_date specified?
 SELECT
   COUNT(*) AS `CountStar()`
 FROM (

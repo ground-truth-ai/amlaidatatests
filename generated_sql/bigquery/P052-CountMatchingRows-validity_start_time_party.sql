@@ -1,4 +1,7 @@
--- More than 10% of transactions have book_time with a round hour or half hour except 00:00:00. Common indicator of a datetime mapping from a source system in a different timezone e.g. transactions book_time=23:30:00 could be assigned to the wrong day.
+-- Tests: party.validity_start_time
+-- Severity: WARN
+-- Description: More than 10% of transactions have book_time with a round hour or half hour except 00:00:00. Common indicator of a datetime mapping from a source system in a different timezone e.g. transactions book_time=23:30:00 could be assigned to the wrong day.
+-- Interpretation: When proportion > 0.10, you should verify timestamps are being correctly mapped. Why are there so many timestamps which are not at midnight but are at exactly a round hour or half hour?
 SELECT
   `t4`.`total_rows`,
   `t4`.`matching_rows`,

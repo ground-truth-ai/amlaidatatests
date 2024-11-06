@@ -1,4 +1,7 @@
--- Check for more than 75% of parties with the same civil_status_code. Warning.
+-- Tests: party.civil_status_code
+-- Severity: WARN
+-- Description: Check for more than 75% of parties with the same civil_status_code. Warning.
+-- Interpretation: When count >= 1, check civil_status_code is correctly mapped as intended.
 SELECT
   COUNT(*) AS `CountStar()`
 FROM (

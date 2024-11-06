@@ -1,4 +1,7 @@
--- Check the overall ratio of CREDITs to DEBITs by count of transaction_id in this dataset. Warns if the ratio of one direction is more than 80%.
+-- Tests: transaction.direction
+-- Severity: INFO
+-- Description: Check the overall ratio of CREDITs to DEBITs by count of transaction_id in this dataset. Warns if the ratio of one direction is more than 80%.
+-- Interpretation: When proportion > 0.8 or proportion < 0.2, verify the the imbalanced ratio. Why is there a significant imbalance?
 SELECT
   `t4`.`value_cnt`,
   `t4`.`group_count`,

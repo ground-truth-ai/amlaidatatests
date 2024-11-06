@@ -1,4 +1,6 @@
--- All account_id in Transaction exist in AccountPartyLink
+-- Tests: transaction
+-- Severity: ERROR
+-- Description: All account_id in Transaction exist in AccountPartyLink
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

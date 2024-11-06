@@ -1,4 +1,6 @@
--- No nulls for non-nullable columns
+-- Tests: party.nationalities.region_code
+-- Severity: ERROR
+-- Description: No nulls for non-nullable columns
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -29,16 +31,16 @@ FROM (
         GREATEST(
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), '3738bacd1c9e4239b6f54ac088b80fd4'),
-              '3738bacd1c9e4239b6f54ac088b80fd4'
+              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), 'ea59531d8afd414c8c27a6127628536e'),
+              'ea59531d8afd414c8c27a6127628536e'
             )
           )
         ) - 1
       ) + 1
     ))) AS _u(seq, key, path, index, pos, this)
     CROSS JOIN TABLE(FLATTEN(INPUT => SPLIT(
-      ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), '3738bacd1c9e4239b6f54ac088b80fd4'),
-      '3738bacd1c9e4239b6f54ac088b80fd4'
+      ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), 'ea59531d8afd414c8c27a6127628536e'),
+      'ea59531d8afd414c8c27a6127628536e'
     ))) AS _u_2(seq, key, path, pos_2, "nationalities", this)
     WHERE
       _u.pos = _u_2.pos_2
@@ -46,16 +48,16 @@ FROM (
         _u.pos > (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), '3738bacd1c9e4239b6f54ac088b80fd4'),
-              '3738bacd1c9e4239b6f54ac088b80fd4'
+              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), 'ea59531d8afd414c8c27a6127628536e'),
+              'ea59531d8afd414c8c27a6127628536e'
             )
           ) - 1
         )
         AND _u_2.pos_2 = (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), '3738bacd1c9e4239b6f54ac088b80fd4'),
-              '3738bacd1c9e4239b6f54ac088b80fd4'
+              ARRAY_TO_STRING(NULLIF("t0"."nationalities", []), 'ea59531d8afd414c8c27a6127628536e'),
+              'ea59531d8afd414c8c27a6127628536e'
             )
           ) - 1
         )

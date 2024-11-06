@@ -1,4 +1,6 @@
--- All party_id in PartySupplementaryData (if supplied) exist in Party
+-- Tests: party_supplementary_data
+-- Severity: ERROR
+-- Description: All party_id in PartySupplementaryData (if supplied) exist in Party
 SELECT
   COUNT(*) AS `CountStar()`
 FROM (

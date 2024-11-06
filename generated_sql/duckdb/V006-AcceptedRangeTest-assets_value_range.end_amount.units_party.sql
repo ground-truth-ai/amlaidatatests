@@ -1,4 +1,6 @@
--- Check all are positive or zero
+-- Tests: party.assets_value_range.end_amount.units
+-- Severity: ERROR
+-- Description: Check all are positive or zero
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

@@ -1,4 +1,6 @@
--- Same number of supplementary_data_id for each customer
+-- Tests: party_supplementary_data.party_id
+-- Severity: ERROR
+-- Description: Same number of party_supplementary_data_id for each customer
 SELECT
   COUNT(DISTINCT `t5`.`ids`) AS `CountDistinct(ids)`
 FROM (

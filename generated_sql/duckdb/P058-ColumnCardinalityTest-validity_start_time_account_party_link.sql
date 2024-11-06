@@ -1,4 +1,7 @@
--- An entity has more than 10000 validity_start_time changes. Error.
+-- Tests: account_party_link.validity_start_time
+-- Severity: ERROR
+-- Description: An entity has more than 10000 validity_start_time changes.
+-- Interpretation: When count > 0, you should verify the number of changes to an entity being passed to the API is correct. Why are there so many changes for these entities?
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

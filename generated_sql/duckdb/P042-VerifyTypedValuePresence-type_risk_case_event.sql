@@ -1,4 +1,7 @@
--- Check not all parties have an AML_EXIT
+-- Tests: risk_case_event.type
+-- Severity: ERROR
+-- Description: Check not all parties have an AML_EXIT
+-- Interpretation: If proportion = 1, why do all parties have an AML_EXIT?
 SELECT
   "t2"."value_cnt",
   "t2"."group_count",

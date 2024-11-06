@@ -1,4 +1,6 @@
--- No empty strings in non-nullable fields
+-- Tests: party.assets_value_range.end_amount.currency_code
+-- Severity: WARN
+-- Description: No empty strings in non-nullable fields
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

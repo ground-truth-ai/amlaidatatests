@@ -1,4 +1,6 @@
--- No nulls for non-nullable columns
+-- Tests: party_supplementary_data.supplementary_data_payload.value
+-- Severity: ERROR
+-- Description: No nulls for non-nullable columns
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

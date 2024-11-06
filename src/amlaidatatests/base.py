@@ -415,12 +415,33 @@ class AbstractTableTest(AbstractBaseTest):
                     connection_string = cfg().get("connection_string")
                     result = urlparse(connection_string)
 
-                    # Write the test description to the top of the file as a comment
+                    # 1: Write the table/column this test
+                    if isinstance(self, AbstractColumnTest):
+                        f.write(
+                            f"-- Tests: {self.table_config.name}.{self.column}\n".encode(
+                                "utf-8"
+                            )
+                        )
+                    else:
+                        f.write(f"-- Tests: {self.table_config.name}\n".encode("utf-8"))
+
+                    if test_configuration.severity:
+                        f.write(
+                            f"-- Severity: {test_configuration.severity}\n".encode(
+                                "utf-8"
+                            )
+                        )
                     f.write(
-                        f"-- {get_test_failure_descriptions(self.test_id)}\n".encode(
+                        f"-- Description: {test_configuration.description}\n".encode(
                             "utf-8"
                         )
                     )
+                    if test_configuration.interpretation:
+                        f.write(
+                            f"-- Interpretation: {test_configuration.interpretation}\n".encode(
+                                "utf-8"
+                            )
+                        )
                     # Important to get the dialect here **from the connection string**
                     # since the dryrun mode sets the internal configuration
                     f.write(

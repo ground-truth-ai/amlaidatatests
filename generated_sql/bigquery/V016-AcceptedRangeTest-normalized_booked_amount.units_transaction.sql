@@ -1,4 +1,6 @@
--- Check all are positive or zero
+-- Tests: transaction.normalized_booked_amount.units
+-- Severity: ERROR
+-- Description: All values between 0 and +999,999,999 inclusive
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

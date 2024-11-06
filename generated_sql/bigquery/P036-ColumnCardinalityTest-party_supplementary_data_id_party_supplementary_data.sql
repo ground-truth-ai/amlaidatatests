@@ -1,4 +1,7 @@
--- LTE 100 supplementary_data_id for each customer
+-- Tests: party_supplementary_data.party_supplementary_data_id
+-- Severity: ERROR
+-- Description: LTE 100 supplementary_data_id for each customer
+-- Interpretation: When count > 0, verify there are less than 100 party_supplementary_data_ids for each customer.
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

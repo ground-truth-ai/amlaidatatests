@@ -1,4 +1,7 @@
--- >= 1 month has a transaction volume of less than 66% the monthly average by volume. Error.
+-- Tests: transaction.book_time
+-- Severity: WARN
+-- Description: >= 1 month has a transaction volume of less than 66% the monthly average by volume.
+-- Interpretation: When count > 0, verify transactions are complete for all months. Why is there a substantial difference in transaction volumes between months?
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

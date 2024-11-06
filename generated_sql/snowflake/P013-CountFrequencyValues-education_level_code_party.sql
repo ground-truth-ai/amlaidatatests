@@ -1,4 +1,7 @@
--- Check for more than 75% of parties with the same education_level_code. Warning.
+-- Tests: party.education_level_code
+-- Severity: WARN
+-- Description: Check for more than 75% of parties with the same education_level_code. Warning.
+-- Interpretation: When count >= 1, check education_level_code is correctly mapped as intended.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

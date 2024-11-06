@@ -1,4 +1,6 @@
--- Field is constrained to permitted enumerations
+-- Tests: risk_case_event.type
+-- Severity: ERROR
+-- Description: Field is constrained to permitted enumerations
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

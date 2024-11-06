@@ -1,4 +1,7 @@
--- All values are before the interval end date (if provided) and before today's date
+-- Tests: party.join_date
+-- Severity: ERROR
+-- Description: All values are before the interval end date (if provided) and before today's date
+-- Interpretation: If matching_rows > 0, fix validity_start_time after today
 SELECT
   "t4"."total_rows",
   "t4"."matching_rows",

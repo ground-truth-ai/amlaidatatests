@@ -1,4 +1,6 @@
--- No nulls for non-nullable columns
+-- Tests: party.type
+-- Severity: ERROR
+-- Description: No nulls for non-nullable columns
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

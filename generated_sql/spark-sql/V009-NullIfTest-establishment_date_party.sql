@@ -1,4 +1,7 @@
--- WHEN type='CONSUMER', check no establishment_date specified
+-- Tests: party.establishment_date
+-- Severity: ERROR
+-- Description: WHEN type='CONSUMER', check no establishment_date specified
+-- Interpretation: If count > 0, why are the consumers with an establishment_date specified?
 SELECT
   COUNT(*) AS `CountStar()`
 FROM (

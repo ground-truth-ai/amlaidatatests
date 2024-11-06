@@ -1,4 +1,7 @@
--- WHEN type='COMPANY', check no gender specified
+-- Tests: party.gender
+-- Severity: ERROR
+-- Description: WHEN type='COMPANY', check no gender specified
+-- Interpretation: If count > 0, why are there companies with a gender specified?
 SELECT
   COUNT(*) AS `CountStar`
 FROM (

@@ -1,4 +1,7 @@
--- Check for parties with more than 5 nationalities
+-- Tests: party.nationalities.region_code
+-- Severity: WARN
+-- Description: Check for parties with more than 5 nationalities
+-- Interpretation: When count >= 5, verify nationalities are populated as intended. More than 5 nationalities for a single party is unusual.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (
@@ -69,16 +72,16 @@ FROM (
             GREATEST(
               ARRAY_SIZE(
                 SPLIT(
-                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), '108a60e8758d4e6cb801c2e0365bf382'),
-                  '108a60e8758d4e6cb801c2e0365bf382'
+                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), 'b0495970e5ba4a93b1bdc924dcd2dd61'),
+                  'b0495970e5ba4a93b1bdc924dcd2dd61'
                 )
               )
             ) - 1
           ) + 1
         ))) AS _u(seq, key, path, index, pos, this)
         CROSS JOIN TABLE(FLATTEN(INPUT => SPLIT(
-          ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), '108a60e8758d4e6cb801c2e0365bf382'),
-          '108a60e8758d4e6cb801c2e0365bf382'
+          ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), 'b0495970e5ba4a93b1bdc924dcd2dd61'),
+          'b0495970e5ba4a93b1bdc924dcd2dd61'
         ))) AS _u_2(seq, key, path, pos_2, "nationalities", this)
         WHERE
           _u.pos = _u_2.pos_2
@@ -86,16 +89,16 @@ FROM (
             _u.pos > (
               ARRAY_SIZE(
                 SPLIT(
-                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), '108a60e8758d4e6cb801c2e0365bf382'),
-                  '108a60e8758d4e6cb801c2e0365bf382'
+                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), 'b0495970e5ba4a93b1bdc924dcd2dd61'),
+                  'b0495970e5ba4a93b1bdc924dcd2dd61'
                 )
               ) - 1
             )
             AND _u_2.pos_2 = (
               ARRAY_SIZE(
                 SPLIT(
-                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), '108a60e8758d4e6cb801c2e0365bf382'),
-                  '108a60e8758d4e6cb801c2e0365bf382'
+                  ARRAY_TO_STRING(NULLIF("t3"."nationalities", []), 'b0495970e5ba4a93b1bdc924dcd2dd61'),
+                  'b0495970e5ba4a93b1bdc924dcd2dd61'
                 )
               ) - 1
             )

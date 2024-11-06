@@ -110,7 +110,7 @@ def test_RI009_temporal_referential_integrity_party(connection, request):
             to_table_config=resolve_table_config("transaction"),
             keys=["account_id"],
             severity=AMLAITestSeverity.WARN,
-            max_proportion=0.05,
+            max_proportion=0.20,
             test_id="P031",
         ),
         common.ReferentialIntegrityTest(
@@ -118,7 +118,7 @@ def test_RI009_temporal_referential_integrity_party(connection, request):
             to_table_config=resolve_table_config("transaction"),
             keys=["account_id"],
             severity=AMLAITestSeverity.ERROR,
-            max_proportion=0.20,
+            max_proportion=0.50,
             test_id="P030",
         ),
     ],

@@ -1,4 +1,6 @@
--- check for consecutive is_entity_deleted values for the same PK
+-- Tests: party_supplementary_data
+-- Severity: WARN
+-- Description: check for consecutive is_entity_deleted values for the same PK
 SELECT
   SUM(CAST(`t2`.`count_per_pk` > 0 AS BIGINT)) AS `CountStar(Greater(count_per_pk, 0))`
 FROM (

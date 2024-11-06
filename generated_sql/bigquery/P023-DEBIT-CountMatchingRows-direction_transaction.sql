@@ -1,4 +1,7 @@
--- DEBIT transaction direction is completely missing across the entire dataset.
+-- Tests: transaction.direction
+-- Severity: WARN
+-- Description: DEBIT transaction direction is completely missing across the entire dataset.
+-- Interpretation: When matching_rows = 0, verify the lack of credit transactions. Why are there no credit transactions?
 SELECT
   `t4`.`total_rows`,
   `t4`.`matching_rows`,

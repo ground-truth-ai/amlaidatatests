@@ -1,4 +1,7 @@
--- WHEN type='CONSUMER', more than 5% of parties have no residencies
+-- Tests: party.residencies
+-- Severity: WARN
+-- Description: WHEN type='CONSUMER', more than 5% of parties have no residencies
+-- Interpretation: When proportion >= 0.05, verify the intention not to populate nationality
 SELECT
   "t4"."total_rows",
   "t4"."matching_rows",

@@ -1,4 +1,7 @@
--- Check for more than 5% of parties with the same join_date. Warning.
+-- Tests: party.join_date
+-- Severity: WARN
+-- Description: Check for more than 5% of parties with the same join_date. Warning.
+-- Interpretation: When proportion >= 0.05, verify exit_date is correctly mapped.
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

@@ -1,4 +1,6 @@
--- check for entities which are immediately deleted
+-- Tests: party_supplementary_data
+-- Severity: WARN
+-- Description: check for entities which are immediately deleted
 SELECT
   COUNT(*) AS "CountStar()"
 FROM (

@@ -1,4 +1,6 @@
--- No nulls for non-nullable columns
+-- Tests: risk_case_event.risk_case_id
+-- Severity: ERROR
+-- Description: No nulls for non-nullable columns
 SELECT
   COUNT(*) AS `CountStar()`
 FROM (
