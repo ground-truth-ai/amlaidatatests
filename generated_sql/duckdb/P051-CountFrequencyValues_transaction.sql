@@ -1,4 +1,4 @@
--- Tests: transaction.<function <lambda> at 0x7f78644b5300>
+-- Tests: transaction.<function <lambda> at 0x7fb6f9f28ea0>
 -- Severity: INFO
 -- Description: 5% of transactions have the same value across any transaction type
 -- Interpretation: When count > 0, verify nanos and units mapping. Why do so many transactions have the same transaction value?

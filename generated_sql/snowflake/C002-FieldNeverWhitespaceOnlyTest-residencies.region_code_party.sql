@@ -31,16 +31,16 @@ FROM (
         GREATEST(
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '9be4171a3342480689012fe9ec780c28'),
-              '9be4171a3342480689012fe9ec780c28'
+              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '7eff18cf0513499b87af2312ba1e6cfa'),
+              '7eff18cf0513499b87af2312ba1e6cfa'
             )
           )
         ) - 1
       ) + 1
     ))) AS _u(seq, key, path, index, pos, this)
     CROSS JOIN TABLE(FLATTEN(INPUT => SPLIT(
-      ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '9be4171a3342480689012fe9ec780c28'),
-      '9be4171a3342480689012fe9ec780c28'
+      ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '7eff18cf0513499b87af2312ba1e6cfa'),
+      '7eff18cf0513499b87af2312ba1e6cfa'
     ))) AS _u_2(seq, key, path, pos_2, "residencies", this)
     WHERE
       _u.pos = _u_2.pos_2
@@ -48,16 +48,16 @@ FROM (
         _u.pos > (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '9be4171a3342480689012fe9ec780c28'),
-              '9be4171a3342480689012fe9ec780c28'
+              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '7eff18cf0513499b87af2312ba1e6cfa'),
+              '7eff18cf0513499b87af2312ba1e6cfa'
             )
           ) - 1
         )
         AND _u_2.pos_2 = (
           ARRAY_SIZE(
             SPLIT(
-              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '9be4171a3342480689012fe9ec780c28'),
-              '9be4171a3342480689012fe9ec780c28'
+              ARRAY_TO_STRING(NULLIF("t0"."residencies", []), '7eff18cf0513499b87af2312ba1e6cfa'),
+              '7eff18cf0513499b87af2312ba1e6cfa'
             )
           ) - 1
         )
