@@ -9,7 +9,7 @@ FROM (
     *
   FROM (
     SELECT
-      "t12"."party_id",
+      "t12"."risk_case_id",
       COUNT("t12"."transaction_id") FILTER(WHERE
         "t12"."transaction_id" IS NOT NULL) AS "txn_count"
     FROM (
