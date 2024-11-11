@@ -1,4 +1,7 @@
--- When is_entity_deleted = True, all non-key fields should be left unset or NULL. Warning.
+-- Tests: party.validity_start_time
+-- Severity: INFO
+-- Description: When is_entity_deleted = True, all non-key fields should be left unset or NULL.
+-- Interpretation: When matching_rows > 0, it is good practice to avoid populating fields where is_entity_deleted = True to make it clear that these fields should not be populated.
 SELECT
   `t2`.`total_rows`,
   `t2`.`matching_rows`,

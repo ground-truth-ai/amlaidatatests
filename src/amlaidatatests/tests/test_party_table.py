@@ -104,6 +104,7 @@ def test_currency_value_entity(connection, column, test: AbstractColumnTest, req
             column="civil_status_code",
             allowed_values=[
                 "SINGLE",
+                "MARRIED",
                 "LEGALLY_DIVORCED",
                 "DIVORCED",
                 "WIDOW",

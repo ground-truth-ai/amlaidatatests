@@ -9,7 +9,7 @@ FROM (
     *
   FROM (
     SELECT
-      "t12"."party_id",
+      "t12"."risk_case_id",
       COUNT(IFF("t12"."transaction_id" IS NOT NULL, "t12"."transaction_id", NULL)) AS "txn_count"
     FROM (
       SELECT

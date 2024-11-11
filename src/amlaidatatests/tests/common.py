@@ -1598,7 +1598,7 @@ class NoTransactionsWithinSuspiciousPeriod(AbstractTableTest):
 
         # Any completely missing
 
-        result = expr.group_by("party_id").agg(
+        result = expr.group_by("risk_case_id").agg(
             txn_count=_.transaction_id.count(where=_.transaction_id.notnull())
         )
 
