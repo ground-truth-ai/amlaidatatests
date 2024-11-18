@@ -29,7 +29,11 @@ FROM (
             *
           FROM "PLACEHOLDER"."party_supplementary_data" AS "t0"
           WHERE
-            "t0"."is_entity_deleted" IN (FALSE, NULL)
+            NOT (
+              "t0"."is_entity_deleted"
+            ) OR (
+              "t0"."is_entity_deleted" IS NULL
+            )
         ) AS "t1"
       ) AS "t2"
       WHERE
