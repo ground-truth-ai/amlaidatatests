@@ -60,7 +60,11 @@ FROM (
                 *
               FROM "PLACEHOLDER"."party" AS "t0"
               WHERE
-                "t0"."is_entity_deleted" IN (FALSE, NULL)
+                NOT (
+                  "t0"."is_entity_deleted"
+                ) OR (
+                  "t0"."is_entity_deleted" IS NULL
+                )
             ) AS "t1"
           ) AS "t2"
           WHERE
@@ -72,16 +76,16 @@ FROM (
             GREATEST(
               ARRAY_SIZE(
                 SPLIT(
-                  ARRAY_TO_STRING(NULLIF("t3"."residencies", []), '30f3e36062024448a0a0f92ad5cab5e9'),
-                  '30f3e36062024448a0a0f92ad5cab5e9'
+                  ARRAY_TO_STRING(NULLIF("t3"."residencies", []), '7631081ca64945a7a6912fda3e80cb01'),
+                  '7631081ca64945a7a6912fda3e80cb01'
                 )
               )
             ) - 1
           ) + 1
         ))) AS _u(seq, key, path, index, pos, this)
         CROSS JOIN TABLE(FLATTEN(INPUT => SPLIT(
-          ARRAY_TO_STRING(NULLIF("t3"."residencies", []), '30f3e36062024448a0a0f92ad5cab5e9'),
-          '30f3e36062024448a0a0f92ad5cab5e9'
+          ARRAY_TO_STRING(NULLIF("t3"."residencies", []), '7631081ca64945a7a6912fda3e80cb01'),
+          '7631081ca64945a7a6912fda3e80cb01'
         ))) AS _u_2(seq, key, path, pos_2, "residencies", this)
         WHERE
           _u.pos = _u_2.pos_2
@@ -89,16 +93,16 @@ FROM (
             _u.pos > (
               ARRAY_SIZE(
                 SPLIT(
-                  ARRAY_TO_STRING(NULLIF("t3"."residencies", []), '30f3e36062024448a0a0f92ad5cab5e9'),
-                  '30f3e36062024448a0a0f92ad5cab5e9'
+                  ARRAY_TO_STRING(NULLIF("t3"."residencies", []), '7631081ca64945a7a6912fda3e80cb01'),
+                  '7631081ca64945a7a6912fda3e80cb01'
                 )
               ) - 1
             )
             AND _u_2.pos_2 = (
               ARRAY_SIZE(
                 SPLIT(
-                  ARRAY_TO_STRING(NULLIF("t3"."residencies", []), '30f3e36062024448a0a0f92ad5cab5e9'),
-                  '30f3e36062024448a0a0f92ad5cab5e9'
+                  ARRAY_TO_STRING(NULLIF("t3"."residencies", []), '7631081ca64945a7a6912fda3e80cb01'),
+                  '7631081ca64945a7a6912fda3e80cb01'
                 )
               ) - 1
             )

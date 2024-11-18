@@ -1,4 +1,4 @@
--- Tests: transaction.<function <lambda> at 0x7fe859634ea0>
+-- Tests: transaction.<function <lambda> at 0x7fc249eb8ea0>
 -- Severity: INFO
 -- Description: 5% of transactions have the same value across any transaction type
 -- Interpretation: When count > 0, verify nanos and units mapping. Why do so many transactions have the same transaction value?
@@ -41,7 +41,11 @@ FROM (
               *
             FROM "PLACEHOLDER"."transaction" AS "t0"
             WHERE
-              "t0"."is_entity_deleted" IN (FALSE, NULL)
+              NOT (
+                "t0"."is_entity_deleted"
+              ) OR (
+                "t0"."is_entity_deleted" IS NULL
+              )
           ) AS "t1"
         ) AS "t2"
         WHERE

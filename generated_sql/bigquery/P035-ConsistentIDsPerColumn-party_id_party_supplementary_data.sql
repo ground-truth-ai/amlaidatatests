@@ -9,10 +9,10 @@ FROM (
     ARRAY_TO_STRING(
       ARRAY(
         SELECT
-          ibis_bq_arr_pj2sg6hl2fbjtnq66uzqir2fji
-        FROM UNNEST(`t4`.`ids`) AS ibis_bq_arr_pj2sg6hl2fbjtnq66uzqir2fji
+          ibis_bq_arr_l5oaxvumufcophaetdfdqteadu
+        FROM UNNEST(`t4`.`ids`) AS ibis_bq_arr_l5oaxvumufcophaetdfdqteadu
         ORDER BY
-          ibis_bq_arr_pj2sg6hl2fbjtnq66uzqir2fji
+          ibis_bq_arr_l5oaxvumufcophaetdfdqteadu
       ),
       '|'
     ) AS `ids`
@@ -37,7 +37,11 @@ FROM (
             *
           FROM `PLACEHOLDER`.`party_supplementary_data` AS `t0`
           WHERE
-            `t0`.`is_entity_deleted` IN (FALSE, NULL)
+            NOT (
+              `t0`.`is_entity_deleted`
+            ) OR (
+              `t0`.`is_entity_deleted` IS NULL
+            )
         ) AS `t1`
       ) AS `t2`
       WHERE
