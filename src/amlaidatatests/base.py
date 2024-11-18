@@ -354,7 +354,12 @@ class AbstractTableTest(AbstractBaseTest):
             TableType.OPEN_ENDED_ENTITY,
         ):
             raise ValueError(f"{table_config.table_type} is not a valid table type")
-        table = table.filter(_["is_entity_deleted"].isin([ibis.literal(False), None]))
+        table = table.filter(
+            ibis.or_(
+                _["is_entity_deleted"] == ibis.literal(False),
+                _["is_entity_deleted"].isnull(),
+            )
+        )
         return table.select(
             s.all(),
             row_num=ibis.row_number().over(
