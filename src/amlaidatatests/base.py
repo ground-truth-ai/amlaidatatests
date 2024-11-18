@@ -356,7 +356,7 @@ class AbstractTableTest(AbstractBaseTest):
             raise ValueError(f"{table_config.table_type} is not a valid table type")
         table = table.filter(
             ibis.or_(
-                _["is_entity_deleted"] == ibis.literal(False),
+                _["is_entity_deleted"].notany(),
                 _["is_entity_deleted"].isnull(),
             )
         )
