@@ -23,7 +23,11 @@ WITH "t3" AS (
         *
       FROM "PLACEHOLDER"."transaction" AS "t0"
       WHERE
-        "t0"."is_entity_deleted" IN (FALSE, NULL)
+        NOT (
+          "t0"."is_entity_deleted"
+        ) OR (
+          "t0"."is_entity_deleted" IS NULL
+        )
     ) AS "t1"
   ) AS "t2"
   WHERE
