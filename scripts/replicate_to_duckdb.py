@@ -1,28 +1,45 @@
 #!/usr/bin/env python
 
 
+import argparse
 import importlib.resources
 import pathlib
+from string import Template
 
 import google.auth
 import ibis
 import pandas as pd
 from ibis import literal
 
-from amlaidatatests.cli import build_parser
-from amlaidatatests.connection import connection_factory
-from amlaidatatests.schema.utils import get_table_name
-
 credentials, project_id = google.auth.default()
 
 
-def load_directory(source_connection, target_connection, tables: list[str]):
+def get_table_name(name: str, suffix: str) -> str:
+    """Get the fully resolved table name for the provided string
+
+    Args:
+        name: A table name corresponding to a table in the configured schema
+
+    Returns:
+        A fully qualified table name
+    """
+    name_template = Template("${table}_${id}")
+    return name_template.substitute({"id": suffix, "table": name})
+
+
+def load_directory(
+    source_connection,
+    target_connection,
+    tables: list[str],
+    source_suffix: str,
+    target_suffix: str,
+):
     for t in tables:
-        t_bq = source_connection.table(t + "_1234")
-        target_table_name = get_table_name(t)
+        t_bq = source_connection.table(get_table_name(t, source_suffix))
+        target_table_name = get_table_name(t, target_suffix)
         print("Loading into", target_table_name)
 
-        # t = connection.table(f"{t}_{SUFFIX}")
+        # create a temporary staging table
         temp_table = target_connection.create_table(
             f"{t}_temp", obj=t_bq.to_pandas(), temp=True
         )
@@ -51,29 +68,25 @@ def load_directory(source_connection, target_connection, tables: list[str]):
         target_connection.insert(
             target_table_name, obj=all_temp_table_2, overwrite=True
         )
-        # connection.create_table(name=f"{t}_{SUFFIX}", obj=table_out, overwrite=True, schema=party_schema)
 
 
 if __name__ == "__main__":
+    # parser = argparse.ArgumentParser()
 
-    parser = build_parser()
-    args = parser.parse_args()
-    target_connection = connection_factory()
+    # parser.add_argument("source_connection_string")
+    # parser.add_argument("target_connection_string")
 
-    # INPUT_DATASET_CONNECTION = ibis.bigquery.connect(
-    #     project_id="gtai-amlai-sandbox",
-    #     dataset_id="my_bq_input_dataset",
-    #     credentials=credentials,
-    # )
+    # args = parser.parse_args()
 
-    # load_directory(
-    #     bigquery_connection=INPUT_DATASET_CONNECTION,
-    #     tables=["transaction", "party"],
-    #     connection=connection,
-    # )
+    source_connection = ibis.connect(
+        "bigquery://utopian-pact-429518-p8/aml_ai_input_dataset?location=US"
+    )
+    target_connection = ibis.connect("duckdb://duckdb2.ddb")
 
     load_directory(
-        source_connection=ibis.connect("duckdb://duckdb.ddb"),
+        source_connection=source_connection,
+        source_suffix="v2",
+        target_suffix="1234",
         tables=[
             "party",
             "account_party_link",
