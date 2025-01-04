@@ -9,7 +9,6 @@ from string import Template
 import google.auth
 import ibis
 import pandas as pd
-from ibis import literal
 
 credentials, project_id = google.auth.default()
 
@@ -35,9 +34,9 @@ def load_directory(
     target_suffix: str,
 ):
     for t in tables:
-        t_bq = source_connection.table(get_table_name(t, source_suffix))
         target_table_name = get_table_name(t, target_suffix)
         print("Loading into", target_table_name)
+        t_bq = source_connection.table(get_table_name(t, source_suffix))
 
         # create a temporary staging table
         temp_table = target_connection.create_table(
@@ -58,7 +57,7 @@ def load_directory(
 
         # Add any columns which are missing in the
         all_temp_table = temp_table.mutate(
-            **{n: literal(None).cast(dtype) for n, dtype in missing_columns}
+            **{n: ibis.literal(None).cast(dtype) for n, dtype in missing_columns}
         )
 
         all_temp_table_2 = all_temp_table.select(
@@ -69,24 +68,24 @@ def load_directory(
             target_table_name, obj=all_temp_table_2, overwrite=True
         )
 
-
 if __name__ == "__main__":
-    # parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Load data from source to target database.")
 
-    # parser.add_argument("source_connection_string")
-    # parser.add_argument("target_connection_string")
+    parser.add_argument("--source_connection_string", required=True, help="bigquery://utopian-pact-429518-p8/aml_ai_input_dataset?location=US")
+    parser.add_argument("--source_suffix", required=True, help="1234")
+    parser.add_argument("--target_connection_string", required=True, help="duckdb://amlai.ddb")
+    parser.add_argument("--target_suffix", required=True, help="1234")
 
-    # args = parser.parse_args()
 
-    source_connection = ibis.connect(
-        "bigquery://utopian-pact-429518-p8/aml_ai_input_dataset?location=US"
-    )
-    target_connection = ibis.connect("duckdb://duckdb2.ddb")
+    args = parser.parse_args()
+
+    source_connection = ibis.connect(args.source_connection_string)
+    target_connection = ibis.connect(args.target_connection_string)
 
     load_directory(
         source_connection=source_connection,
-        source_suffix="v2",
-        target_suffix="1234",
+        source_suffix=args.source_suffix,
+        target_suffix=args.target_suffix,
         tables=[
             "party",
             "account_party_link",
