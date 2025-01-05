@@ -1,4 +1,3 @@
-ibis-framework>=9.2
 ibis-framework[bigquery]
 ibis-framework[duckdb]
 pytest

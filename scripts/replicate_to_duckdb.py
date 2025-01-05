@@ -9,6 +9,7 @@ from string import Template
 import google.auth
 import ibis
 import pandas as pd
+from ibis import literal
 
 credentials, project_id = google.auth.default()
 
@@ -57,7 +58,7 @@ def load_directory(
 
         # Add any columns which are missing in the
         all_temp_table = temp_table.mutate(
-            **{n: ibis.literal(None).cast(dtype) for n, dtype in missing_columns}
+            **{n: literal(None).cast(dtype) for n, dtype in missing_columns}
         )
 
         all_temp_table_2 = all_temp_table.select(
@@ -92,6 +93,8 @@ if __name__ == "__main__":
             "risk_case_event",
             "party_supplementary_data",
             "transaction",
+            "explanation",
+            "prediction"
         ],
         target_connection=target_connection,
     )
