@@ -93,7 +93,7 @@ if __name__ == "__main__":
             "risk_case_event",
             "party_supplementary_data",
             "transaction",
-            "explanation",
+            "explainability",
             "prediction"
         ],
         target_connection=target_connection,
