@@ -2,7 +2,7 @@ CREATE TABLE aml_ai_input_ds.prediction AS
 WITH
 -- Get the list of party_ids (100k party_ids)
 party_data AS (
-  SELECT party_id
+  SELECT DISTINCT party_id
   FROM aml_ai_input_ds.party
 ),
 -- Generate a random risk_score between 0 and 1 for each party_id
