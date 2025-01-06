@@ -1,4 +1,4 @@
-CREATE TABLE aml_ai_input_ds.explanation AS
+CREATE TABLE aml_ai_input_ds.explainability AS
 WITH
 party_data AS (
   SELECT party_id
