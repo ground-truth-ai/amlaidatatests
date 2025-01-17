@@ -1,6 +1,7 @@
 import importlib
+import re
 from typing import Optional
-from urllib.parse import parse_qsl, urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import ibis
 
@@ -52,6 +53,20 @@ def connection_factory(default: Optional[str] = None):
     result = urlparse(connection_string)
     kwargs = dict(parse_qsl(result.query))
 
+    # Extract job labels from query string
+    label_keys = [k for k in kwargs.keys() if re.match(r"^labels\.(.*)$", k)]
+    labels = dict(
+        [
+            (re.match(r"^labels\.(.*)$", k)[1], v)
+            for k, v in kwargs.items()
+            if k in label_keys
+        ]
+    )
+    for k in label_keys:
+        kwargs.pop(k)
+    result = result._replace(query=urlencode(kwargs, True))
+    connection_string = urlunparse(result)
+
     _verify_required_packages(scheme=result.scheme)
 
     if config.dry_run:
@@ -92,6 +107,8 @@ def connection_factory(default: Optional[str] = None):
             kwargs["credentials"] = credentials
 
     connection = ibis.connect(connection_string, **kwargs)
+    if result.scheme == "bigquery":
+        connection.client.default_query_job_config.labels = labels
     # We also need to set the ibis backend to avoid always passing around the connection
     # object. This allows ibis.to_sql to successfully generate sql in the right language
     ibis.set_backend(connection)
