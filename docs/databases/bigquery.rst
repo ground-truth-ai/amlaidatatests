@@ -7,11 +7,12 @@ Bigquery
 Connection String
 =================
 
-``bigquery://{project_id}/{dataset_id}?location``
+``bigquery://{project_id}/{dataset_id}?location&labels.first=value1&labels.second=value2``
 
 :project: The Google cloud *billing* project
 :dataset: The bigquery dataset id in which queries are executed
 :location: The `bigquery location <https://cloud.google.com/bigquery/docs/locations#regions>`_ of the dataset
+:labels: Key value pairs that will be added to default query job labels in the BigQuery client, formatted as ``labels.{label_key}={label_value}``
 
 
 Authentication
