@@ -191,7 +191,7 @@ def test_date_consistency(connection, test, request):
                 column="type",
                 table_config=TABLE_CONFIG,
                 min_number=1,
-                expression=lambda t: (t["type"] == typ),
+                expression=lambda t, typ=typ: (t["type"] == typ),
                 test_id=f"P022-{typ}",
                 explanation=f"Expected at least one row with type == '{typ}'",
             )
@@ -202,7 +202,7 @@ def test_date_consistency(connection, test, request):
                 column="direction",
                 table_config=TABLE_CONFIG,
                 min_number=1,
-                expression=lambda t: t["direction"] == direction,
+                expression=lambda t, direction=direction: t["direction"] == direction,
                 test_id=f"P023-{direction}",
                 explanation=f"Expected at least one row with direction == '{direction}'",
             )

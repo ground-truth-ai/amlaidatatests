@@ -9,7 +9,7 @@ SELECT
 FROM (
   SELECT
     COUNT(*) AS `total_rows`,
-    SUM(CAST(`t3`.`direction` = 'DEBIT' AS BIGINT)) AS `matching_rows`
+    SUM(CAST(`t3`.`direction` = 'CREDIT' AS BIGINT)) AS `matching_rows`
   FROM (
     SELECT
       *

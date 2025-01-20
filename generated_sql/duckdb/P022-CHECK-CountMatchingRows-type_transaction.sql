@@ -10,7 +10,7 @@ FROM (
   SELECT
     COUNT(*) AS "total_rows",
     COUNT(*) FILTER(WHERE
-      "t3"."type" = 'CARD') AS "matching_rows"
+      "t3"."type" = 'CHECK') AS "matching_rows"
   FROM (
     SELECT
       *
