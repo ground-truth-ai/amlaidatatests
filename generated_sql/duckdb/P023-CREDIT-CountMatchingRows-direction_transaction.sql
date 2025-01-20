@@ -10,7 +10,7 @@ FROM (
   SELECT
     COUNT(*) AS "total_rows",
     COUNT(*) FILTER(WHERE
-      "t3"."direction" = 'DEBIT') AS "matching_rows"
+      "t3"."direction" = 'CREDIT') AS "matching_rows"
   FROM (
     SELECT
       *

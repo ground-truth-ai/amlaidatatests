@@ -9,7 +9,7 @@ SELECT
 FROM (
   SELECT
     COUNT(*) AS `total_rows`,
-    COUNTIF(`t3`.`type` = 'CARD') AS `matching_rows`
+    COUNTIF(`t3`.`type` = 'CASH') AS `matching_rows`
   FROM (
     SELECT
       *
