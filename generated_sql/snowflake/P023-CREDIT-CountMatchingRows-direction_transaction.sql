@@ -9,7 +9,7 @@ SELECT
 FROM (
   SELECT
     COUNT(*) AS "total_rows",
-    COUNT_IF("t3"."direction" = 'DEBIT') AS "matching_rows"
+    COUNT_IF("t3"."direction" = 'CREDIT') AS "matching_rows"
   FROM (
     SELECT
       *
