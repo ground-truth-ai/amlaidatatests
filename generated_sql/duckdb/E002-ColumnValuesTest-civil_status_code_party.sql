@@ -9,6 +9,6 @@ FROM (
   FROM "PLACEHOLDER"."party" AS "t0"
   WHERE
     NOT (
-      "t0"."civil_status_code" IN ('SINGLE', 'LEGALLY_DIVORCED', 'DIVORCED', 'WIDOW', 'STABLE_UNION', 'SEPARATED', 'UNKNOWN')
+      "t0"."civil_status_code" IN ('SINGLE', 'MARRIED', 'LEGALLY_DIVORCED', 'DIVORCED', 'WIDOW', 'STABLE_UNION', 'SEPARATED', 'UNKNOWN')
     )
 ) AS "t1"
