@@ -2,7 +2,12 @@
 
 import pytest
 
-from amlaidatatests.base import AbstractColumnTest, AbstractTableTest
+from amlaidatatests.base import (
+    AbstractColumnTest,
+    AbstractTableTest,
+    get_entity_state_windows,
+)
+from amlaidatatests.config import ConfigSingleton
 from amlaidatatests.exceptions import AMLAITestSeverity
 from amlaidatatests.schema.utils import resolve_table_config
 from amlaidatatests.test_generators import (
@@ -12,9 +17,24 @@ from amlaidatatests.test_generators import (
     timestamp_field_tests,
 )
 from amlaidatatests.tests import common
+from amlaidatatests.tests.fixtures.fixtures import connection
 from amlaidatatests.utils import get_columns
 
 TABLE_CONFIG = resolve_table_config("account_party_link")
+
+
+@pytest.fixture(scope="session")
+def entity_state_windows_table(connection):
+    cfg = ConfigSingleton.get()
+    entity_state_windows_table = get_entity_state_windows(table_config=TABLE_CONFIG)
+    connection.set_database(cfg.database)
+    connection.create_table(
+        "temp_account_party_link_entity_windows",
+        entity_state_windows_table,
+        temp=True,
+        overwrite=True,
+    )
+    return entity_state_windows_table
 
 
 def test_RI001_referential_integrity_party(connection, request):
@@ -90,13 +110,16 @@ def test_entity_mutation_tests(connection, test: AbstractColumnTest, request):
     test(connection=connection, request=request)
 
 
-def test_RI009_temporal_referential_integrity_party(connection, request):
+def test_RI009_temporal_referential_integrity_party(
+    connection, request, entity_state_windows_table
+):
     # A warning here means that there are parties without linked accounts
     to_table_config = resolve_table_config("party")
     test = common.TemporalReferentialIntegrityTest(
         table_config=TABLE_CONFIG,
         to_table_config=to_table_config,
         key="party_id",
+        entity_state_table=entity_state_windows_table,
         test_id="RI009",
     )
     test(connection, request)
