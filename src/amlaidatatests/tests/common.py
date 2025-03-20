@@ -1277,6 +1277,7 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
         table_config: ResolvedTableConfig,
         to_table_config: ResolvedTableConfig,
         key: str,
+        entity_state_table: Optional[Table] = None,
         validate_datetime_column: Optional[str] = None,
         # BQ doesn't support values longer than a day
         tolerance: Optional[
@@ -1296,6 +1297,7 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
 
         super().__init__(table_config=table_config, severity=severity, test_id=test_id)
         self.to_table = to_table_config.table
+        self.entity_state_table = entity_state_table
         self.validate_datetime_column = validate_datetime_column
         self.to_table_config = to_table_config
         self.tolerance = tolerance
@@ -1324,6 +1326,8 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
                 first_date=_[self.validate_datetime_column].min(),
                 last_date=_[self.validate_datetime_column].max(),
             )
+        elif self.entity_state_table is not None:
+            tbl = self.entity_state_table
         else:
             tbl = self.get_entity_state_windows(
                 table_config=self.table_config, key=[self.key]
