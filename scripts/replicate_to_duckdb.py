@@ -88,11 +88,11 @@ if __name__ == "__main__":
         source_suffix=args.source_suffix,
         target_suffix=args.target_suffix,
         tables=[
-            "party",
-            "account_party_link",
-            "risk_case_event",
-            "party_supplementary_data",
-            "transaction",
+            # "party",
+            # "account_party_link",
+            # "risk_case_event",
+            # "party_supplementary_data",
+            # "transaction",
             "explainability",
             "prediction"
         ],
