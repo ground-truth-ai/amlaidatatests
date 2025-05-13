@@ -21,7 +21,7 @@ from amlaidatatests.exceptions import (
     DataTestWarning,
 )
 from amlaidatatests.schema.base import ResolvedTableConfig, TableType
-from amlaidatatests.schema.utils import resolve_table_config
+from amlaidatatests.schema.utils import get_entity_state_windows, resolve_table_config
 from amlaidatatests.tests import common
 
 
@@ -1325,10 +1325,10 @@ class TemporalReferentialIntegrityTest(AbstractTableTest):
                 last_date=_[self.validate_datetime_column].max(),
             )
         else:
-            tbl = self.get_entity_state_windows(
+            tbl = get_entity_state_windows(
                 table_config=self.table_config, key=[self.key]
             )
-        totbl = self.get_entity_state_windows(
+        totbl = get_entity_state_windows(
             table_config=self.to_table_config, key=[self.key]
         )
         # First, associate keys by joining
@@ -1550,7 +1550,7 @@ class NoTransactionsWithinSuspiciousPeriod(AbstractTableTest):
             .filter((_.exits > 0) | (_.sars > 0))
         )
 
-        entity_state_windows = self.get_entity_state_windows(
+        entity_state_windows = get_entity_state_windows(
             self.account_party_link_table_config
         )
 
