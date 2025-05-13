@@ -12,7 +12,7 @@ from ibis.expr.datatypes import String, Timestamp
 risk_case_event_schema = schema(
     {
         "risk_case_event_id": String(nullable=False),
-        "event_time": Timestamp(nullable=False),
+        "event_time": Timestamp(nullable=False, timezone="UTC"),
         "type": String(nullable=False),
         "party_id": String(nullable=False),
         "risk_case_id": String(nullable=False),
