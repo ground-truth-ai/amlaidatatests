@@ -25,7 +25,7 @@ from amlaidatatests.schema.v1.common import CurrencyValue
 party_schema = ibis.Schema(
     fields={
         "party_id": String(nullable=False),
-        "validity_start_time": Timestamp(nullable=False),
+        "validity_start_time": Timestamp(nullable=False, timezone="UTC"),
         "is_entity_deleted": Boolean(),
         "source_system": String(),
         "type": String(nullable=False),

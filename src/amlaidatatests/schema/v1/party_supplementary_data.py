@@ -24,7 +24,7 @@ from ibis.expr.datatypes import Boolean, Float64, String, Struct, Timestamp
 party_supplementary_data_schema = ibis.Schema(
     fields={
         "party_supplementary_data_id": String(nullable=False),
-        "validity_start_time": Timestamp(nullable=False),
+        "validity_start_time": Timestamp(nullable=False, timezone="UTC"),
         "is_entity_deleted": Boolean(),
         "source_system": String(),
         "party_id": String(nullable=False),
