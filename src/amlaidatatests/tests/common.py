@@ -1608,7 +1608,7 @@ class NoTransactionsWithinSuspiciousPeriod(AbstractTableTest):
             msg = (
                 f"{result} positive examples (AML_EXIT or AML_SAR) with no "
                 "transactions within suspicious activity period or for "
-                f"{self.lookback_period} months prior to AML_PROCESS_START "
+                f"{self.lookback_period} days prior to AML_PROCESS_START "
                 "if suspicious activity period is not defined"
             )
             raise DataTestFailure(msg, expr=expr)
