@@ -6,7 +6,7 @@ import importlib
 import typing
 from dataclasses import dataclass, field, fields
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Generic, Optional, Type, TypeVar, Union
 from urllib.parse import urlparse
 
 import pytest
@@ -15,8 +15,10 @@ from simple_parsing.docstring import get_attribute_docstring
 
 from .singleton import Singleton
 
+T = TypeVar("T")
 
-def cfg() -> "DatatestConfig":
+
+def cfg() -> "AMLAIInstanceConfig":
     """Convenience function for retrieving the config from the ConfigSingleton
     in a short function.
 
@@ -25,7 +27,8 @@ def cfg() -> "DatatestConfig":
     Returns:
         The DatatestConfig
     """
-    return ConfigSingleton.get()
+    _cfg = ConfigSingleton.get()
+    return _cfg
 
 
 def infer_database(connection_str: str) -> str | None:
@@ -71,8 +74,8 @@ def today_isoformat():
 
 
 @dataclass(kw_only=True)
-class DatatestConfig:
-    """Container for all amlaidatatest configurations"""
+class AMLAIInstanceConfig:
+    """A configuration identifying a unique amlai set of tables"""
 
     id: Optional[str] = None
     """ Unique identifier for a set of associated tables"""
@@ -90,6 +93,17 @@ class DatatestConfig:
     database: Optional[str] = "${infer_database:${connection_string}}"
     """ For bigquery, the dataset being used """
 
+    dry_run: bool = False
+    """ If set, do not execute """
+
+    log_sql_path: Optional[Path] = None
+    """ If set, log the SQL generated to a path"""
+
+
+@dataclass(kw_only=True)
+class DatatestConfig(AMLAIInstanceConfig):
+    """Container for all amlaidatatest configurations"""
+
     scale: float = 1.0
     """ Scale changes to modify profiling tests based on absolute values """
 
@@ -98,26 +112,19 @@ class DatatestConfig:
 
     testing_mode: bool = False
 
-    log_sql_path: Optional[Path] = None
-    """ If set, log the SQL generated for a test to a path"""
 
-    dry_run: bool = False
-    """ If set, do not execute the test """
-
-
-class ConfigSingleton(metaclass=Singleton):
+class ConfigSingleton(Generic[T], metaclass=Singleton):
     """Singleton for all amlaidatatest configuration"""
 
-    def __init__(self) -> None:
-        self.cfg: Optional[DatatestConfig] = None
+    def __init__(self, config: type[T] = None) -> None:
+        self.cfg: Optional[T] = None
 
-    def set_config(self, config: DatatestConfig) -> None:
+    def set_config(self, config: T) -> None:
         assert config is not None
-
         self.cfg = config
 
     @staticmethod
-    def get() -> DatatestConfig:
+    def get() -> T:
         instance = ConfigSingleton.instance()
         if instance.cfg is None:
             raise ValueError("Singleton was not set")
@@ -138,7 +145,8 @@ class ConfigSingleton(metaclass=Singleton):
         instance.cfg = None
 
 
-STRUCTURED_CONFIG = OmegaConf.structured(DatatestConfig)
+AMLAIINSTANCE_STRUCTURED_CONFIG = OmegaConf.structured(AMLAIInstanceConfig)
+DATATEST_STRUCTURED_CONFIG = OmegaConf.structured(DatatestConfig)
 
 
 class IngestConfigAction(argparse.Action):
@@ -169,11 +177,13 @@ class IngestConfigAction(argparse.Action):
         current_conf = ConfigSingleton.get()
         if option_string == "--conf":
             config = OmegaConf.load(values)
-            config = OmegaConf.merge(STRUCTURED_CONFIG, current_conf, config)
+            config = OmegaConf.merge(DATATEST_STRUCTURED_CONFIG, current_conf, config)
         else:
             # TODO: We're not handling nested configuration here
             conf_for_param = {option_string.replace("--", ""): values}
-            config = OmegaConf.merge(STRUCTURED_CONFIG, current_conf, conf_for_param)
+            config = OmegaConf.merge(
+                DATATEST_STRUCTURED_CONFIG, current_conf, conf_for_param
+            )
         ConfigSingleton().set_config(config)
 
     def format_usage(self) -> str:
@@ -204,7 +214,7 @@ def init_parser_options_from_config(
     """
     if defaults is None:
         defaults = {}
-    ConfigSingleton().set_config(STRUCTURED_CONFIG)
+    ConfigSingleton().set_config(DATATEST_STRUCTURED_CONFIG)
     if isinstance(parser, argparse.ArgumentParser):
         parser.addoption = parser.add_argument
     parser.addoption(
@@ -215,7 +225,7 @@ def init_parser_options_from_config(
     )
     for f in fields(DatatestConfig):
         docstring = get_attribute_docstring(DatatestConfig, f.name)
-        required = OmegaConf.is_missing(STRUCTURED_CONFIG, f.name)
+        required = OmegaConf.is_missing(DATATEST_STRUCTURED_CONFIG, f.name)
         default = defaults.get(f.name)
         parser.addoption(
             f"--{f.name}",
