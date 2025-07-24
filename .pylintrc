@@ -130,6 +130,7 @@ disable=invalid-name,
         wrong-import-order,
         xrange-builtin,
         zip-builtin-not-iterating,
+        import-outside-toplevel
 
 
 [REPORTS]
