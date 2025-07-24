@@ -9,7 +9,7 @@ SELECT
 FROM (
   SELECT
     COUNT(*) AS `total_rows`,
-    SUM(CAST(DATE(`t3`.`validity_start_time`) < `t3`.`join_date` AS BIGINT)) AS `matching_rows`
+    SUM(CAST(CAST(`t3`.`validity_start_time` AS DATE) < `t3`.`join_date` AS BIGINT)) AS `matching_rows`
   FROM (
     SELECT
       *

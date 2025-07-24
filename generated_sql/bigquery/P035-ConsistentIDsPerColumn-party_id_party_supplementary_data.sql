@@ -6,15 +6,27 @@ SELECT
 FROM (
   SELECT
     `t4`.`by`,
-    ARRAY_TO_STRING(
-      ARRAY(
-        SELECT
-          ibis_bq_arr_l5oaxvumufcophaetdfdqteadu
-        FROM UNNEST(`t4`.`ids`) AS ibis_bq_arr_l5oaxvumufcophaetdfdqteadu
-        ORDER BY
-          ibis_bq_arr_l5oaxvumufcophaetdfdqteadu
+    IF(
+      ARRAY_LENGTH(
+        ARRAY(
+          SELECT
+            ibis_bq_arr_ac4irivzlzfhfefkjklac2rhjm
+          FROM UNNEST(`t4`.`ids`) AS ibis_bq_arr_ac4irivzlzfhfefkjklac2rhjm
+          ORDER BY
+            ibis_bq_arr_ac4irivzlzfhfefkjklac2rhjm
+        )
+      ) > 0,
+      ARRAY_TO_STRING(
+        ARRAY(
+          SELECT
+            ibis_bq_arr_ac4irivzlzfhfefkjklac2rhjm
+          FROM UNNEST(`t4`.`ids`) AS ibis_bq_arr_ac4irivzlzfhfefkjklac2rhjm
+          ORDER BY
+            ibis_bq_arr_ac4irivzlzfhfefkjklac2rhjm
+        ),
+        '|'
       ),
-      '|'
+      NULL
     ) AS `ids`
   FROM (
     SELECT

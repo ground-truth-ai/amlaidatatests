@@ -12,7 +12,7 @@ def test_column_only_has_allowed_values(test_connection, create_test_table, requ
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[{"column": "alpha"}, {"column": "beta"}, {"column": "alpha"}],
+            [{"column": "alpha"}, {"column": "beta"}, {"column": "alpha"}],
             schema=schema,
         )
     )
@@ -32,7 +32,7 @@ def test_column_has_invalid_values(test_connection, create_test_table, request):
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[{"column": "alpha"}, {"column": "beta"}, {"column": "gamma"}],
+            [{"column": "alpha"}, {"column": "beta"}, {"column": "gamma"}],
             schema=schema,
         )
     )
@@ -57,7 +57,7 @@ def test_column_only_has_allowed_values_embedded_struct(
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"column": [{"v": "alpha"}]},
                 {"column": [{"v": "alpha"}]},
                 {"column": [{"v": "alpha"}]},

@@ -17,7 +17,7 @@ FROM (
       ) AS `proportion`
     FROM (
       SELECT
-        format_datetime('%Y-%m', `t0`.`book_time`) AS `mnth`,
+        format_timestamp('%Y-%m', `t0`.`book_time`, 'UTC') AS `mnth`,
         COUNT(*) AS `cnt`
       FROM `PLACEHOLDER`.`transaction` AS `t0`
       GROUP BY

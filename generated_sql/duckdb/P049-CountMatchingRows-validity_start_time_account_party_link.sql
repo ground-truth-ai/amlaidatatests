@@ -10,7 +10,11 @@ FROM (
   SELECT
     COUNT(*) AS "total_rows",
     COUNT(*) FILTER(WHERE
-      "t1"."role" IS NOT NULL OR "t1"."source_system" IS NOT NULL) AS "matching_rows"
+      (
+        "t1"."role" IS NOT NULL
+      ) OR (
+        "t1"."source_system" IS NOT NULL
+      )) AS "matching_rows"
   FROM (
     SELECT
       *

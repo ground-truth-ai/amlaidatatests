@@ -10,9 +10,9 @@ FROM (
   SELECT
     COUNT(*) AS `total_rows`,
     COUNTIF(
-      format_datetime('%M:%S', `t0`.`event_time`) IN ('00:00', '00:30')
+      format_timestamp('%M:%S', `t0`.`event_time`, 'UTC') IN ('00:00', '00:30')
       AND (
-        format_datetime('%H:%M:%S', `t0`.`event_time`) <> '00:00:00'
+        format_timestamp('%H:%M:%S', `t0`.`event_time`, 'UTC') <> '00:00:00'
       )
     ) AS `matching_rows`
   FROM `PLACEHOLDER`.`risk_case_event` AS `t0`

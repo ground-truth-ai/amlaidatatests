@@ -10,18 +10,42 @@ FROM (
   SELECT
     COUNT(*) AS "total_rows",
     COUNT(*) FILTER(WHERE
-      "t1"."source_system" IS NOT NULL
-      OR "t1"."birth_date" IS NOT NULL
-      OR "t1"."establishment_date" IS NOT NULL
-      OR "t1"."occupation" IS NOT NULL
-      OR "t1"."gender" IS NOT NULL
-      OR "t1"."nationalities" IS NOT NULL
-      OR "t1"."residencies" IS NOT NULL
-      OR "t1"."exit_date" IS NOT NULL
-      OR "t1"."join_date" IS NOT NULL
-      OR "t1"."assets_value_range" IS NOT NULL
-      OR "t1"."civil_status_code" IS NOT NULL
-      OR "t1"."education_level_code" IS NOT NULL) AS "matching_rows"
+      (
+        "t1"."source_system" IS NOT NULL
+      )
+      OR (
+        "t1"."birth_date" IS NOT NULL
+      )
+      OR (
+        "t1"."establishment_date" IS NOT NULL
+      )
+      OR (
+        "t1"."occupation" IS NOT NULL
+      )
+      OR (
+        "t1"."gender" IS NOT NULL
+      )
+      OR (
+        "t1"."nationalities" IS NOT NULL
+      )
+      OR (
+        "t1"."residencies" IS NOT NULL
+      )
+      OR (
+        "t1"."exit_date" IS NOT NULL
+      )
+      OR (
+        "t1"."join_date" IS NOT NULL
+      )
+      OR (
+        "t1"."assets_value_range" IS NOT NULL
+      )
+      OR (
+        "t1"."civil_status_code" IS NOT NULL
+      )
+      OR (
+        "t1"."education_level_code" IS NOT NULL
+      )) AS "matching_rows"
   FROM (
     SELECT
       *

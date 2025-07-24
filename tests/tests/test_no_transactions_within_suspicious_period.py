@@ -38,7 +38,7 @@ LINK_SCHEMA = ibis.Schema(
 def test_has_transactions(test_connection, create_test_table, request):
     risk_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "risk_case_id": "1",
                     "party_id": "1",
@@ -74,7 +74,7 @@ def test_has_transactions(test_connection, create_test_table, request):
 
     link_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "party_id": "1",
                     "account_id": "20",
@@ -96,7 +96,7 @@ def test_has_transactions(test_connection, create_test_table, request):
 
     txn_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "transaction_id": "1",
                     "account_id": "20",
@@ -132,7 +132,7 @@ def test_has_transactions(test_connection, create_test_table, request):
 def test_has_no_transactions(test_connection, create_test_table, request):
     risk_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "risk_case_id": "1",
                     "party_id": "1",
@@ -168,7 +168,7 @@ def test_has_no_transactions(test_connection, create_test_table, request):
 
     link_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "party_id": "1",
                     "account_id": "20",
@@ -190,7 +190,7 @@ def test_has_no_transactions(test_connection, create_test_table, request):
 
     txn_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "transaction_id": "1",
                     "account_id": "20",
@@ -231,7 +231,7 @@ def test_has_transactions_in_one_account_not_linked(
 
     risk_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "risk_case_id": "1",
                     "party_id": "1",
@@ -275,7 +275,7 @@ def test_has_transactions_in_one_account_not_linked(
 
     link_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "party_id": "1",
                     "account_id": "20",
@@ -305,7 +305,7 @@ def test_has_transactions_in_one_account_not_linked(
 
     txn_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "transaction_id": "1",
                     "account_id": "20",
@@ -347,7 +347,7 @@ def test_has_transactions_in_one_account_linked(
 
     risk_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "risk_case_id": "1",
                     "party_id": "1",
@@ -391,7 +391,7 @@ def test_has_transactions_in_one_account_linked(
 
     link_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "party_id": "1",
                     "account_id": "20",
@@ -421,7 +421,7 @@ def test_has_transactions_in_one_account_linked(
 
     txn_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "transaction_id": "1",
                     "account_id": "20",

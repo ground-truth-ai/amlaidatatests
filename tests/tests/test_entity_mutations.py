@@ -18,7 +18,7 @@ def test_orphaned_deleted_entity(test_connection, create_test_table, request):
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "ent1",
                     "is_entity_deleted": True,
@@ -51,7 +51,7 @@ def test_not_orphaned_deleted_entity(test_connection, create_test_table, request
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "ent1",
                     "is_entity_deleted": False,

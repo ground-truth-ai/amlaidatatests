@@ -14,9 +14,9 @@ def test_missing_key_local_table(test_connection, create_test_table, request):
     # Test behaviour if the other table has more than one key which isn't on
     # the table for testing. This shouldn't be a problem - there may well be
     # keys not on this table which are present on the base table
-    lcl_tbl = create_test_table(ibis.memtable(data=[{"id": "1"}], schema={"id": str}))
+    lcl_tbl = create_test_table(ibis.memtable([{"id": "1"}], schema={"id": str}))
     otr_tbl = create_test_table(
-        ibis.memtable(data=[{"id": "1"}, {"id": "2"}], schema={"id": str})
+        ibis.memtable([{"id": "1"}, {"id": "2"}], schema={"id": str})
     )
 
     table_config = ResolvedTableConfig(
@@ -37,7 +37,7 @@ def test_skips_optional_to_table(
     test_connection, create_test_table, test_raise_on_skip, request
 ):
     schema = {"id": String(nullable=False)}
-    lcl_tbl = create_test_table(ibis.memtable(data=[{"id": "1"}], schema=schema))
+    lcl_tbl = create_test_table(ibis.memtable([{"id": "1"}], schema=schema))
 
     table_config = ResolvedTableConfig(
         name=lcl_tbl, table=ibis.table(name=lcl_tbl, schema=schema)
@@ -61,9 +61,9 @@ def test_missing_key_other_table(test_connection, create_test_table, request):
     schema = {"id": String(nullable=False)}
 
     lcl_tbl = create_test_table(
-        ibis.memtable(data=[{"id": "1"}, {"id": "2"}], schema=schema)
+        ibis.memtable([{"id": "1"}, {"id": "2"}], schema=schema)
     )
-    otr_tbl = create_test_table(ibis.memtable(data=[{"id": "1"}], schema=schema))
+    otr_tbl = create_test_table(ibis.memtable([{"id": "1"}], schema=schema))
 
     table_config = ResolvedTableConfig(
         name=lcl_tbl, table=ibis.table(name=lcl_tbl, schema=schema)
@@ -85,12 +85,12 @@ def test_passes_multiple_keys(test_connection, create_test_table, request):
 
     lcl_tbl = create_test_table(
         ibis.memtable(
-            data=[{"id1": "1", "id2": "2"}, {"id1": "2", "id2": "3"}], schema=schema
+            [{"id1": "1", "id2": "2"}, {"id1": "2", "id2": "3"}], schema=schema
         )
     )
     otr_tbl = create_test_table(
         ibis.memtable(
-            data=[{"id1": "1", "id2": "2"}, {"id1": "2", "id2": "3"}], schema=schema
+            [{"id1": "1", "id2": "2"}, {"id1": "2", "id2": "3"}], schema=schema
         )
     )
 
@@ -111,12 +111,12 @@ def test_passes_duplicated_keys(test_connection, create_test_table, request):
 
     lcl_tbl = create_test_table(
         ibis.memtable(
-            data=[{"id1": "1", "id2": "2"}, {"id1": "1", "id2": "2"}], schema=schema
+            [{"id1": "1", "id2": "2"}, {"id1": "1", "id2": "2"}], schema=schema
         )
     )
     otr_tbl = create_test_table(
         ibis.memtable(
-            data=[{"id1": "1", "id2": "2"}, {"id1": "1", "id2": "2"}], schema=schema
+            [{"id1": "1", "id2": "2"}, {"id1": "1", "id2": "2"}], schema=schema
         )
     )
 
@@ -137,10 +137,10 @@ def test_missing_multiple_keys_other_table(test_connection, create_test_table, r
     schema = {"id1": String(nullable=False), "id2": String(nullable=False)}
 
     lcl_tbl = create_test_table(
-        ibis.memtable(data=[{"id1": "1", "id2": "2"}], schema=schema)
+        ibis.memtable([{"id1": "1", "id2": "2"}], schema=schema)
     )
     otr_tbl = create_test_table(
-        ibis.memtable(data=[{"id1": "2", "id2": "3"}], schema=schema)
+        ibis.memtable([{"id1": "2", "id2": "3"}], schema=schema)
     )
 
     table_config = ResolvedTableConfig(
@@ -169,7 +169,7 @@ def test_temporal_referential_integrity_key_in_time(
     }
     lcl_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -190,7 +190,7 @@ def test_temporal_referential_integrity_key_in_time(
     )
     otr_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -233,7 +233,7 @@ def test_temporal_referential_integrity_key_out_of_time(
     }
     lcl_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -254,7 +254,7 @@ def test_temporal_referential_integrity_key_out_of_time(
     )
     otr_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -298,7 +298,7 @@ def test_temporal_referential_integrity_key_within_time_tolerance(
     }
     lcl_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -319,7 +319,7 @@ def test_temporal_referential_integrity_key_within_time_tolerance(
     )
     otr_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -365,7 +365,7 @@ def test_temporal_referential_integrity_key_out_of_time_tolerance(
     }
     lcl_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -386,7 +386,7 @@ def test_temporal_referential_integrity_key_out_of_time_tolerance(
     )
     otr_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -433,7 +433,7 @@ def test_temporal_referential_integrity_fails_before_period(
     }
     lcl_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -454,7 +454,7 @@ def test_temporal_referential_integrity_fails_before_period(
     )
     otr_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -498,7 +498,7 @@ def test_temporal_referential_integrity_fails_after_period(
     }
     lcl_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -519,7 +519,7 @@ def test_temporal_referential_integrity_fails_after_period(
     )
     otr_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -563,7 +563,7 @@ def test_temporal_referential_integrity_fails_encompassing_period(
     }
     lcl_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -584,7 +584,7 @@ def test_temporal_referential_integrity_fails_encompassing_period(
     )
     otr_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -630,7 +630,7 @@ def test_temporal_referential_integrity_immediate_delete_in_period(
     # tests should pick this up
     lcl_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -644,7 +644,7 @@ def test_temporal_referential_integrity_immediate_delete_in_period(
     )
     otr_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -687,7 +687,7 @@ def test_temporal_referential_integrity_multiple_mutations_in_period(
     }
     lcl_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -722,7 +722,7 @@ def test_temporal_referential_integrity_multiple_mutations_in_period(
     )
     otr_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -765,7 +765,7 @@ def test_temporal_referential_integrity_multiple_mutations_out_of_period(
     }
     lcl_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -793,7 +793,7 @@ def test_temporal_referential_integrity_multiple_mutations_out_of_period(
     )
     otr_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "validity_start_time": datetime.datetime(
@@ -855,7 +855,7 @@ def test_temporal_referential_integrity_multiple_local_valid(
 
     lcl_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "party_id": "0",
                     "account_id": "0",
@@ -895,7 +895,7 @@ def test_temporal_referential_integrity_multiple_local_valid(
 
     txn_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "account_id": "0",
@@ -979,7 +979,7 @@ def test_temporal_referential_integrity_multiple_local_invalid(
     }
     lnk_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "party_id": "0",
                     "account_id": "0",
@@ -1027,7 +1027,7 @@ def test_temporal_referential_integrity_multiple_local_invalid(
 
     txn_tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "0",
                     "account_id": "0",
