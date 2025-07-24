@@ -49,7 +49,7 @@ def create_test_table(test_connection: BaseBackend) -> Callable[..., Table]:
     def _create_test_table(obj):
         tbl_name = temporary_table_name()
         table = test_connection.create_table(
-            name=tbl_name, obj=obj, temp=True, schema=obj.schema()
+            tbl_name, obj=obj, temp=True, schema=obj.schema()
         )
         # Workaround for https://github.com/ibis-project/ibis/issues/9502
         if ibis.get_backend(table).name == "duckdb":

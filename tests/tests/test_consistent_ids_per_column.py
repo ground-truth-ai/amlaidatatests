@@ -15,7 +15,7 @@ def test_consistent_ids_per_column(test_connection, create_test_table, request):
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"party_id": "1", "party_supplementary_data_id": "1"},
                 {"party_id": "1", "party_supplementary_data_id": "2"},
                 {"party_id": "1", "party_supplementary_data_id": "3"},
@@ -46,7 +46,7 @@ def test_inconsistent_ids_per_column(test_connection, create_test_table, request
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"party_id": "1", "party_supplementary_data_id": "1"},
                 {"party_id": "1", "party_supplementary_data_id": "2"},
                 {"party_id": "1", "party_supplementary_data_id": "3"},

@@ -15,7 +15,7 @@ def test_column_cardinality_grouped_max(test_connection, create_test_table, requ
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "ent1",
                     "value": "value1",
@@ -51,7 +51,7 @@ def test_column_cardinality_test_grouped_max_fails(
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "ent1",
                     "value": "value1",
@@ -90,7 +90,7 @@ def test_column_cardinality_test_grouped_min(
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "ent1",
                     "value": "value1",
@@ -132,7 +132,7 @@ def test_column_cardinality_test_grouped_min_fails(
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "ent1",
                     "value": "value1",
@@ -171,7 +171,7 @@ def test_column_cardinality_test_global_min(
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "ent1",
                     "value": "value1",
@@ -206,7 +206,7 @@ def test_column_cardinality_test_global_min_fails(
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "ent1",
                     "value": "value1",
@@ -241,7 +241,7 @@ def test_column_cardinality_test_global_min_max_fails(
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": "ent1",
                     "value": "value1",

@@ -15,7 +15,7 @@ def test_count_frequency_values(test_connection, create_test_table, request):
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"party_id": "1", "who": "foo"},
                 {"party_id": "2", "who": "foo"},
                 {"party_id": "3", "who": "foo"},
@@ -48,7 +48,7 @@ def test_count_frequency_values_fails(test_connection, create_test_table, reques
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"party_id": "1", "who": "foo"},
                 {"party_id": "2", "who": "foo"},
                 {"party_id": "3", "who": "foo"},
@@ -86,7 +86,7 @@ def test_count_frequency_values_ignores_nulls(
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"party_id": "1", "who": "foo"},
                 {"party_id": "2", "who": "baz"},
                 {"party_id": "3", "who": "other"},
@@ -124,7 +124,7 @@ def test_count_frequency_values_consider_nulls(
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"party_id": "1", "who": "foo"},
                 {"party_id": "2", "who": "baz"},
                 {"party_id": "3", "who": "other"},
@@ -163,7 +163,7 @@ def test_count_frequency_values_group_by(test_connection, create_test_table, req
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"party_id": "1", "country": "UK", "who": "foo"},
                 {"party_id": "2", "country": "UK", "who": "foo"},
                 {"party_id": "3", "country": "UK", "who": "foo"},
@@ -216,7 +216,7 @@ def test_count_frequency_values_group_by_expression_failure(
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"party_id": "1", "units": 1, "nanos": 1, "who": "foo"},
                 {"party_id": "2", "units": 1, "nanos": 1, "who": "foo"},
                 {"party_id": "3", "units": 1, "nanos": 1, "who": "foo"},

@@ -173,10 +173,9 @@ def get_entity_state_windows(
                 # non-nullable field
                 first_date=_.validity_start_time.min(),
                 last_date=ibis.ifelse(
-                    condition=_.next_row_validity_start_time.isnull()
-                    & ~_.is_entity_deleted,
-                    true_expr=MAX_DATETIME_VALUE,
-                    false_expr=_.validity_start_time,
+                    _.next_row_validity_start_time.isnull() & ~_.is_entity_deleted,
+                    MAX_DATETIME_VALUE,
+                    _.validity_start_time,
                 ).max(),
             )
         )

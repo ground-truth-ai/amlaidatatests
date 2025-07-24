@@ -222,6 +222,7 @@ def test_DT014_event_order(connection, request):
             table_config=TABLE_CONFIG,
             min_number=1,
             expression=lambda t: t["type"] == "AML_SAR",
+            severity=AMLAITestSeverity.WARN,
             test_id="P043",
         ),
         common.VerifyTypedValuePresence(
