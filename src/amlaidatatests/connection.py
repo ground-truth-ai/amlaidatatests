@@ -116,7 +116,7 @@ def connection_factory(default: Optional[str] = None):
                 pass
 
             connection.create_table(
-                name=get_table_name(t.name),
+                get_table_name(t.name),
                 schema=t.schema,
                 database=config.database,
                 overwrite=True,

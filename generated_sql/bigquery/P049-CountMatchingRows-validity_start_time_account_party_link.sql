@@ -9,7 +9,11 @@ SELECT
 FROM (
   SELECT
     COUNT(*) AS `total_rows`,
-    COUNTIF(`t1`.`role` IS NOT NULL OR `t1`.`source_system` IS NOT NULL) AS `matching_rows`
+    COUNTIF((
+      `t1`.`role` IS NOT NULL
+    ) OR (
+      `t1`.`source_system` IS NOT NULL
+    )) AS `matching_rows`
   FROM (
     SELECT
       *

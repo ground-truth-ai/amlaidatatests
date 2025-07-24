@@ -245,7 +245,6 @@ def test_date_consistency(connection, test, request):
             severity=AMLAITestSeverity.WARN,
             test_id="P029",
         ),
-        # TODO: This only checks the nanos field, not all the columns
         common.CountFrequencyValues(
             column=lambda t: t.normalized_booked_amount.units
             + t.normalized_booked_amount.nanos / 1e9,

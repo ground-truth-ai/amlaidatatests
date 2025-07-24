@@ -9,7 +9,7 @@ SELECT
 FROM (
   SELECT
     COUNT(*) AS "total_rows",
-    COUNT_IF(DATE("t3"."validity_start_time") < "t3"."join_date") AS "matching_rows"
+    COUNT_IF(TO_DATE("t3"."validity_start_time") < "t3"."join_date") AS "matching_rows"
   FROM (
     SELECT
       *
