@@ -5,6 +5,7 @@ import sys
 import typing
 from typing import List
 
+from amlaidatatests import __version__
 from amlaidatatests.config import ConfigSingleton, init_parser_options_from_config
 from amlaidatatests.connection import connection_factory
 from amlaidatatests.schema.utils import get_amlai_schema, get_table_name
@@ -24,6 +25,15 @@ def build_parser():
     parser = argparse.ArgumentParser()
     parser = init_parser_options_from_config(parser)
     parser = typing.cast(argparse.ArgumentParser, parser)
+
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        help="Show program's version number and exit.",
+        version=f"%(prog)s {__version__}",
+    )
+
     parser.add_argument(
         "--pytest-help",
         help="Print extra additional flags from pytest and exit",
