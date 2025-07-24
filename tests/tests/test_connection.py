@@ -3,6 +3,7 @@
 import unittest.mock
 
 import pytest
+from ibis import BaseBackend
 from omegaconf import OmegaConf
 
 from amlaidatatests import __version__
@@ -10,25 +11,11 @@ from amlaidatatests.config import DATATEST_STRUCTURED_CONFIG, ConfigSingleton
 from amlaidatatests.connection import connection_factory
 
 
-@pytest.fixture(scope="function")
-def setup_config():
-    """Clear and setup config for testing the connection module only"""
-    ConfigSingleton.clear()
-    # A default config is needed.
-    # The connection string will be overridden in the test.
-    conf = OmegaConf.merge(
-        DATATEST_STRUCTURED_CONFIG, {"connection_string": "duckdb://"}
-    )
-    ConfigSingleton().set_config(conf)
-    yield
-    ConfigSingleton.clear()
-
-
 @unittest.mock.patch("ibis.bigquery.connect")
 @unittest.mock.patch("google.cloud.bigquery.Client")
 @unittest.mock.patch("google.auth.default")
 def test_bigquery_user_agent(
-    mock_auth, mock_bq_client, mock_ibis_connect, setup_config
+    mock_auth, mock_bq_client, mock_ibis_connect, test_connection
 ):
     """Verify that the BigQuery client is created with the correct user agent."""
     # Arrange
