@@ -15,7 +15,7 @@ from amlaidatatests.connection import connection_factory
 @unittest.mock.patch("google.cloud.bigquery.Client")
 @unittest.mock.patch("google.auth.default")
 def test_bigquery_user_agent(
-    mock_auth, mock_bq_client, mock_ibis_connect, test_connection
+    mock_auth, mock_bq_client, mock_ibis_connect, protect_config
 ):
     """Verify that the BigQuery client is created with the correct user agent."""
     # Arrange
