@@ -11,7 +11,7 @@ def test_null_if_succeeds(test_connection, create_test_table, request):
     schema = {"type": String(), "b": String()}
     tbl = create_test_table(
         ibis.memtable(
-            data=[{"type": "card", "b": None}, {"type": "cash", "b": "yes"}],
+            [{"type": "card", "b": None}, {"type": "cash", "b": "yes"}],
             schema=schema,
         )
     )
@@ -33,7 +33,7 @@ def test_null_if_fails(test_connection, create_test_table, request):
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[{"type": "card", "b": "bad"}, {"type": "cash", "b": "yes"}],
+            [{"type": "card", "b": "bad"}, {"type": "cash", "b": "yes"}],
             schema=schema,
         )
     )

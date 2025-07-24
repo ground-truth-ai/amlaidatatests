@@ -12,7 +12,7 @@ def test_max_proportion_group_by(test_connection, create_test_table, request):
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"account_id": "1", "column": "born"},
                 {"account_id": "2", "column": "married"},
                 {"account_id": "3", "column": "married"},
@@ -40,7 +40,7 @@ def test_max_proportion_group_by_fails(test_connection, create_test_table, reque
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"account_id": "1", "column": "married"},
                 {"account_id": "1", "column": "born"},
                 {"account_id": "2", "column": "married"},
@@ -76,7 +76,7 @@ def test_collar_proportion_group_by_fails_too_high(
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"transaction_id": "1", "direction": "DEBIT"},
                 {"transaction_id": "2", "direction": "DEBIT"},
                 {"transaction_id": "3", "direction": "DEBIT"},
@@ -119,7 +119,7 @@ def test_collar_proportion_group_by_fails_too_low(
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"transaction_id": "1", "direction": "DEBIT"},
                 {"transaction_id": "2", "direction": "DEBIT"},
                 {"transaction_id": "3", "direction": "DEBIT"},
@@ -160,7 +160,7 @@ def test_collar_proportion_group_by(test_connection, create_test_table, request)
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"transaction_id": "internal_account_1", "direction": "DEBIT"},
                 {"transaction_id": "internal_account_1", "direction": "DEBIT"},
                 {"transaction_id": "internal_account_1", "direction": "DEBIT"},
@@ -200,7 +200,7 @@ def test_collar_proportion_group_by_where(test_connection, create_test_table, re
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"transaction_id": "internal_account_1", "direction": "DEBIT"},
                 {"transaction_id": "internal_account_2", "direction": "DEBIT"},
                 {"transaction_id": "internal_account_3", "direction": "DEBIT"},
@@ -249,7 +249,7 @@ def test_max_proportion_group_by(test_connection, create_test_table, request):
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"account_id": "1", "column": "born"},
                 {"account_id": "2", "column": "married"},
                 {"account_id": "3", "column": "married"},
@@ -277,7 +277,7 @@ def test_max_proportion_group_by_fails(test_connection, create_test_table, reque
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"account_id": "1", "column": "married"},
                 {"account_id": "1", "column": "born"},
                 {"account_id": "2", "column": "married"},
@@ -313,7 +313,7 @@ def test_collar_proportion_group_by_fails_too_high(
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"transaction_id": "1", "direction": "DEBIT"},
                 {"transaction_id": "2", "direction": "DEBIT"},
                 {"transaction_id": "3", "direction": "DEBIT"},
@@ -356,7 +356,7 @@ def test_collar_proportion_group_by_fails_too_low(
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"transaction_id": "1", "direction": "DEBIT"},
                 {"transaction_id": "2", "direction": "DEBIT"},
                 {"transaction_id": "3", "direction": "DEBIT"},
@@ -397,7 +397,7 @@ def test_collar_proportion_group_by(test_connection, create_test_table, request)
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"transaction_id": "internal_account_1", "direction": "DEBIT"},
                 {"transaction_id": "internal_account_1", "direction": "DEBIT"},
                 {"transaction_id": "internal_account_1", "direction": "DEBIT"},
@@ -437,7 +437,7 @@ def test_collar_proportion_group_by_where(test_connection, create_test_table, re
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"transaction_id": "internal_account_1", "direction": "DEBIT"},
                 {"transaction_id": "internal_account_2", "direction": "DEBIT"},
                 {"transaction_id": "internal_account_3", "direction": "DEBIT"},
@@ -486,7 +486,7 @@ def test_overlapping_value_keys(test_connection, create_test_table, request):
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"party_id": "10", "risk_case_id": "01", "type": "OTHER_EVENT"},
                 {"party_id": "100", "risk_case_id": "1", "type": "SAR"},
             ],
@@ -519,7 +519,7 @@ def test_proportion_counts_fails(test_connection, create_test_table, request):
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"party_id": "1", "risk_case_id": "1", "type": "AML_PROCESS_START"},
                 {"party_id": "1", "risk_case_id": "1", "type": "OTHER_EVENT"},
                 {"party_id": "1", "risk_case_id": "1", "type": "OTHER_EVENT"},

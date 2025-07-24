@@ -11,7 +11,7 @@ def test_verify_subset_succeeds(test_connection, create_test_table, request):
     schema = {"type": String(), "id_0": String(), "id_1": String()}
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"type": "exit", "id_0": "A", "id_1": "B"},
                 {"type": "start", "id_0": "A", "id_1": "B"},
             ],
@@ -38,7 +38,7 @@ def test_verify_subset_fails(test_connection, create_test_table, request):
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {"type": "exit", "id_0": "A", "id_1": "B"},
             ],
             schema=schema,

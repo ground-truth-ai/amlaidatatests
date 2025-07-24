@@ -11,7 +11,7 @@ def test_equals_low_threshold(test_connection, create_test_table, request):
     schema = {"column": Int64(nullable=False)}
 
     tbl = create_test_table(
-        ibis.memtable(data=[{"column": 1}, {"column": 10}], schema=schema)
+        ibis.memtable([{"column": 1}, {"column": 10}], schema=schema)
     )
     table_config = ResolvedTableConfig(
         name=tbl, table=ibis.table(name=tbl, schema=schema)
@@ -27,7 +27,7 @@ def test_equals_high_threshold(test_connection, create_test_table, request):
     schema = {"column": Int64(nullable=False)}
 
     tbl = create_test_table(
-        ibis.memtable(data=[{"column": 1}, {"column": 10}], schema=schema)
+        ibis.memtable([{"column": 1}, {"column": 10}], schema=schema)
     )
     table_config = ResolvedTableConfig(
         name=tbl, table=ibis.table(name=tbl, schema=schema)
@@ -43,7 +43,7 @@ def test_float_in_range(test_connection, create_test_table, request):
     schema = {"column": Float64(nullable=False)}
 
     tbl = create_test_table(
-        ibis.memtable(data=[{"column": 1.0}, {"column": 10.0}], schema=schema)
+        ibis.memtable([{"column": 1.0}, {"column": 10.0}], schema=schema)
     )
     table_config = ResolvedTableConfig(
         name=tbl, table=ibis.table(name=tbl, schema=schema)
@@ -59,7 +59,7 @@ def test_int_in_range(test_connection, create_test_table, request):
     schema = {"column": Int64(nullable=False)}
 
     tbl = create_test_table(
-        ibis.memtable(data=[{"column": 1}, {"column": 10}], schema=schema)
+        ibis.memtable([{"column": 1}, {"column": 10}], schema=schema)
     )
     table_config = ResolvedTableConfig(
         name=tbl, table=ibis.table(name=tbl, schema=schema)
@@ -75,7 +75,7 @@ def test_int_out_of_range_max(test_connection, create_test_table, request):
     schema = {"column": Int64(nullable=False)}
 
     tbl = create_test_table(
-        ibis.memtable(data=[{"column": 1}, {"column": 25}], schema=schema)
+        ibis.memtable([{"column": 1}, {"column": 25}], schema=schema)
     )
     table_config = ResolvedTableConfig(
         name=tbl, table=ibis.table(name=tbl, schema=schema)
@@ -93,7 +93,7 @@ def test_int_out_of_range_min(test_connection, create_test_table, request):
     schema = {"column": Int64(nullable=False)}
 
     tbl = create_test_table(
-        ibis.memtable(data=[{"column": -10}, {"column": 25}], schema=schema)
+        ibis.memtable([{"column": -10}, {"column": 25}], schema=schema)
     )
     table_config = ResolvedTableConfig(
         name=tbl, table=ibis.table(name=tbl, schema=schema)
