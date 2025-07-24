@@ -18,7 +18,7 @@ def create_skeleton(args):
     schema = get_amlai_schema(version)
     connection = connection_factory()
     for table in schema.TABLES:
-        connection.create_table(name=get_table_name(table.name), schema=table.schema)
+        connection.create_table(get_table_name(table.name), schema=table.schema)
 
 
 def build_parser():

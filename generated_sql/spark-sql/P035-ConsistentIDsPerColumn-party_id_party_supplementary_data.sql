@@ -6,7 +6,7 @@ SELECT
 FROM (
   SELECT
     `t4`.`by`,
-    CONCAT_WS('|', ARRAY_SORT(`t4`.`ids`)) AS `ids`
+    IF(SIZE(ARRAY_SORT(`t4`.`ids`)) > 0, CONCAT_WS('|', ARRAY_SORT(`t4`.`ids`)), NULL) AS `ids`
   FROM (
     SELECT
       `t3`.`party_id` AS `by`,

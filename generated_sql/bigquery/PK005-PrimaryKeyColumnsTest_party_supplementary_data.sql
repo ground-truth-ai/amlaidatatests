@@ -4,9 +4,9 @@
 SELECT
   COUNT(
     DISTINCT CONCAT(
-      to_json_string(`party_supplementary_data_id`),
-      to_json_string(`party_id`),
-      to_json_string(`validity_start_time`)
+      TO_JSON_STRING(`party_supplementary_data_id`),
+      TO_JSON_STRING(`party_id`),
+      TO_JSON_STRING(`validity_start_time`)
     )
   ) AS `unique_rows`,
   COUNT(*) AS `count`

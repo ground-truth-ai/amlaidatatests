@@ -10,9 +10,9 @@ FROM (
   SELECT
     COUNT(*) AS `total_rows`,
     COUNTIF(
-      format_datetime('%M:%S', `t3`.`validity_start_time`) IN ('00:00', '00:30')
+      format_timestamp('%M:%S', `t3`.`validity_start_time`, 'UTC') IN ('00:00', '00:30')
       AND (
-        format_datetime('%H:%M:%S', `t3`.`validity_start_time`) <> '00:00:00'
+        format_timestamp('%H:%M:%S', `t3`.`validity_start_time`, 'UTC') <> '00:00:00'
       )
     ) AS `matching_rows`
   FROM (

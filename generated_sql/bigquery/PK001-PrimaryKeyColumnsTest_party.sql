@@ -3,7 +3,7 @@
 -- Description: check columns defined are a primary key on the table
 SELECT
   COUNT(
-    DISTINCT CONCAT(to_json_string(`party_id`), to_json_string(`validity_start_time`))
+    DISTINCT CONCAT(TO_JSON_STRING(`party_id`), TO_JSON_STRING(`validity_start_time`))
   ) AS `unique_rows`,
   COUNT(*) AS `count`
 FROM (

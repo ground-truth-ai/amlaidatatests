@@ -6,7 +6,7 @@ SELECT
 FROM (
   SELECT
     "t4"."by",
-    ARRAY_TO_STRING(ARRAY_SORT("t4"."ids"), '|') AS "ids"
+    ARRAY_TO_STRING(NULLIF(ARRAY_SORT("t4"."ids"), []), '|') AS "ids"
   FROM (
     SELECT
       "t3"."party_id" AS "by",

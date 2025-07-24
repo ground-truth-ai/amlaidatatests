@@ -12,7 +12,7 @@ SELECT
     `t8`.`missing_key_count`,
     (
       SELECT
-        COUNT(DISTINCT CONCAT(to_json_string(`account_id`))) AS `CountDistinctStar`
+        COUNT(DISTINCT CONCAT(TO_JSON_STRING(`account_id`))) AS `CountDistinctStar`
       FROM `t3` AS `t4`
     )
   ) AS `proportion`

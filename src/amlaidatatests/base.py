@@ -294,8 +294,14 @@ class AbstractTableTest(AbstractBaseTest):
 
                     # 1: Write the table/column this test
                     if isinstance(self, AbstractColumnTest):
+                        # Some columns are defined by lambda functions.
+                        # TODO: make this annotation friendlier for these
+                        # lambda functions
+                        column_name = (
+                            "<dynamic-column>" if callable(self.column) else self.column
+                        )
                         f.write(
-                            f"-- Tests: {self.table_config.name}.{self.column}\n".encode(
+                            f"-- Tests: {self.table_config.name}.{column_name}\n".encode(
                                 "utf-8"
                             )
                         )

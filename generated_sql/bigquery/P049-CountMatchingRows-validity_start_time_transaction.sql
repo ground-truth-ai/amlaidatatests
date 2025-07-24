@@ -10,11 +10,21 @@ FROM (
   SELECT
     COUNT(*) AS `total_rows`,
     COUNTIF(
-      `t1`.`source_system` IS NOT NULL
-      OR `t1`.`account_id` IS NOT NULL
-      OR `t1`.`counterparty_account` IS NOT NULL
-      OR `t1`.`book_time` IS NOT NULL
-      OR `t1`.`normalized_booked_amount` IS NOT NULL
+      (
+        `t1`.`source_system` IS NOT NULL
+      )
+      OR (
+        `t1`.`account_id` IS NOT NULL
+      )
+      OR (
+        `t1`.`counterparty_account` IS NOT NULL
+      )
+      OR (
+        `t1`.`book_time` IS NOT NULL
+      )
+      OR (
+        `t1`.`normalized_booked_amount` IS NOT NULL
+      )
     ) AS `matching_rows`
   FROM (
     SELECT
