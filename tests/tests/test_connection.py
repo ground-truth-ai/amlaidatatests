@@ -10,9 +10,9 @@ from amlaidatatests.config import DATATEST_STRUCTURED_CONFIG, ConfigSingleton
 from amlaidatatests.connection import connection_factory
 
 
-@pytest.fixture(autouse=True)
-def _setup_config():
-    """Clear and setup config for each test."""
+@pytest.fixture(scope="function")
+def setup_config():
+    """Clear and setup config for testing the connection module only"""
     ConfigSingleton.clear()
     # A default config is needed.
     # The connection string will be overridden in the test.
@@ -27,7 +27,9 @@ def _setup_config():
 @unittest.mock.patch("ibis.bigquery.connect")
 @unittest.mock.patch("google.cloud.bigquery.Client")
 @unittest.mock.patch("google.auth.default")
-def test_bigquery_user_agent(mock_auth, mock_bq_client, mock_ibis_connect):
+def test_bigquery_user_agent(
+    mock_auth, mock_bq_client, mock_ibis_connect, setup_config
+):
     """Verify that the BigQuery client is created with the correct user agent."""
     # Arrange
     mock_auth.return_value = (None, "test-project")
