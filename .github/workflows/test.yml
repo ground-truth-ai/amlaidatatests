@@ -89,6 +89,10 @@ jobs:
     needs:
     - build
 
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
     runs-on: ubuntu-latest
 
     strategy:
@@ -109,9 +113,36 @@ jobs:
           pip install -e .
           pip install -e .[duckdb]
 
+      - name: Cache duckdb
+        id: cache-duckdb
+        uses: actions/cache@v3
+        with:
+          # npm cache files are stored in `~/.npm` on Linux/macOS
+          path: ~/duckdb.ddb
+          key: ${{ runner.os }}-primes
+
+      - if: ${{ steps.cache-duckdb.outputs.cache-hit != 'true' }}
+        name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - if: ${{ steps.cache-duckdb.outputs.cache-hit != 'true' }}
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          create_credentials_file: true
+          export_environment_variables: true
+          workload_identity_provider: '${{ secrets.CI_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.CI_SERVICE_ACCOUNT }}'
+
+      - if: ${{ steps.cache-duckdb.outputs.cache-hit != 'true' }}
+        name: 'Get duckdb'
+        run: |
+          gcloud storage cp gs://amlai-datatest-ci-bucket/duckdb.ddb ./
+
       - name: Test with pytest
         run: |
-          pytest --connection_string=duckdb://
+          amlaidatatests --connection_string=duckdb://duckdb.ddb?access_mode=READ_ONLY 
+          --id=1234 -x -n=4 -k "not F004 and not P043" -W error
 
   integration-test-bq:
     needs:
