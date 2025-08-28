@@ -210,10 +210,6 @@ jobs:
           key: ${{ runner.os }}-primes
 
       - if: ${{ steps.cache-duckdb.outputs.cache-hit != 'true' }}
-        name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v2'
-
-      - if: ${{ steps.cache-duckdb.outputs.cache-hit != 'true' }}
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v2'
         with:
@@ -221,6 +217,10 @@ jobs:
           export_environment_variables: true
           workload_identity_provider: '${{ secrets.CI_WORKLOAD_IDENTITY_PROVIDER }}'
           service_account: '${{ secrets.CI_SERVICE_ACCOUNT }}'
+
+      - if: ${{ steps.cache-duckdb.outputs.cache-hit != 'true' }}
+        name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
 
       - if: ${{ steps.cache-duckdb.outputs.cache-hit != 'true' }}
         name: 'Get duckdb'
