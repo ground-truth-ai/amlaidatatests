@@ -234,4 +234,4 @@ jobs:
         # Skip F043 (SAR test, has no SARs in our test dataset)
         run: >
           amlaidatatests --connection_string=duckdb://duckdb.ddb?access_mode=READ_ONLY 
-          --id=1234 -k "not F004 and not P043" -W error
+          --id=1234 -x -n=4 -k "not F004 and not P043" -W error
