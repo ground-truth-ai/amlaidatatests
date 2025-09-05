@@ -188,12 +188,12 @@ jobs:
 
       - name: Install Testing Dependencies
         run: |
-          pip install pytest-xdist
-          pip install duckdb
+          python3 -m pip install duckdb --no-binary duckdb
 
       - name: Install
         if: ${{ matrix.os-version != 'windows-latest' }}
         run: |
+          pip install pytest-xdist
           pip install dist/*.whl
 
       - name: Install
