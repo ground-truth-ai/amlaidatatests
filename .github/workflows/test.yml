@@ -227,11 +227,22 @@ jobs:
         run: |
           gcloud storage cp gs://amlai-datatest-ci-bucket/duckdb.ddb ./
 
-      - name: Integration test
+      - name: Integration test (parallel)
         # access_mode allows parallelism in duckdb - default cores available for public
         # runners in github is 4.
         # Skip F004 (schema tests - TODO, these should probably work in duckdb)
         # Skip F043 (SAR test, has no SARs in our test dataset)
+        if: ${{ matrix.os-version != 'windows-latest' }}
         run: >
           amlaidatatests --connection_string=duckdb://duckdb.ddb?access_mode=READ_ONLY 
           --id=1234 -x -n=4 -k "not F004 and not P043" -W error
+
+      - name: Integration test (sequential)
+        # access_mode allows parallelism in duckdb - default cores available for public
+        # runners in github is 4.
+        # Skip F004 (schema tests - TODO, these should probably work in duckdb)
+        # Skip F043 (SAR test, has no SARs in our test dataset)
+        if: ${{ matrix.os-version == 'windows-latest' }}
+        run: >
+          amlaidatatests --connection_string=duckdb://duckdb.ddb?access_mode=READ_ONLY 
+          --id=1234 -x -k "not F004 and not P043" -W error
