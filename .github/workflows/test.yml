@@ -192,7 +192,7 @@ jobs:
           pip install duckdb
 
       - name: Install DuckDB nightly
-        if: ${{ matrix.os-version != 'windows-latest' }}
+        if: ${{ matrix.os-version == 'windows-latest' }}
         run: |
           pip install duckdb --pre --upgrade
 
