@@ -188,7 +188,7 @@ jobs:
 
       - name: Install Testing Dependencies
         run: |
-          python3 -m pip install duckdb --no-binary duckdb
+          pip install duckdb --pre --upgrade
 
       - name: Install
         if: ${{ matrix.os-version != 'windows-latest' }}
