@@ -186,10 +186,19 @@ jobs:
         with:
           python-version: 3.12
 
+      - name: Install DuckDB stable
+        if: ${{ matrix.os-version != 'windows-latest' }}
+        run: |
+          pip install duckdb
+
+      - name: Install DuckDB nightly
+        if: ${{ matrix.os-version == 'windows-latest' }}
+        run: |
+          pip install duckdb --pre --upgrade
+
       - name: Install Testing Dependencies
         run: |
           pip install pytest-xdist
-          pip install duckdb
 
       - name: Install
         if: ${{ matrix.os-version != 'windows-latest' }}

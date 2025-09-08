@@ -158,3 +158,5 @@ duckdb.ddb
 
 .coverage-dir/*
 src/amlaidatatests/_version.py
+
+.notebooks
