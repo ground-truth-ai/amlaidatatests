@@ -23,5 +23,7 @@ USER ${USER}
 COPY --from=compile-image --chown=${USER} /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
+WORKDIR /home/${USER}
+
 # Default
 CMD [ "amlaidatatests", "--help" ]

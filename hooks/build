@@ -1,0 +1,7 @@
+#!/bin/bash
+
+docker buildx create --name container --driver docker-container --use
+docker buildx build --no-cache --build-arg CUSTOM=$VAR -f $DOCKERFILE_PATH -t $IMAGE_NAME --push --sbom=true --attest type=provenance,mode=max .
+if [ $DOCKER_TAG != "latest" ]; then
+    docker buildx build --build-arg CUSTOM=$VAR -f $DOCKERFILE_PATH -t $DOCKER_REPO:latest --push --sbom=true --attest type=provenance,mode=max .
+fi
