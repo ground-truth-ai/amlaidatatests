@@ -1,6 +1,7 @@
 """Utility CLI for amlaidatatests"""
 
 import argparse
+import re
 import sys
 import typing
 from typing import List
@@ -70,7 +71,11 @@ def entry_point(sysargs: List[str] | None = None) -> None:
 
     # show sql really just shows the full tracebacks which
     # prints the full sql
-    show_sql = ["--tb=no", "--disable-warnings"]
+
+    if any([re.match(r"^--tb.*$", e) for e in extra]):
+        show_sql = []
+    else:
+        show_sql = ["--tb=no", "--disable-warnings"]
     if args.showsql:
         show_sql = ["--tb=short"]
         sysargs.remove("--show-sql")
