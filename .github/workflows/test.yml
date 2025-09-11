@@ -184,7 +184,7 @@ jobs:
       - name: MSVC
         if: ${{ matrix.os-version == 'windows-latest' }}
         run: |
-          choco install vcredist140
+          choco install vcredist140 --force
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v3
