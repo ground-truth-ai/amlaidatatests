@@ -182,6 +182,7 @@ jobs:
           path: dist/
 
       - name: Compile Visual Studio project with MSBuild
+        if: ${{ matrix.os-version == 'windows-latest' }}
         shell: cmd 
         run: ${{ '"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" && msbuild' }}
         working-directory: ${{ github.workspace }}
@@ -191,15 +192,9 @@ jobs:
         with:
           python-version: 3.12
 
-      - name: Install DuckDB stable
-        if: ${{ matrix.os-version != 'windows-latest' }}
+      - name: Install DuckDB
         run: |
           pip install duckdb
-
-      - name: Install DuckDB nightly
-        if: ${{ matrix.os-version == 'windows-latest' }}
-        run: |
-          pip install duckdb --upgrade
 
       - name: Install Testing Dependencies
         run: |
