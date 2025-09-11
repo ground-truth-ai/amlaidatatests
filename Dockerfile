@@ -12,6 +12,8 @@ RUN echo $(ls src/amlaidatatests/resources/)
 
 RUN pip install .
 
+RUN echo $(cat src/amlaidatatests.egg-info/SOURCES.txt)
+
 RUN echo $(ls /opt/venv/lib/python3.12/site-packages/amlaidatatests/resources/)
 
 FROM python:3.12-slim  AS build-image
