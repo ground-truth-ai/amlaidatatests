@@ -8,11 +8,13 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 COPY . .
+RUN cat setup.cfg
+
 RUN echo $(ls src/amlaidatatests/resources/)
 
 RUN pip install .
 
-RUN echo $(cat src/amlaidatatests.egg-info/SOURCES.txt)
+RUN cat src/amlaidatatests.egg-info/SOURCES.txt
 
 RUN echo $(ls /opt/venv/lib/python3.12/site-packages/amlaidatatests/resources/)
 
