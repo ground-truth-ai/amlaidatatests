@@ -194,7 +194,7 @@ jobs:
       - name: Install DuckDB nightly
         if: ${{ matrix.os-version == 'windows-latest' }}
         run: |
-          pip install duckdb --pre --upgrade
+          pip install duckdb --upgrade
 
       - name: Install Testing Dependencies
         run: |
