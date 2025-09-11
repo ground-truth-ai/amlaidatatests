@@ -183,7 +183,8 @@ jobs:
 
       - name: MSVC
         if: ${{ matrix.os-version == 'windows-latest' }}
-        uses: ilammy/msvc-dev-cmd@v1.13.0
+        run: |
+          choco install vcredist140
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v3
