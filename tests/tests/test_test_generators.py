@@ -47,7 +47,7 @@ def test_find_consistent_timestamp_offset(test_connection, create_test_table, re
     schema = ibis.schema({"a": Timestamp(nullable=False)})
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "a": datetime.datetime(
                         2020, 1, 1, hour=1, tzinfo=datetime.timezone.utc

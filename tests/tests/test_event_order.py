@@ -19,7 +19,7 @@ def test_incorrect_event_order(test_connection, create_test_table, request):
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": 1,
                     "event": "BORN",
@@ -67,7 +67,7 @@ def test_correct_event_order(test_connection, create_test_table, request):
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": 1,
                     "event": "BORN",
@@ -114,7 +114,7 @@ def test_correct_event_order_missing_middle_event(
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": 1,
                     "event": "BORN",
@@ -154,7 +154,7 @@ def test_correct_event_order_missing_last_event(
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": 1,
                     "event": "BORN",
@@ -194,7 +194,7 @@ def test_correct_event_order_missing_events_at_the_same(
 
     tbl = create_test_table(
         ibis.memtable(
-            data=[
+            [
                 {
                     "id": 1,
                     "event": "BORN",

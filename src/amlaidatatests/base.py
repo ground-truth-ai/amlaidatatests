@@ -13,7 +13,7 @@ import pytest
 from google.api_core.exceptions import NotFound as GoogleTableNotFound
 from ibis import BaseBackend, Expr, IbisError, Table, _
 from ibis import selectors as s
-from ibis.common.exceptions import IbisTypeError
+from ibis.common.exceptions import IbisTypeError, TableNotFound
 
 from amlaidatatests.config import ConfigSingleton, cfg
 from amlaidatatests.exceptions import (
@@ -192,21 +192,12 @@ class AbstractTableTest(AbstractBaseTest):
             # qualified table names
             if connection.dialect == "duckdb":
                 return connection.table(
-                    name=table_config.table.get_name().split(".")[-1],
+                    table_config.table.get_name().split(".")[-1],
                     database=cfg().database,
                 )
             return connection.table(table_config.table.get_name())
-        # Ibis has no consistent API around missing tables:
-        # https://github.com/ibis-project/ibis/issues/9468
-        # We have to workaround this whilst ensuring we don't
-        # catch any errors we don't want to catch. This is
-        # easier with some backends than others
-        except GoogleTableNotFound as e:
-            if connection.name != "bigquery":
-                raise e
-        except IbisError as e:
-            if connection.name != "duckdb":
-                raise e
+        except TableNotFound:
+            pass
         if request:
             self._add_pytest_attribute(request, "table_missing", True)
         self._skip_test_if_optional_table(table_config=table_config)
@@ -303,8 +294,14 @@ class AbstractTableTest(AbstractBaseTest):
 
                     # 1: Write the table/column this test
                     if isinstance(self, AbstractColumnTest):
+                        # Some columns are defined by lambda functions.
+                        # TODO: make this annotation friendlier for these
+                        # lambda functions
+                        column_name = (
+                            "<dynamic-column>" if callable(self.column) else self.column
+                        )
                         f.write(
-                            f"-- Tests: {self.table_config.name}.{self.column}\n".encode(
+                            f"-- Tests: {self.table_config.name}.{column_name}\n".encode(
                                 "utf-8"
                             )
                         )

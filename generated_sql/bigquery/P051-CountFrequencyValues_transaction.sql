@@ -1,4 +1,4 @@
--- Tests: transaction.<function <lambda> at 0x7f5fa342cea0>
+-- Tests: transaction.<dynamic-column>
 -- Severity: INFO
 -- Description: 5% of transactions have the same value across any transaction type
 -- Interpretation: When count > 0, verify nanos and units mapping. Why do so many transactions have the same transaction value?
@@ -18,9 +18,7 @@ FROM (
       ) AS `proportion`
     FROM (
       SELECT
-        `t3`.`normalized_booked_amount`.`units` + (
-          ieee_divide(`t3`.`normalized_booked_amount`.`nanos`, 1000000000.0)
-        ) AS `Add_units_Divide_nanos_1000000000_0`,
+        `t3`.`normalized_booked_amount`.`units` + ieee_divide(`t3`.`normalized_booked_amount`.`nanos`, 1000000000.0) AS `Add_units_Divide_nanos_1000000000_0`,
         `t3`.`type`,
         COUNT(*) AS `value_cnt`
       FROM (
@@ -54,9 +52,7 @@ FROM (
         WHERE
           `t2`.`row_num` = 0
           AND (
-            `t2`.`normalized_booked_amount`.`units` + (
-              ieee_divide(`t2`.`normalized_booked_amount`.`nanos`, 1000000000.0)
-            )
+            `t2`.`normalized_booked_amount`.`units` + ieee_divide(`t2`.`normalized_booked_amount`.`nanos`, 1000000000.0)
           ) IS NOT NULL
       ) AS `t3`
       GROUP BY

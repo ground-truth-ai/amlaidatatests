@@ -2,7 +2,7 @@
 -- Severity: ERROR
 -- Description: check columns defined are a primary key on the table
 SELECT
-  COUNT(DISTINCT CONCAT(to_json_string(`risk_case_event_id`))) AS `unique_rows`,
+  COUNT(DISTINCT CONCAT(TO_JSON_STRING(`risk_case_event_id`))) AS `unique_rows`,
   COUNT(*) AS `count`
 FROM (
   SELECT
