@@ -166,10 +166,8 @@ jobs:
 
     strategy:
       fail-fast: false
-      matrix:
-        os-version: ["windows-latest", "macos-latest"]
 
-    runs-on: ${{ matrix.os-version }}
+    runs-on: "macos-latest"
 
     permissions:
       contents: 'read'
@@ -180,11 +178,6 @@ jobs:
         with:
           name: python-package-distributions-3.12
           path: dist/
-
-      - name: MSVC
-        if: ${{ matrix.os-version == 'windows-latest' }}
-        run: |
-          choco install vcredist140 --force
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v3
@@ -200,14 +193,8 @@ jobs:
           pip install pytest-xdist
 
       - name: Install
-        if: ${{ matrix.os-version != 'windows-latest' }}
         run: |
           pip install dist/*.whl
-
-      - name: Install
-        if: ${{ matrix.os-version == 'windows-latest' }}
-        run: |
-          Get-ChildItem -Path .\dist\*.whl -File | ForEach-Object { pip install $_.FullName }
 
       - name: Cache duckdb
         id: cache-duckdb
