@@ -1,0 +1,2 @@
+include src/amlaidatatests/resources/*.csv
+include src/amlaidatatests/resources/*.xml

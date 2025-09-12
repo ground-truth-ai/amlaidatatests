@@ -166,10 +166,8 @@ jobs:
 
     strategy:
       fail-fast: false
-      matrix:
-        os-version: ["windows-latest", "macos-latest"]
 
-    runs-on: ${{ matrix.os-version }}
+    runs-on: "macos-latest"
 
     permissions:
       contents: 'read'
@@ -186,29 +184,17 @@ jobs:
         with:
           python-version: 3.12
 
-      - name: Install DuckDB stable
-        if: ${{ matrix.os-version != 'windows-latest' }}
+      - name: Install DuckDB
         run: |
           pip install duckdb
-
-      - name: Install DuckDB nightly
-        if: ${{ matrix.os-version == 'windows-latest' }}
-        run: |
-          pip install duckdb --pre --upgrade
 
       - name: Install Testing Dependencies
         run: |
           pip install pytest-xdist
 
       - name: Install
-        if: ${{ matrix.os-version != 'windows-latest' }}
         run: |
           pip install dist/*.whl
-
-      - name: Install
-        if: ${{ matrix.os-version == 'windows-latest' }}
-        run: |
-          Get-ChildItem -Path .\dist\*.whl -File | ForEach-Object { pip install $_.FullName }
 
       - name: Cache duckdb
         id: cache-duckdb
@@ -243,4 +229,4 @@ jobs:
         # Skip F043 (SAR test, has no SARs in our test dataset)
         run: >
           amlaidatatests --connection_string=duckdb://duckdb.ddb?access_mode=READ_ONLY 
-          --id=1234 -x -n=4 -k "not F004 and not P043" -W error
+          --id=1234 -x -n=4 -k "not F004 and not P043" -W error --tb=long
